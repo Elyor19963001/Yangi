@@ -11,10 +11,7 @@
 <body>
   <header class="topbar">
     <div class="topbar-inner">
-      <a class="brand" href="#top" aria-label="Bosh sahifa">
-        <span class="brand-mark">QR</span>
-        <span><strong>Qishloq Raqamli Platformasi</strong><small>PhD Research MVP · Samarqand</small></span>
-      </a>
+      <a class="brand" href="#top" aria-label="Bosh sahifa"><span class="brand-mark">QR</span><span><strong>Qishloq Raqamli Platformasi</strong><small>PhD Research MVP · Samarqand</small></span></a>
       <div class="server-pill" id="serverPill"><span class="status-dot"></span><span id="serverText">Server tekshirilmoqda…</span></div>
     </div>
   </header>
@@ -22,117 +19,53 @@
   <main id="top" class="shell">
     <section class="hero">
       <div class="hero-copy">
-        <span class="eyebrow">ILMIY-AMALIY PLATFORMА · v0.2</span>
+        <span class="eyebrow">ILMIY-AMALIY PLATFORMA · v0.3</span>
         <h1>Qishloq aholisi uchun raqamli iqtisodiy xizmatlar — bitta platformada</h1>
-        <p>Bozor narxlari, mahsulot e’lonlari, ob-havo, davlat dasturlari va tadqiqot analitikasi. Platforma pilot sinov va RCT uchun foydalanish loglarini rozilik asosida qayd etishga tayyorlangan.</p>
-        <div class="hero-stats">
-          <div><strong>14</strong><span>pilot tuman</span></div>
-          <div><strong>5</strong><span>MVP modul</span></div>
-          <div><strong>RCT</strong><span>ta’sir baholash</span></div>
-        </div>
+        <p>Bozor narxlari, mahsulot e’lonlari, ob-havo, davlat dasturlari, ilmiy so‘rovnoma va tadqiqot analitikasi. Platforma pilot sinov va RCT uchun ma’lumotlarni rozilik asosida yig‘ishga tayyorlangan.</p>
+        <div class="hero-stats"><div><strong>14</strong><span>pilot tuman</span></div><div><strong>5</strong><span>MVP modul</span></div><div><strong>T0/T3/T6</strong><span>survey waves</span></div></div>
       </div>
       <aside class="auth-card" id="authCard">
-        <div class="auth-head">
-          <span class="step-badge">M1</span>
-          <div><h2>Kirish / ro‘yxatdan o‘tish</h2><p>Telefon raqami orqali OTP tasdiqlash</p></div>
-        </div>
-
+        <div class="auth-head"><span class="step-badge">M1</span><div><h2>Kirish / ro‘yxatdan o‘tish</h2><p>Telefon raqami orqali OTP tasdiqlash</p></div></div>
         <form id="registerForm" class="form-stack">
-          <label>F.I.Sh.<input id="fullName" name="full_name" autocomplete="name" placeholder="Masalan: Ali Valiyev" /></label>
+          <label>F.I.Sh. <small>(ixtiyoriy)</small><input id="fullName" name="full_name" autocomplete="name" placeholder="Masalan: Ali Valiyev" /></label>
           <label>Telefon raqami<input id="phone" name="phone" inputmode="tel" autocomplete="tel" value="+998" placeholder="+998901234567" required /></label>
           <label>Tuman<select id="districtSelect" name="district_id" required><option value="">Yuklanmoqda…</option></select></label>
           <label class="check-row"><input id="consentAnalytics" type="checkbox" checked /><span>Ilmiy tahlil uchun anonim foydalanish ma’lumotlarini qayd etishga roziman.</span></label>
           <button class="btn btn-primary" type="submit">OTP olish</button>
         </form>
-
         <form id="otpForm" class="form-stack hidden">
-          <div class="otp-info" id="otpInfo"></div>
-          <label>6 xonali OTP<input id="otp" inputmode="numeric" maxlength="6" placeholder="000000" required /></label>
-          <button class="btn btn-primary" type="submit">Tasdiqlash va kirish</button>
-          <button class="btn btn-ghost" id="backToRegister" type="button">Telefonni o‘zgartirish</button>
+          <div class="otp-info" id="otpInfo"></div><label>6 xonali OTP<input id="otp" inputmode="numeric" maxlength="6" placeholder="000000" required /></label>
+          <button class="btn btn-primary" type="submit">Tasdiqlash va kirish</button><button class="btn btn-ghost" id="backToRegister" type="button">Telefonni o‘zgartirish</button>
         </form>
-
-        <div id="userSession" class="session-box hidden">
-          <div class="session-line"><span class="avatar" id="avatarInitial">U</span><div><strong id="sessionName">Foydalanuvchi</strong><small id="sessionStudy">study_id yuklanmoqda</small></div></div>
-          <button class="btn btn-ghost" id="logoutBtn" type="button">Chiqish</button>
-        </div>
+        <div id="userSession" class="session-box hidden"><div class="session-line"><span class="avatar" id="avatarInitial">U</span><div><strong id="sessionName">Foydalanuvchi</strong><small id="sessionStudy">study_id yuklanmoqda</small></div></div><button class="btn btn-ghost" id="logoutBtn" type="button">Chiqish</button></div>
         <div class="form-message" id="authMessage" role="status"></div>
       </aside>
     </section>
 
     <section class="workspace">
-      <div class="workspace-head">
-        <div><span class="eyebrow">FOYDALANUVCHI PANELI</span><h2>Raqamli xizmatlar</h2></div>
-        <label class="compact-select">Faol tuman<select id="activeDistrict"><option value="">Tuman tanlang</option></select></label>
-      </div>
-
-      <nav class="tabs" aria-label="Platforma modullari">
-        <button class="tab active" data-tab="prices"><span>📊</span>Narxlar</button>
-        <button class="tab" data-tab="market"><span>🛒</span>E’lonlar</button>
-        <button class="tab" data-tab="weather"><span>🌦️</span>Ob-havo</button>
-        <button class="tab" data-tab="programs"><span>🏛️</span>Dasturlar</button>
-        <button class="tab" data-tab="research"><span>🧪</span>Research</button>
-      </nav>
-
-      <div id="loginGate" class="login-gate">
-        <div class="gate-icon">🔐</div>
-        <h3>Modullardan foydalanish uchun OTP orqali kiring</h3>
-        <p>Pilot bosqichida har bir foydalanuvchi sessiyasi autentifikatsiya qilinadi.</p>
-        <a href="#top" class="btn btn-primary">Kirish oynasiga qaytish</a>
-      </div>
+      <div class="workspace-head"><div><span class="eyebrow">FOYDALANUVCHI PANELI</span><h2>Raqamli xizmatlar</h2></div><label class="compact-select">Faol tuman<select id="activeDistrict"><option value="">Tuman tanlang</option></select></label></div>
+      <nav class="tabs" aria-label="Platforma modullari"><button class="tab active" data-tab="prices"><span>📊</span>Narxlar</button><button class="tab" data-tab="market"><span>🛒</span>E’lonlar</button><button class="tab" data-tab="weather"><span>🌦️</span>Ob-havo</button><button class="tab" data-tab="programs"><span>🏛️</span>Dasturlar</button><button class="tab" data-tab="research"><span>🧪</span>Research</button></nav>
+      <div id="loginGate" class="login-gate"><div class="gate-icon">🔐</div><h3>Modullardan foydalanish uchun OTP orqali kiring</h3><p>Pilot bosqichida har bir foydalanuvchi sessiyasi autentifikatsiya qilinadi.</p><a href="#top" class="btn btn-primary">Kirish oynasiga qaytish</a></div>
 
       <div id="moduleArea" class="hidden">
-        <section class="panel active" id="panel-prices" data-panel="prices">
-          <div class="panel-head"><div><span class="module-code">M2</span><h3>Qishloq xo‘jaligi mahsulotlari narxlari</h3><p>Bozor va tuman kesimida demo narxlar bazasi.</p></div><button class="btn btn-secondary" id="refreshPrices">Yangilash</button></div>
-          <div class="table-wrap"><table><thead><tr><th>Mahsulot</th><th>Bozor</th><th>Narx</th><th>Birlik</th><th>Sana</th><th>Manba</th></tr></thead><tbody id="pricesBody"><tr><td colspan="6">Ma’lumot yuklanmoqda…</td></tr></tbody></table></div>
-        </section>
+        <section class="panel active" id="panel-prices" data-panel="prices"><div class="panel-head"><div><span class="module-code">M2</span><h3>Qishloq xo‘jaligi mahsulotlari narxlari</h3><p>Bozor va tuman kesimida demo narxlar bazasi.</p></div><button class="btn btn-secondary" id="refreshPrices">Yangilash</button></div><div class="table-wrap"><table><thead><tr><th>Mahsulot</th><th>Bozor</th><th>Narx</th><th>Birlik</th><th>Sana</th><th>Manba</th></tr></thead><tbody id="pricesBody"><tr><td colspan="6">Ma’lumot yuklanmoqda…</td></tr></tbody></table></div></section>
 
-        <section class="panel" id="panel-market" data-panel="market">
-          <div class="panel-head"><div><span class="module-code">M3</span><h3>Mahsulot e’lonlari</h3><p>Sotuvchi va xaridorni bog‘lovchi pilot marketplace.</p></div></div>
-          <div class="market-layout">
-            <form id="listingForm" class="listing-form">
-              <h4>Yangi e’lon</h4>
-              <label>Mahsulot nomi<input id="listingTitle" required placeholder="Masalan: Pomidor" /></label>
-              <div class="form-row"><label>Narx, so‘m<input id="listingPrice" type="number" min="0" required /></label><label>Miqdor<input id="listingQty" type="number" min="0" step="0.1" /></label></div>
-              <label>Birlik<select id="listingUnit"><option value="kg">kg</option><option value="dona">dona</option><option value="tonna">tonna</option></select></label>
-              <label>Tavsif<textarea id="listingDescription" rows="3" placeholder="Mahsulot haqida qisqa ma’lumot"></textarea></label>
-              <button class="btn btn-primary" type="submit">E’lon joylashtirish</button>
-              <div class="form-message" id="listingMessage"></div>
-            </form>
-            <div><div class="section-title"><h4>Faol e’lonlar</h4><button class="text-btn" id="refreshListings">Yangilash</button></div><div id="listingsGrid" class="listing-grid"><div class="empty-card">E’lonlar yuklanmoqda…</div></div></div>
-          </div>
-        </section>
+        <section class="panel" id="panel-market" data-panel="market"><div class="panel-head"><div><span class="module-code">M3</span><h3>Mahsulot e’lonlari</h3><p>Sotuvchi va xaridorni bog‘lovchi pilot marketplace.</p></div></div><div class="market-layout"><form id="listingForm" class="listing-form"><h4>Yangi e’lon</h4><label>Mahsulot nomi<input id="listingTitle" required placeholder="Masalan: Pomidor" /></label><div class="form-row"><label>Narx, so‘m<input id="listingPrice" type="number" min="0" required /></label><label>Miqdor<input id="listingQty" type="number" min="0" step="0.1" /></label></div><label>Birlik<select id="listingUnit"><option value="kg">kg</option><option value="dona">dona</option><option value="tonna">tonna</option></select></label><label>Tavsif<textarea id="listingDescription" rows="3" placeholder="Mahsulot haqida qisqa ma’lumot"></textarea></label><button class="btn btn-primary" type="submit">E’lon joylashtirish</button><div class="form-message" id="listingMessage"></div></form><div><div class="section-title"><h4>Faol e’lonlar</h4><button class="text-btn" id="refreshListings">Yangilash</button></div><div id="listingsGrid" class="listing-grid"><div class="empty-card">E’lonlar yuklanmoqda…</div></div></div></div></section>
 
-        <section class="panel" id="panel-weather" data-panel="weather">
-          <div class="panel-head"><div><span class="module-code">M4</span><h3>5 kunlik ob-havo prognozi</h3><p>Tanlangan tuman bo‘yicha ob-havo moduli.</p></div><button class="btn btn-secondary" id="refreshWeather">Yangilash</button></div>
-          <div id="weatherContent" class="weather-content"><div class="empty-card">Tuman tanlang.</div></div>
-        </section>
+        <section class="panel" id="panel-weather" data-panel="weather"><div class="panel-head"><div><span class="module-code">M4</span><h3>5 kunlik ob-havo prognozi</h3><p>Tanlangan tuman bo‘yicha ob-havo moduli.</p></div><button class="btn btn-secondary" id="refreshWeather">Yangilash</button></div><div id="weatherContent" class="weather-content"><div class="empty-card">Tuman tanlang.</div></div></section>
 
-        <section class="panel" id="panel-programs" data-panel="programs">
-          <div class="panel-head"><div><span class="module-code">M5</span><h3>Davlat dasturlari katalogi</h3><p>Subsidiya, grant va o‘quv dasturlari bo‘yicha pilot ma’lumotlar.</p></div><button class="btn btn-secondary" id="refreshPrograms">Yangilash</button></div>
-          <div id="programsGrid" class="program-grid"><div class="empty-card">Dasturlar yuklanmoqda…</div></div>
-        </section>
+        <section class="panel" id="panel-programs" data-panel="programs"><div class="panel-head"><div><span class="module-code">M5</span><h3>Davlat dasturlari katalogi</h3><p>Subsidiya, grant va o‘quv dasturlari bo‘yicha pilot ma’lumotlar.</p></div><button class="btn btn-secondary" id="refreshPrograms">Yangilash</button></div><div id="programsGrid" class="program-grid"><div class="empty-card">Dasturlar yuklanmoqda…</div></div></section>
 
         <section class="panel" id="panel-research" data-panel="research">
-          <div class="panel-head"><div><span class="module-code">ILMIY YANGILIK №4</span><h3>RCT va foydalanish analitikasi</h3><p>Anonim study_id orqali platforma exposure va faollikni kuzatish.</p></div></div>
-          <div class="research-grid">
-            <article class="metric-card"><span>Study ID</span><strong id="researchStudyId">—</strong><small>shaxsiy ma’lumotdan ajratilgan identifikator</small></article>
-            <article class="metric-card"><span>Sessiya</span><strong id="researchSession">Faol</strong><small>JWT orqali himoyalangan</small></article>
-            <article class="metric-card"><span>Analytics roziligi</span><strong id="researchConsent">—</strong><small>faqat rozilik berilgan holatda loglanadi</small></article>
-          </div>
-          <div class="research-note"><strong>Tadqiqot dizayni:</strong> platforma usage analytics ma’lumotlari baseline, midline va endline so‘rov natijalari bilan bog‘lanishi uchun anonim identifikator saqlanadi. Production pilotdan oldin etik rozilik matni, real SMS provayderi va rasmiy ma’lumot manbalari yakuniy tasdiqlanishi kerak.</div>
+          <div class="panel-head"><div><span class="module-code">ILMIY YANGILIK №4</span><h3>RCT, ilmiy so‘rovnoma va foydalanish analitikasi</h3><p>Anonim study_id orqali baseline, midline, endline hamda platforma faolligini bog‘lash.</p></div><a class="btn btn-primary" href="/research.html">Ilmiy so‘rovnomani ochish →</a></div>
+          <div class="research-grid"><article class="metric-card"><span>Study ID</span><strong id="researchStudyId">—</strong><small>shaxsiy ma’lumotdan ajratilgan identifikator</small></article><article class="metric-card"><span>Sessiya</span><strong id="researchSession">Faol</strong><small>JWT orqali himoyalangan</small></article><article class="metric-card"><span>Analytics roziligi</span><strong id="researchConsent">—</strong><small>faqat rozilik berilgan holatda loglanadi</small></article></div>
+          <div class="research-note"><strong>v0.3:</strong> ilmiy so‘rovnoma alohida rozilik bilan ishlaydi. Ilmiy eksportda ism va telefon chiqmaydi; respondentlar <code>study_id</code> bilan bog‘lanadi. Real pilotdan oldin hosting va etik-huquqiy tartib yakuniy tasdiqlanishi kerak.</div>
         </section>
       </div>
     </section>
 
-    <section class="method-strip">
-      <div><span>01</span><strong>User-Centered Design</strong><small>ehtiyoj → prototip → test</small></div>
-      <div><span>02</span><strong>Technology Acceptance</strong><small>foydalilik va qulaylik</small></div>
-      <div><span>03</span><strong>RCT Impact Evaluation</strong><small>treatment vs control</small></div>
-      <div><span>04</span><strong>Research Analytics</strong><small>usage + outcome data</small></div>
-    </section>
-
-    <footer class="footer"><span>Qishloq Raqamli Platformasi · PhD Research MVP</span><span>GitHub + Railway + PostgreSQL · v0.2.0</span></footer>
+    <section class="method-strip"><div><span>01</span><strong>User-Centered Design</strong><small>ehtiyoj → prototip → test</small></div><div><span>02</span><strong>Technology Acceptance</strong><small>foydalilik va qulaylik</small></div><div><span>03</span><strong>RCT Impact Evaluation</strong><small>treatment vs control</small></div><div><span>04</span><strong>Research Analytics</strong><small>survey + usage + outcome</small></div></section>
+    <footer class="footer"><span>Qishloq Raqamli Platformasi · PhD Research MVP</span><span>GitHub + Railway + PostgreSQL · v0.3.0</span></footer>
   </main>
 </body>
 </html>
