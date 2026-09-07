@@ -23,6 +23,7 @@ const places = require('./routes/places');
 const agro = require('./routes/agro');
 const agroPipeline = require('./routes/agroPipeline');
 const adminUsers = require('./routes/adminUsers');
+const tourism = require('./routes/tourism');
 
 if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is required');
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required');
@@ -72,7 +73,7 @@ app.use('/vendor/leaflet', express.static(path.join(__dirname, '..', 'node_modul
   immutable: true,
 }));
 
-app.get('/health', (_req, res) => res.json({ ok: true, version: '0.9.0' }));
+app.get('/health', (_req, res) => res.json({ ok: true, version: '1.0.0' }));
 app.use('/api/auth', auth);
 app.use('/api/prices', prices);
 app.use('/api/listings', listings);
@@ -87,6 +88,7 @@ app.use('/api/chat', chat);
 app.use('/api/places', places);
 app.use('/api/agro', agro);
 app.use('/api/agro/pipeline', agroPipeline);
+app.use('/api/tourism', tourism);
 
 app.get('/', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')));
 
@@ -160,4 +162,4 @@ io.on('connection', (socket) => {
 });
 
 const port = Number(process.env.PORT || 4000);
-server.listen(port, () => console.log(`API + realtime chat + maps + role-based agro ML v0.9.0 listening on http://localhost:${port}`));
+server.listen(port, () => console.log(`API + chat + maps + agro ML + AI tourism planner v1.0.0 listening on http://localhost:${port}`));
