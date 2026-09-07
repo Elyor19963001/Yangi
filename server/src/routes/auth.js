@@ -181,11 +181,12 @@ router.post('/consent', requireAuth, asyncHandler(async (req, res) => {
   );
   const studyId = existing.rows[0]?.study_id || crypto.randomUUID();
   const consentVersion = String(req.body.consent_version || 'v2-auth').slice(0, 30);
-  const consentAnalytics = Boolean(req.body.consent_analytics);
+  const consentAnalytics = req.body.consent_analytics === true;
 
-  await pool.query('BEGIN');
+  const client = await pool.connect();
   try {
-    await pool.query(
+    await client.query('BEGIN');
+    await client.query(
       `INSERT INTO study_participants
         (user_id, study_id, consent_version, consent_analytics, consented_at)
        VALUES ($1, $2, $3, $4, NOW())
@@ -196,16 +197,18 @@ router.post('/consent', requireAuth, asyncHandler(async (req, res) => {
       [userId, studyId, consentVersion, consentAnalytics]
     );
 
-    await pool.query(
+    await client.query(
       `INSERT INTO consent_records (study_id, consent_scope, consent_version, accepted, recorded_at)
        VALUES ($1, 'analytics', $2, $3, NOW())`,
       [studyId, consentVersion, consentAnalytics]
     );
 
-    await pool.query('COMMIT');
+    await client.query('COMMIT');
   } catch (error) {
-    await pool.query('ROLLBACK');
+    await client.query('ROLLBACK');
     throw error;
+  } finally {
+    client.release();
   }
 
   const refreshed = {
