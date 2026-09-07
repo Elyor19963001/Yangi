@@ -71,7 +71,7 @@ app.use('/vendor/leaflet', express.static(path.join(__dirname, '..', 'node_modul
   immutable: true,
 }));
 
-app.get('/health', (_req, res) => res.json({ ok: true, version: '0.8.0' }));
+app.get('/health', (_req, res) => res.json({ ok: true, version: '0.8.1' }));
 app.use('/api/auth', auth);
 app.use('/api/prices', prices);
 app.use('/api/listings', listings);
@@ -158,4 +158,4 @@ io.on('connection', (socket) => {
 });
 
 const port = Number(process.env.PORT || 4000);
-server.listen(port, () => console.log(`API + realtime chat + maps + agro ML pipeline listening on http://localhost:${port}`));
+server.listen(port, () => console.log(`API + realtime chat + maps + agro ML pipeline v0.8.1 listening on http://localhost:${port}`));
