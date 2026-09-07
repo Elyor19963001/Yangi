@@ -5,10 +5,25 @@ const asyncHandler = require('../utils/asyncHandler');
 const router = express.Router();
 
 const CENTER = { latitude: 39.6542, longitude: 66.9597, name: 'Samarqand markazi' };
-const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+const OVERPASS_URLS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+];
 const OSRM_URL = 'https://router.project-osrm.org';
 const CACHE_MS = 30 * 60 * 1000;
 const poiCache = new Map();
+
+const CURATED_POIS = [
+  { id:'wikidata/Q1373583', name:'Registon maydoni', latitude:39.654722, longitude:66.975556, category:'historic', wikidata:'Q1373583', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q1373583' },
+  { id:'wikidata/Q1256223', name:'Go‘ri Amir maqbarasi', latitude:39.648333, longitude:66.968889, category:'historic', wikidata:'Q1256223', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q1256223' },
+  { id:'wikidata/Q679218', name:'Bibixonim masjidi', latitude:39.660556, longitude:66.979722, category:'pilgrimage', wikidata:'Q679218', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q679218' },
+  { id:'wikidata/Q671935', name:'Shohi Zinda majmuasi', latitude:39.662620, longitude:66.987878, category:'pilgrimage', wikidata:'Q671935', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q671935' },
+  { id:'unesco/ulugh-beg-observatory', name:'Ulug‘bek rasadxonasi', latitude:39.674722, longitude:67.005556, category:'historic', wikidata:null, source:'UNESCO', source_url:'https://www.unesco.org/en/astronomy-and-world-heritage/ulugh-beg-observatory' },
+  { id:'wikidata/Q4306302', name:'Afrosiyob muzeyi', latitude:39.669339, longitude:66.993350, category:'museum', wikidata:'Q4306302', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q4306302' },
+  { id:'wikidata/Q13534449', name:'Siyob bozori', latitude:39.661893, longitude:66.979915, category:'market', wikidata:'Q13534449', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q13534449' },
+  { id:'wikidata/Q4273779', name:'Ruhobod maqbarasi', latitude:39.650861, longitude:66.968208, category:'historic', wikidata:'Q4273779', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q4273779' },
+  { id:'wikidata/Q13201584', name:'Hazrati Xizr masjidi', latitude:39.663453, longitude:66.983256, category:'pilgrimage', wikidata:'Q13201584', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q13201584' },
+];
 
 const PRIORITY_PATTERNS = [
   /registan|registon/i,
@@ -18,6 +33,8 @@ const PRIORITY_PATTERNS = [
   /ulugh.?beg|ulug.?bek|ulug.?bek.*observ/i,
   /afrasiyab|afrosiyob/i,
   /siab|siyob/i,
+  /ruhabad|ruhobod/i,
+  /hazrat.?khizr|hazrati.?xizr/i,
 ];
 
 function number(value) {
@@ -42,7 +59,7 @@ function haversine(lat1, lon1, lat2, lon2) {
   const R = 6371000;
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(toRad(lon2 - lon1)) ** 2;
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
 }
 
@@ -114,10 +131,7 @@ async function parseIntentWithOpenAI(prompt, fallback) {
     const response = await axios.post('https://api.openai.com/v1/responses', {
       model: process.env.OPENAI_MODEL || 'gpt-5.6-luna',
       input: [
-        {
-          role: 'system',
-          content: 'You extract travel-planning preferences for a Samarqand itinerary. Do not invent places. Return only the requested structured fields. Default interest is history and default trip length is 2 days when unclear.',
-        },
+        { role: 'system', content: 'You extract travel-planning preferences for a Samarqand itinerary. Do not invent places. Return only the requested structured fields. Default interest is history and default trip length is 2 days when unclear.' },
         { role: 'user', content: prompt },
       ],
       text: { format: { type: 'json_schema', name: 'samarkand_tour_intent', strict: true, schema } },
@@ -156,6 +170,10 @@ function categoryFor(tags = {}) {
   return 'heritage';
 }
 
+function normalizePoiKey(name) {
+  return String(name || '').toLocaleLowerCase('uz-UZ').replace(/[ʻʼ’`´]/g, "'").replace(/[^a-zа-я0-9']/gi, '');
+}
+
 function poiScore(poi, intent) {
   let score = 0;
   if (poi.wikidata || poi.wikipedia) score += 10;
@@ -163,43 +181,21 @@ function poiScore(poi, intent) {
   if (poi.category === 'museum') score += intent.interests.includes('museum') ? 13 : 7;
   if (poi.category === 'pilgrimage') score += intent.interests.includes('pilgrimage') ? 16 : 5;
   if (poi.category === 'attraction') score += 6;
+  if (poi.category === 'market' && intent.interests.includes('gastronomy')) score += 12;
   if (PRIORITY_PATTERNS.some((rx) => rx.test(poi.name))) score += 28;
   if (intent.family && poi.category === 'museum') score += 4;
   return score;
 }
 
-async function discoverHeritagePois() {
-  const key = 'samarkand-heritage-v2';
-  const cached = poiCache.get(key);
-  if (cached && Date.now() - cached.at < CACHE_MS) return cached.rows;
-  const radius = 16000;
-  const query = `[out:json][timeout:24];(
-    nwr(around:${radius},${CENTER.latitude},${CENTER.longitude})["historic"]["name"];
-    nwr(around:${radius},${CENTER.latitude},${CENTER.longitude})["tourism"~"attraction|museum"]["name"];
-    nwr(around:${radius},${CENTER.latitude},${CENTER.longitude})["amenity"="place_of_worship"]["historic"]["name"];
-    nwr(around:${radius},${CENTER.latitude},${CENTER.longitude})["amenity"="marketplace"]["name"];
-  );out center tags;`;
-  const response = await axios.post(
-    OVERPASS_URL,
-    new URLSearchParams({ data: query }).toString(),
-    {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'QishloqRaqamliPlatformasi-TourPlanner/1.0 (+https://phd-api-production-d2e5.up.railway.app)',
-      },
-      timeout: 26000,
-      maxContentLength: 6 * 1024 * 1024,
-    }
-  );
-  const dedupe = new Map();
-  for (const el of response.data?.elements || []) {
+function parseOverpassElements(elements = []) {
+  const rows = [];
+  for (const el of elements) {
     const tags = el.tags || {};
     const name = osmName(tags);
     const latitude = number(el.lat ?? el.center?.lat);
     const longitude = number(el.lon ?? el.center?.lon);
     if (!name || !validCoord(latitude, longitude)) continue;
-    const normalized = name.toLocaleLowerCase('uz-UZ').replace(/\s+/g, ' ').trim();
-    const row = {
+    rows.push({
       id: `${el.type}/${el.id}`,
       osm_type: el.type,
       osm_id: el.id,
@@ -216,15 +212,62 @@ async function discoverHeritagePois() {
       wikidata: tags.wikidata || null,
       source_url: `https://www.openstreetmap.org/${el.type}/${el.id}`,
       source: 'OpenStreetMap',
-    };
-    const existing = dedupe.get(normalized);
-    if (!existing || Number(Boolean(row.wikidata)) + Number(Boolean(row.wikipedia)) > Number(Boolean(existing.wikidata)) + Number(Boolean(existing.wikipedia))) {
-      dedupe.set(normalized, row);
-    }
+    });
   }
-  const rows = [...dedupe.values()];
-  poiCache.set(key, { at: Date.now(), rows });
   return rows;
+}
+
+function mergeWithCurated(external = []) {
+  const merged = new Map(CURATED_POIS.map((poi) => [normalizePoiKey(poi.name), { ...poi, curated: true }]));
+  for (const poi of external) {
+    const key = normalizePoiKey(poi.name);
+    if (!key) continue;
+    if (!merged.has(key)) merged.set(key, poi);
+  }
+  return [...merged.values()];
+}
+
+async function discoverHeritagePois() {
+  const key = 'samarkand-heritage-v3';
+  const cached = poiCache.get(key);
+  if (cached && Date.now() - cached.at < CACHE_MS) return cached.result;
+  const radius = 16000;
+  const query = `[out:json][timeout:18];(
+    nwr(around:${radius},${CENTER.latitude},${CENTER.longitude})["historic"]["name"];
+    nwr(around:${radius},${CENTER.latitude},${CENTER.longitude})["tourism"~"attraction|museum"]["name"];
+    nwr(around:${radius},${CENTER.latitude},${CENTER.longitude})["amenity"="place_of_worship"]["historic"]["name"];
+    nwr(around:${radius},${CENTER.latitude},${CENTER.longitude})["amenity"="marketplace"]["name"];
+  );out center tags;`;
+  const requestBody = new URLSearchParams({ data: query }).toString();
+  const requests = OVERPASS_URLS.map((endpoint) => axios.post(endpoint, requestBody, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'User-Agent': 'QishloqRaqamliPlatformasi-TourPlanner/1.0 (+https://phd-api-production-d2e5.up.railway.app)',
+    },
+    timeout: 9000,
+    maxContentLength: 6 * 1024 * 1024,
+  }).then((response) => ({ endpoint, rows: parseOverpassElements(response.data?.elements || []) })));
+
+  let result;
+  try {
+    const winner = await Promise.any(requests);
+    result = {
+      provider: 'osm+curated',
+      external_provider: winner.endpoint,
+      external_count: winner.rows.length,
+      rows: mergeWithCurated(winner.rows),
+    };
+  } catch (error) {
+    console.warn('Overpass unavailable; curated fallback active');
+    result = {
+      provider: 'curated-fallback',
+      external_provider: null,
+      external_count: 0,
+      rows: mergeWithCurated([]),
+    };
+  }
+  poiCache.set(key, { at: Date.now(), result });
+  return result;
 }
 
 function nearestOrder(rows, start) {
@@ -260,7 +303,7 @@ function selectPois(pois, intent, start) {
   const selected = [];
   const seen = new Set();
   for (const poi of scored) {
-    const key = poi.name.toLocaleLowerCase('uz-UZ').replace(/[^a-zа-я0-9ʻ‘’]/gi, '');
+    const key = normalizePoiKey(poi.name);
     if (!key || seen.has(key)) continue;
     selected.push(poi);
     seen.add(key);
@@ -285,7 +328,7 @@ async function routeDriving(start, stops) {
   try {
     const response = await axios.get(`${OSRM_URL}/route/v1/driving/${coords}`, {
       params: { overview: 'full', geometries: 'geojson', steps: false },
-      timeout: 14000,
+      timeout: 10000,
     });
     const route = response.data?.routes?.[0];
     if (!route) return null;
@@ -359,9 +402,10 @@ router.get('/status', (_req, res) => {
     version: '1.0.0',
     openai_configured: Boolean(process.env.OPENAI_API_KEY),
     openai_model: process.env.OPENAI_API_KEY ? (process.env.OPENAI_MODEL || 'gpt-5.6-luna') : null,
-    poi_source: 'OpenStreetMap / Overpass',
+    poi_source: 'Verified curated Samarkand anchors + OpenStreetMap/Overpass enrichment',
     routing_source: 'OSRM driving + geodesic fallback',
-    note: 'Ish vaqti, chipta narxi va kirish qoidalari OSMda to‘liq bo‘lmasligi mumkin; safardan oldin rasmiy manbadan tekshirish kerak.',
+    curated_poi_count: CURATED_POIS.length,
+    note: 'Ish vaqti, chipta narxi va kirish qoidalari xarita manbalarida to‘liq bo‘lmasligi mumkin; safardan oldin rasmiy manbadan tekshirish kerak.',
   });
 });
 
@@ -380,14 +424,8 @@ router.post('/plan', asyncHandler(async (req, res) => {
     : false;
   const start = requestedStart && !startOutsideSamarkand ? requestedStart : CENTER;
 
-  let pois;
-  try {
-    pois = await discoverHeritagePois();
-  } catch (error) {
-    console.error('Tour POI discovery failed:', error.response?.status || error.message);
-    return res.status(502).json({ error: 'Samarqand tarixiy joylarini OpenStreetMap katalogidan olishda xatolik. Qayta urinib ko‘ring.' });
-  }
-  const ordered = selectPois(pois, intent, start);
+  const discovered = await discoverHeritagePois();
+  const ordered = selectPois(discovered.rows, intent, start);
   if (ordered.length < intent.days * 2) return res.status(422).json({ error: 'Marshrut uchun yetarli xarita obyektlari topilmadi.' });
   const groups = splitDays(ordered, intent.days);
   const days = [];
@@ -408,12 +446,15 @@ router.post('/plan', asyncHandler(async (req, res) => {
     summary: localizedSummary(intent, totalStops),
     days,
     sources: {
-      places: 'OpenStreetMap contributors via Overpass API',
+      places: discovered.provider === 'curated-fallback' ? 'Verified curated Samarkand reference catalog' : 'Curated Samarkand references + OpenStreetMap contributors via Overpass API',
+      places_provider: discovered.provider,
+      external_poi_count: discovered.external_count,
       routing: [...new Set(days.map((d) => d.route?.source).filter(Boolean))],
       ai: intent.engine === 'openai' ? `OpenAI ${intent.model || ''}`.trim() : 'Local multilingual preference parser',
     },
     warnings: [
       startOutsideSamarkand ? 'Sizning geolokatsiyangiz Samarqand markazidan 30 km dan uzoq bo‘lgani uchun tur Samarqand markazidan boshlandi.' : null,
+      discovered.provider === 'curated-fallback' ? 'OpenStreetMap real-vaqt katalogi sekin javob berdi; marshrut tasdiqlangan tayanch obyektlar katalogidan tuzildi.' : null,
       'Marshrut tavsiya xarakterida. Ish vaqti, chipta narxi, vaqtinchalik yopilish va kirish qoidalarini rasmiy manbalardan tekshiring.',
       intent.transport === 'walking' ? 'Piyoda rejimida yo‘l chizig‘i geodezik taxmin; piyodalar yo‘laklari bo‘yicha professional routing keyingi bosqichda ulanadi.' : null,
     ].filter(Boolean),
@@ -423,11 +464,11 @@ router.post('/plan', asyncHandler(async (req, res) => {
 async function runStartupSmoke() {
   try {
     const intent = fallbackIntent('Samarqand tarixiy qadamjolari bo‘yicha 2 kun, ko‘p yurmay, milliy taomlar bilan', 2);
-    const pois = await discoverHeritagePois();
-    const selected = selectPois(pois, intent, CENTER).slice(0, 4);
+    const discovered = await discoverHeritagePois();
+    const selected = selectPois(discovered.rows, intent, CENTER).slice(0, 4);
     const route = selected.length ? (await routeDriving(CENTER, selected) || routeFallback(CENTER, selected, false)) : null;
     const names = selected.map((p) => p.name).join(' | ');
-    console.log(`[tour-smoke] overpass=ok pois=${pois.length} sample=${names || 'none'} route=${route?.source || 'none'} geometry=${route?.geometry?.type || 'none'}`);
+    console.log(`[tour-smoke] provider=${discovered.provider} pois=${discovered.rows.length} external=${discovered.external_count} sample=${names || 'none'} route=${route?.source || 'none'} geometry=${route?.geometry?.type || 'none'}`);
   } catch (error) {
     console.warn(`[tour-smoke] failed=${error.response?.status || error.message}`);
   }
