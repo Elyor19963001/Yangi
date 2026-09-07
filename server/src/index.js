@@ -20,6 +20,7 @@ const meta = require('./routes/meta');
 const survey = require('./routes/survey');
 const chat = require('./routes/chat');
 const places = require('./routes/places');
+const agro = require('./routes/agro');
 
 if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is required');
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required');
@@ -32,7 +33,7 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", 'data:', 'blob:', 'https://tile.openstreetmap.org'],
+      imgSrc: ["'self'", 'data:', 'blob:', 'https://tile.openstreetmap.org', 'https://*.tile.openstreetmap.org'],
       connectSrc: ["'self'", 'ws:', 'wss:'],
       fontSrc: ["'self'", 'data:'],
       objectSrc: ["'none'"],
@@ -69,7 +70,7 @@ app.use('/vendor/leaflet', express.static(path.join(__dirname, '..', 'node_modul
   immutable: true,
 }));
 
-app.get('/health', (_req, res) => res.json({ ok: true, version: '0.6.0' }));
+app.get('/health', (_req, res) => res.json({ ok: true, version: '0.7.0' }));
 app.use('/api/auth', auth);
 app.use('/api/prices', prices);
 app.use('/api/listings', listings);
@@ -81,6 +82,7 @@ app.use('/api/meta', meta);
 app.use('/api/survey', survey);
 app.use('/api/chat', chat);
 app.use('/api/places', places);
+app.use('/api/agro', agro);
 
 app.get('/', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')));
 
@@ -154,4 +156,4 @@ io.on('connection', (socket) => {
 });
 
 const port = Number(process.env.PORT || 4000);
-server.listen(port, () => console.log(`API + realtime chat + maps listening on http://localhost:${port}`));
+server.listen(port, () => console.log(`API + realtime chat + maps + agro intelligence listening on http://localhost:${port}`));
