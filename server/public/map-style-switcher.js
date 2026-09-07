@@ -1,6 +1,6 @@
 (() => {
   const STORAGE_KEY = 'qrp_map_style';
-  const MODES = ['hybrid', 'satellite', 'street', 'standard'];
+  const MODES = ['3d', 'hybrid', 'satellite', 'street', 'standard'];
 
   function install(map) {
     if (!map || map._qrpMapStyleSwitcherInstalled) return;
@@ -47,6 +47,7 @@
     };
 
     let activeMode = null;
+    let last2DMode = 'hybrid';
     let activeBase = null;
     let activeOverlay = null;
     let imageryErrors = 0;
@@ -61,8 +62,27 @@
       });
     }
 
+    function persist(mode) {
+      try { localStorage.setItem(STORAGE_KEY, mode); } catch {}
+    }
+
     function setMode(mode, notify = true) {
       const safeMode = MODES.includes(mode) ? mode : 'hybrid';
+
+      if (safeMode === '3d') {
+        activeMode = '3d';
+        persist('3d');
+        updateButtons();
+        const opened = window.QRP3D?.open?.(map);
+        if (opened === false) {
+          activeMode = last2DMode;
+          persist(last2DMode);
+          updateButtons();
+        }
+        return;
+      }
+
+      window.QRP3D?.close?.();
       const config = configs[safeMode];
       if (activeBase) map.removeLayer(activeBase);
       if (activeOverlay) map.removeLayer(activeOverlay);
@@ -71,12 +91,12 @@
       activeBase.addTo(map);
       if (activeOverlay) activeOverlay.addTo(map);
       activeMode = safeMode;
+      last2DMode = safeMode;
       imageryErrors = 0;
-      try { localStorage.setItem(STORAGE_KEY, safeMode); } catch {}
+      persist(safeMode);
       updateButtons();
-      if (notify && typeof toast === 'function') {
-        toast(`Xarita: ${config.label}`);
-      }
+      window.QRPMapStyle.last2DMode = last2DMode;
+      if (notify && typeof toast === 'function') toast(`Xarita: ${config.label}`);
     }
 
     imagery.on('tileerror', () => {
@@ -94,9 +114,10 @@
         div.setAttribute('role', 'group');
         div.setAttribute('aria-label', 'Xarita ko‘rinishi');
         div.innerHTML = [
+          '<button type="button" data-map-mode="3d" title="MapLibre orqali 3D bino geometriyasi">🏙 <span>3D</span></button>',
           '<button type="button" data-map-mode="hybrid" title="Sun’iy yo‘ldosh tasviri va joy nomlari">🛰 <span>Hybrid</span></button>',
           '<button type="button" data-map-mode="satellite" title="Sun’iy yo‘ldosh tasviri">📷 <span>Satellite</span></button>',
-          '<button type="button" data-map-mode="street" title="Ko‘cha va bino konturlari uchun ko‘cha xaritasi">🏙 <span>Ko‘cha</span></button>',
+          '<button type="button" data-map-mode="street" title="Ko‘cha va bino konturlari uchun ko‘cha xaritasi">🛣 <span>Ko‘cha</span></button>',
           '<button type="button" data-map-mode="standard" title="OpenStreetMap standart xaritasi">🗺 <span>OSM</span></button>',
         ].join('');
         L.DomEvent.disableClickPropagation(div);
@@ -111,10 +132,21 @@
     });
 
     map.addControl(new StyleControl());
+    window.QRPMapStyle = {
+      setMode,
+      get activeMode() { return activeMode; },
+      last2DMode,
+    };
+
     const preferred = (() => {
       try { return localStorage.getItem(STORAGE_KEY) || 'hybrid'; } catch { return 'hybrid'; }
     })();
-    setMode(preferred, false);
+    if (preferred === '3d') {
+      setMode('hybrid', false);
+      setTimeout(() => setMode('3d', false), 150);
+    } else {
+      setMode(preferred, false);
+    }
 
     const DetailControl = L.Control.extend({
       options: { position: 'bottomright' },
