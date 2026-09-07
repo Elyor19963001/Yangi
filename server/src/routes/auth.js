@@ -52,8 +52,14 @@ router.post('/register', otpRequestLimiter, asyncHandler(async (req, res) => {
     `INSERT INTO users (phone_number, full_name, district_id)
      VALUES ($1, $2, $3)
      ON CONFLICT (phone_number) DO UPDATE SET
-       full_name = COALESCE(EXCLUDED.full_name, users.full_name),
-       district_id = COALESCE(EXCLUDED.district_id, users.district_id),
+       full_name = CASE
+         WHEN users.is_verified THEN users.full_name
+         ELSE COALESCE(EXCLUDED.full_name, users.full_name)
+       END,
+       district_id = CASE
+         WHEN users.is_verified THEN users.district_id
+         ELSE COALESCE(EXCLUDED.district_id, users.district_id)
+       END,
        updated_at = NOW()
      RETURNING user_id`,
     [phone, req.body.full_name || null, req.body.district_id || null]
@@ -92,7 +98,7 @@ router.post('/register', otpRequestLimiter, asyncHandler(async (req, res) => {
     [userId, otpHash]
   );
 
-  const response = { ok: true, user_id: userId, message: 'OTP yuborildi', expires_in_seconds: 600 };
+  const response = { ok: true, message: 'OTP yuborildi', expires_in_seconds: 600 };
   if (String(process.env.DEV_MODE).toLowerCase() === 'true') response.dev_otp = otp;
   res.json(response);
 }));
@@ -148,11 +154,16 @@ router.post('/verify-otp', otpVerifyLimiter, asyncHandler(async (req, res) => {
   }
 
   await pool.query('UPDATE users SET is_verified = TRUE, updated_at=NOW() WHERE user_id = $1', [row.user_id]);
-  await pool.query(
-    `UPDATE users SET role='admin', updated_at=NOW()
-      WHERE user_id=$1 AND NOT EXISTS (SELECT 1 FROM users WHERE role='admin')`,
-    [row.user_id]
-  );
+
+  const bootstrapAdminPhone = normalizePhone(process.env.BOOTSTRAP_ADMIN_PHONE);
+  if (bootstrapAdminPhone && phone === bootstrapAdminPhone) {
+    await pool.query(
+      `UPDATE users SET role='admin', updated_at=NOW()
+        WHERE user_id=$1 AND NOT EXISTS (SELECT 1 FROM users WHERE role='admin' AND user_id<>$1)`,
+      [row.user_id]
+    );
+  }
+
   await pool.query('DELETE FROM otp_codes WHERE user_id = $1', [row.user_id]);
 
   const current = await pool.query(
