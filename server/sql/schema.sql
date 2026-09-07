@@ -92,7 +92,43 @@ CREATE TABLE IF NOT EXISTS markets (
   market_id SERIAL PRIMARY KEY,
   name VARCHAR(160) NOT NULL,
   district_id INT REFERENCES districts(district_id),
+  latitude NUMERIC(9,6),
+  longitude NUMERIC(9,6),
+  address VARCHAR(300),
+  phone VARCHAR(40),
+  opening_hours VARCHAR(180),
+  source_url VARCHAR(800),
+  verification_status VARCHAR(20) NOT NULL DEFAULT 'unverified' CHECK (verification_status IN ('unverified','verified','rejected')),
   UNIQUE(name, district_id)
+);
+
+ALTER TABLE markets ADD COLUMN IF NOT EXISTS latitude NUMERIC(9,6);
+ALTER TABLE markets ADD COLUMN IF NOT EXISTS longitude NUMERIC(9,6);
+ALTER TABLE markets ADD COLUMN IF NOT EXISTS address VARCHAR(300);
+ALTER TABLE markets ADD COLUMN IF NOT EXISTS phone VARCHAR(40);
+ALTER TABLE markets ADD COLUMN IF NOT EXISTS opening_hours VARCHAR(180);
+ALTER TABLE markets ADD COLUMN IF NOT EXISTS source_url VARCHAR(800);
+ALTER TABLE markets ADD COLUMN IF NOT EXISTS verification_status VARCHAR(20) NOT NULL DEFAULT 'unverified';
+
+CREATE TABLE IF NOT EXISTS service_places (
+  place_id BIGSERIAL PRIMARY KEY,
+  category VARCHAR(40) NOT NULL CHECK (category IN (
+    'market','restaurant','cafe','pharmacy','hospital','taxi','atm','bank','fuel','government','agro','hotel','repair','veterinary'
+  )),
+  name VARCHAR(180) NOT NULL,
+  district_id INT REFERENCES districts(district_id),
+  latitude NUMERIC(9,6) NOT NULL,
+  longitude NUMERIC(9,6) NOT NULL,
+  address VARCHAR(350),
+  phone VARCHAR(60),
+  opening_hours VARCHAR(180),
+  description VARCHAR(700),
+  source_type VARCHAR(30) NOT NULL DEFAULT 'user' CHECK (source_type IN ('user','operator','official','osm')),
+  source_ref VARCHAR(900),
+  submitted_by BIGINT REFERENCES users(user_id) ON DELETE SET NULL,
+  verification_status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (verification_status IN ('pending','verified','rejected')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS prices (
@@ -206,5 +242,7 @@ CREATE INDEX IF NOT EXISTS idx_chat_members_user ON chat_members(user_id, joined
 CREATE INDEX IF NOT EXISTS idx_chat_messages_space_time ON chat_messages(space_id, message_id DESC);
 CREATE INDEX IF NOT EXISTS idx_chat_price_signals_space_time ON chat_price_signals(space_id, extracted_at DESC);
 CREATE INDEX IF NOT EXISTS idx_chat_price_signals_product ON chat_price_signals(product_id, extracted_at DESC);
+CREATE INDEX IF NOT EXISTS idx_service_places_category_status ON service_places(category, verification_status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_service_places_coords ON service_places(latitude, longitude);
 
 COMMIT;
