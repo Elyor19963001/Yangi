@@ -90,7 +90,7 @@ app.use('/vendor/maplibre', express.static(path.join(__dirname, '..', 'node_modu
   immutable: true,
 }));
 
-app.get('/health', (_req, res) => res.json({ ok: true, version: '1.4.0' }));
+app.get('/health', (_req, res) => res.json({ ok: true, version: '1.4.1' }));
 app.use('/api/auth', auth);
 app.use('/api/prices', prices);
 app.use('/api/listings', listings);
@@ -181,4 +181,4 @@ io.on('connection', (socket) => {
 });
 
 const port = Number(process.env.PORT || 4000);
-server.listen(port, () => console.log(`API + chat + maps + agro ML + Live GPS AI tourism + MapLibre 3D buildings v1.4.0 listening on http://localhost:${port}`));
+server.listen(port, () => console.log(`API + chat + maps + agro ML + Live GPS AI tourism + MapLibre 3D buildings v1.4.1 on Node 22 listening on http://localhost:${port}`));
