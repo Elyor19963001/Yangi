@@ -145,11 +145,66 @@ CREATE TABLE IF NOT EXISTS user_activity (
   timestamp TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS chat_spaces (
+  space_id BIGSERIAL PRIMARY KEY,
+  space_type VARCHAR(20) NOT NULL CHECK (space_type IN ('group','channel')),
+  visibility VARCHAR(20) NOT NULL DEFAULT 'public' CHECK (visibility IN ('public','private')),
+  name VARCHAR(100) NOT NULL,
+  description VARCHAR(500),
+  avatar_emoji VARCHAR(16) DEFAULT '💬',
+  district_id INT REFERENCES districts(district_id),
+  created_by BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  invite_code VARCHAR(64) UNIQUE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS chat_members (
+  space_id BIGINT NOT NULL REFERENCES chat_spaces(space_id) ON DELETE CASCADE,
+  user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  role VARCHAR(20) NOT NULL DEFAULT 'member' CHECK (role IN ('owner','admin','member')),
+  is_muted BOOLEAN DEFAULT FALSE,
+  joined_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (space_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+  message_id BIGSERIAL PRIMARY KEY,
+  space_id BIGINT NOT NULL REFERENCES chat_spaces(space_id) ON DELETE CASCADE,
+  sender_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  body TEXT NOT NULL CHECK (char_length(body) BETWEEN 1 AND 4000),
+  reply_to_message_id BIGINT REFERENCES chat_messages(message_id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  edited_at TIMESTAMPTZ,
+  deleted_at TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS chat_price_signals (
+  signal_id BIGSERIAL PRIMARY KEY,
+  message_id BIGINT UNIQUE NOT NULL REFERENCES chat_messages(message_id) ON DELETE CASCADE,
+  space_id BIGINT NOT NULL REFERENCES chat_spaces(space_id) ON DELETE CASCADE,
+  product_id INT REFERENCES products(product_id),
+  product_text VARCHAR(120),
+  price_min NUMERIC(14,2) NOT NULL CHECK (price_min >= 0),
+  price_max NUMERIC(14,2) CHECK (price_max >= 0),
+  unit VARCHAR(30),
+  market_text VARCHAR(160),
+  district_id INT REFERENCES districts(district_id),
+  confidence NUMERIC(4,3) NOT NULL DEFAULT 0.500 CHECK (confidence BETWEEN 0 AND 1),
+  status VARCHAR(20) NOT NULL DEFAULT 'unverified' CHECK (status IN ('unverified','verified','rejected')),
+  extracted_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE INDEX IF NOT EXISTS idx_activity_study_time ON user_activity(study_id, timestamp);
 CREATE INDEX IF NOT EXISTS idx_activity_feature_time ON user_activity(feature, timestamp);
 CREATE INDEX IF NOT EXISTS idx_prices_date ON prices(price_date DESC);
 CREATE INDEX IF NOT EXISTS idx_listings_status_created ON listings(status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_survey_wave ON survey_responses(wave, submitted_at DESC);
 CREATE INDEX IF NOT EXISTS idx_consent_study ON consent_records(study_id, recorded_at DESC);
+CREATE INDEX IF NOT EXISTS idx_chat_spaces_type_visibility ON chat_spaces(space_type, visibility, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_chat_members_user ON chat_members(user_id, joined_at DESC);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_space_time ON chat_messages(space_id, message_id DESC);
+CREATE INDEX IF NOT EXISTS idx_chat_price_signals_space_time ON chat_price_signals(space_id, extracted_at DESC);
+CREATE INDEX IF NOT EXISTS idx_chat_price_signals_product ON chat_price_signals(product_id, extracted_at DESC);
 
 COMMIT;
