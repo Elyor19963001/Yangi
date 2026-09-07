@@ -231,6 +231,56 @@ CREATE TABLE IF NOT EXISTS chat_price_signals (
   extracted_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Agro Intelligence v0.7. Satellite/model results are never treated as verified ground truth by default.
+CREATE TABLE IF NOT EXISTS agro_fields (
+  field_id BIGSERIAL PRIMARY KEY,
+  district_id INT REFERENCES districts(district_id),
+  crop_name VARCHAR(100) NOT NULL,
+  season VARCHAR(20) NOT NULL,
+  geometry_geojson JSONB NOT NULL,
+  centroid_latitude NUMERIC(9,6),
+  centroid_longitude NUMERIC(9,6),
+  area_ha NUMERIC(14,3) CHECK (area_ha >= 0),
+  confidence NUMERIC(4,3) CHECK (confidence BETWEEN 0 AND 1),
+  ndvi NUMERIC(5,3) CHECK (ndvi BETWEEN -1 AND 1),
+  growth_stage VARCHAR(60),
+  harvest_start DATE,
+  harvest_end DATE,
+  source_type VARCHAR(40) NOT NULL DEFAULT 'satellite_model' CHECK (source_type IN ('satellite_model','worldcereal','operator','ground_truth')),
+  source_ref VARCHAR(900),
+  verification_status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (verification_status IN ('pending','published','rejected')),
+  observed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS agro_field_samples (
+  sample_id BIGSERIAL PRIMARY KEY,
+  submitted_by BIGINT REFERENCES users(user_id) ON DELETE SET NULL,
+  district_id INT REFERENCES districts(district_id),
+  crop_name VARCHAR(100) NOT NULL,
+  geometry_geojson JSONB NOT NULL,
+  observed_at DATE,
+  notes VARCHAR(700),
+  verification_status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (verification_status IN ('pending','verified','rejected')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS agro_model_runs (
+  run_id BIGSERIAL PRIMARY KEY,
+  district_id INT REFERENCES districts(district_id),
+  season VARCHAR(20) NOT NULL,
+  model_name VARCHAR(120) NOT NULL,
+  model_version VARCHAR(60),
+  source_collection VARCHAR(120) DEFAULT 'sentinel-2-l2a',
+  status VARCHAR(20) NOT NULL DEFAULT 'queued' CHECK (status IN ('queued','running','completed','failed')),
+  metrics JSONB DEFAULT '{}'::jsonb,
+  source_ref VARCHAR(900),
+  started_at TIMESTAMPTZ,
+  completed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE INDEX IF NOT EXISTS idx_activity_study_time ON user_activity(study_id, timestamp);
 CREATE INDEX IF NOT EXISTS idx_activity_feature_time ON user_activity(feature, timestamp);
 CREATE INDEX IF NOT EXISTS idx_prices_date ON prices(price_date DESC);
@@ -244,5 +294,9 @@ CREATE INDEX IF NOT EXISTS idx_chat_price_signals_space_time ON chat_price_signa
 CREATE INDEX IF NOT EXISTS idx_chat_price_signals_product ON chat_price_signals(product_id, extracted_at DESC);
 CREATE INDEX IF NOT EXISTS idx_service_places_category_status ON service_places(category, verification_status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_service_places_coords ON service_places(latitude, longitude);
+CREATE INDEX IF NOT EXISTS idx_agro_fields_district_season ON agro_fields(district_id, season, verification_status);
+CREATE INDEX IF NOT EXISTS idx_agro_fields_crop_season ON agro_fields(crop_name, season, verification_status);
+CREATE INDEX IF NOT EXISTS idx_agro_samples_status ON agro_field_samples(verification_status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_agro_runs_district_season ON agro_model_runs(district_id, season, created_at DESC);
 
 COMMIT;
