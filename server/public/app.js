@@ -3,6 +3,7 @@ const state = {
   profile: null,
   districts: [],
   pendingPhone: '',
+  pendingConsent: false,
   activeTab: 'prices',
 };
 
@@ -148,10 +149,7 @@ async function handleRegister(event) {
     });
 
     state.pendingPhone = phone;
-    await api('/api/auth/consent', {
-      method: 'POST',
-      body: JSON.stringify({ phone, consent_version: 'v1', consent_analytics: consent }),
-    });
+    state.pendingConsent = consent;
 
     $('registerForm').classList.add('hidden');
     $('otpForm').classList.remove('hidden');
@@ -177,7 +175,20 @@ async function handleOtp(event) {
     });
     state.token = result.token;
     localStorage.setItem('qrp_token', result.token);
-    setMessage($('authMessage'), 'Muvaffaqiyatli kirdingiz.', 'success');
+
+    const consentResult = await api('/api/auth/consent', {
+      method: 'POST',
+      body: JSON.stringify({
+        consent_version: 'v2-auth',
+        consent_analytics: state.pendingConsent,
+      }),
+    });
+    if (consentResult?.token) {
+      state.token = consentResult.token;
+      localStorage.setItem('qrp_token', consentResult.token);
+    }
+
+    setMessage($('authMessage'), 'Muvaffaqiyatli kirdingiz. Rozilik tasdiqlangan sessiyaga bog‘landi.', 'success');
     await renderLoggedIn();
   } catch (error) {
     setMessage($('authMessage'), error.message, 'error');
