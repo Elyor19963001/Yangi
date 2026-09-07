@@ -1,12 +1,12 @@
 {
   "name": "phd-rural-platform-server",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "private": true,
   "type": "commonjs",
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
-    "check": "node --check src/index.js && node --check src/routes/chat.js && node --check src/routes/places.js && node --check src/routes/weather.js && node --check src/routes/agro.js && node --check src/routes/agroPipeline.js",
+    "check": "node --check src/index.js && node --check src/routes/chat.js && node --check src/routes/places.js && node --check src/routes/weather.js && node --check src/routes/agro.js && node --check src/routes/agroPipeline.js && node --check public/agro-samples.js && node --check public/agro-admin.js",
     "db:migrate": "node scripts/migrate.js",
     "db:seed": "node scripts/seed.js"
   },
