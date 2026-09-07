@@ -10,6 +10,7 @@ const state = {
   socket: null,
   typingTimer: null,
   searchTimer: null,
+  replyTo: null,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -42,8 +43,7 @@ async function api(path, options = {}) {
 
 function formatTime(value) {
   if (!value) return '';
-  const d = new Date(value);
-  return d.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
+  return new Date(value).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
 }
 
 function formatDate(value) {
@@ -90,6 +90,7 @@ async function loadSpaces() {
   try {
     state.spaces = await api('/api/chat/spaces?' + params.toString());
     renderSpaces();
+    renderRecommendations();
   } catch (error) {
     $('spaceList').innerHTML = `<div class="empty-card">${esc(error.message)}</div>`;
   }
@@ -98,7 +99,7 @@ async function loadSpaces() {
 function renderSpaces() {
   $('spaceCount').textContent = `${state.spaces.length} ta chat`;
   if (!state.spaces.length) {
-    $('spaceList').innerHTML = '<div class="empty-card">Hozircha chat topilmadi. Yangi guruh yoki kanal yarating.</div>';
+    $('spaceList').innerHTML = '<div class="empty-card">Hozircha chat topilmadi. Pastdagi shablonlardan foydalaning yoki yangi chat yarating.</div>';
     return;
   }
   $('spaceList').innerHTML = state.spaces.map((space) => {
@@ -114,16 +115,52 @@ function renderSpaces() {
   document.querySelectorAll('[data-space-id]').forEach((button) => button.addEventListener('click', () => openSpace(Number(button.dataset.spaceId))));
 }
 
+function renderRecommendations() {
+  const live = state.spaces.filter((s) => s.visibility === 'public').slice(0, 3);
+  const district = state.districts.find((d) => Number(d.district_id) === Number(state.profile?.district_id));
+  const districtName = district?.name || 'Hududingiz';
+  if (live.length) {
+    $('recommendationMode').textContent = 'JONLI HAMJAMIYATLAR';
+    $('recommendedGrid').innerHTML = live.map((space) => `<article class="recommend-card"><div class="recommend-top"><span class="recommend-avatar">${esc(space.avatar_emoji || '💬')}</span><span class="recommend-type">${space.space_type === 'channel' ? 'KANAL' : 'GURUH'}</span></div><h4>${esc(space.name)}</h4><p>${esc(space.description || `${Number(space.member_count || 0)} a’zo · ommaviy hamjamiyat`)}</p><button class="text-btn" data-recommend-space="${space.space_id}">Ochish →</button></article>`).join('');
+    document.querySelectorAll('[data-recommend-space]').forEach((b) => b.addEventListener('click', () => openSpace(Number(b.dataset.recommendSpace))));
+    return;
+  }
+  $('recommendationMode').textContent = 'DEMO SHABLON';
+  const templates = [
+    { emoji:'🌾', type:'group', name:`${districtName} fermerlari`, desc:'Fermerlar o‘zaro tajriba, mahsulot va agro maslahat almashadigan guruh.' },
+    { emoji:'📊', type:'channel', name:`${districtName} bozor narxlari`, desc:'Mahalliy bozorlardagi narx signallari va tasdiqlangan kuzatuvlar uchun kanal.' },
+    { emoji:'🏛️', type:'channel', name:'Davlat dasturlari va subsidiyalar', desc:'Grant, subsidiya, kredit va qo‘llab-quvvatlash e’lonlari uchun axborot kanali.' },
+  ];
+  $('recommendedGrid').innerHTML = templates.map((t, i) => `<article class="recommend-card"><div class="recommend-top"><span class="recommend-avatar">${t.emoji}</span><span class="recommend-type">${t.type === 'channel' ? 'KANAL' : 'GURUH'}</span></div><h4>${esc(t.name)}</h4><p>${esc(t.desc)}</p><button class="text-btn" data-template="${i}">Shu kabi yaratish →</button></article>`).join('');
+  document.querySelectorAll('[data-template]').forEach((b) => b.addEventListener('click', () => {
+    const t = templates[Number(b.dataset.template)];
+    openCreate();
+    $('createName').value = t.name;
+    $('createDescription').value = t.desc;
+    $('createEmoji').value = t.emoji;
+    const radio = document.querySelector(`input[name="space_type"][value="${t.type}"]`);
+    if (radio) radio.checked = true;
+    if (state.profile?.district_id) $('createDistrict').value = String(state.profile.district_id);
+  }));
+}
+
 function connectSocket() {
   if (!window.io || !state.token) return;
   state.socket = io({ auth: { token: state.token } });
   state.socket.on('connect_error', (error) => console.warn('Realtime:', error.message));
   state.socket.on('chat:message', (message) => {
-    if (Number(message.space_id) !== Number(state.active?.space_id)) {
-      loadSpaces();
-      return;
-    }
+    if (Number(message.space_id) !== Number(state.active?.space_id)) { loadSpaces(); return; }
     addMessage(message, true);
+  });
+  state.socket.on('chat:message-edited', (message) => {
+    if (Number(message.space_id) !== Number(state.active?.space_id)) return;
+    state.messages.set(String(message.message_id), message);
+    replaceMessage(message);
+  });
+  state.socket.on('chat:message-deleted', (payload) => {
+    if (Number(payload.space_id) !== Number(state.active?.space_id)) return;
+    state.messages.delete(String(payload.message_id));
+    document.querySelector(`[data-message-id="${payload.message_id}"]`)?.remove();
   });
   state.socket.on('chat:typing', (payload) => {
     if (Number(payload.space_id) !== Number(state.active?.space_id) || String(payload.user_id) === String(state.profile?.user_id)) return;
@@ -139,22 +176,15 @@ async function openSpace(spaceId) {
   try {
     if (state.active?.space_id && state.socket) state.socket.emit('chat:leave', state.active.space_id);
     state.active = await api(`/api/chat/spaces/${spaceId}`);
-    state.messages.clear();
-    state.firstMessageId = null;
+    state.messages.clear(); state.firstMessageId = null; clearReply();
     $('messages').innerHTML = '';
-    $('emptyConversation').classList.add('hidden');
-    $('chatView').classList.remove('hidden');
+    $('emptyConversation').classList.add('hidden'); $('chatView').classList.remove('hidden');
     document.querySelector('.app-shell').classList.add('chat-open');
-    renderActiveHeader();
-    renderSpaces();
+    renderActiveHeader(); renderSpaces();
     await loadMessages(false);
     if (state.socket) state.socket.emit('chat:join', spaceId, (result) => { if (!result?.ok) console.warn(result?.error); });
-    const url = new URL(location.href);
-    url.searchParams.set('space', spaceId);
-    history.replaceState(null, '', url);
-  } catch (error) {
-    toast(error.message);
-  }
+    const url = new URL(location.href); url.searchParams.set('space', spaceId); history.replaceState(null, '', url);
+  } catch (error) { toast(error.message); }
 }
 
 function renderActiveHeader() {
@@ -164,32 +194,22 @@ function renderActiveHeader() {
   $('chatMeta').textContent = `${Number(space.member_count || 0)} a’zo · ${space.visibility === 'public' ? 'ommaviy' : 'xususiy'}`;
   $('channelBadge').classList.toggle('hidden', space.space_type !== 'channel');
   $('channelBanner').classList.toggle('hidden', space.space_type !== 'channel');
-
-  $('infoAvatar').textContent = space.avatar_emoji || '💬';
-  $('infoName').textContent = space.name;
-  $('infoDescription').textContent = space.description || 'Tavsif mavjud emas.';
-  $('infoMembers').textContent = Number(space.member_count || 0);
-  $('infoType').textContent = space.space_type === 'channel' ? 'Kanal' : 'Guruh';
-  $('infoVisibility').textContent = space.visibility === 'public' ? 'Ommaviy' : 'Xususiy';
+  $('infoAvatar').textContent = space.avatar_emoji || '💬'; $('infoName').textContent = space.name;
+  $('infoDescription').textContent = space.description || 'Tavsif mavjud emas.'; $('infoMembers').textContent = Number(space.member_count || 0);
+  $('infoType').textContent = space.space_type === 'channel' ? 'Kanal' : 'Guruh'; $('infoVisibility').textContent = space.visibility === 'public' ? 'Ommaviy' : 'Xususiy';
   $('infoRole').textContent = space.my_role === 'owner' ? 'Egasi' : space.my_role === 'admin' ? 'Admin' : space.is_member ? 'A’zo' : 'Mehmon';
   $('leaveBtn').classList.toggle('hidden', !space.is_member || space.my_role === 'owner');
   $('inviteBtn').classList.toggle('hidden', !(space.invite_code || space.visibility === 'public'));
   $('joinBtn').classList.toggle('hidden', Boolean(space.is_member));
-  $('joinBtn').textContent = space.space_type === 'channel' ? '＋' : '＋';
-
   const canPost = space.is_member && (space.space_type === 'group' || ['owner','admin'].includes(space.my_role));
-  $('composer').classList.toggle('hidden', !canPost);
-  $('joinGate').classList.toggle('hidden', canPost);
+  $('composer').classList.toggle('hidden', !canPost); $('joinGate').classList.toggle('hidden', canPost);
   if (!canPost) {
     if (!space.is_member) {
       $('joinGate').querySelector('strong').textContent = space.space_type === 'channel' ? 'Kanalga obuna bo‘ling' : 'Guruhga qo‘shiling';
       $('joinGate').querySelector('span').textContent = space.space_type === 'channel' ? 'Yangiliklarni kuzatish uchun kanalga obuna bo‘ling.' : 'Xabar yozish uchun guruhga qo‘shiling.';
-      $('joinGateBtn').classList.remove('hidden');
-      $('joinGateBtn').textContent = space.space_type === 'channel' ? 'Obuna bo‘lish' : 'Qo‘shilish';
+      $('joinGateBtn').classList.remove('hidden'); $('joinGateBtn').textContent = space.space_type === 'channel' ? 'Obuna bo‘lish' : 'Qo‘shilish';
     } else {
-      $('joinGate').querySelector('strong').textContent = 'Faqat administratorlar yozadi';
-      $('joinGate').querySelector('span').textContent = 'Siz ushbu kanal yangiliklarini kuzatyapsiz.';
-      $('joinGateBtn').classList.add('hidden');
+      $('joinGate').querySelector('strong').textContent = 'Faqat administratorlar yozadi'; $('joinGate').querySelector('span').textContent = 'Siz ushbu kanal yangiliklarini kuzatyapsiz.'; $('joinGateBtn').classList.add('hidden');
     }
   }
 }
@@ -200,175 +220,131 @@ async function loadMessages(older = false) {
   if (older && state.firstMessageId) params.set('before', state.firstMessageId);
   try {
     const rows = await api(`/api/chat/spaces/${state.active.space_id}/messages?${params}`);
-    if (!older) {
-      state.messages.clear();
-      $('messages').innerHTML = '';
-    }
+    if (!older) { state.messages.clear(); $('messages').innerHTML = ''; }
     for (const row of rows) addMessage(row, false, older);
     const ids = [...state.messages.keys()].map(Number).filter(Number.isFinite);
     state.firstMessageId = ids.length ? Math.min(...ids) : null;
     $('loadMoreBtn').classList.toggle('hidden', rows.length < 50);
     if (!older) scrollBottom();
-  } catch (error) {
-    toast(error.message);
-  }
+  } catch (error) { toast(error.message); }
 }
 
 function messageHtml(message) {
   const mine = String(message.sender_id) === String(state.profile?.user_id);
-  const signal = message.signal_id ? `<div class="price-signal"><strong>₿ ${esc(message.product_text)} · ${money(message.price_min)}${Number(message.price_max) !== Number(message.price_min) ? ' – ' + money(message.price_max) : ''}/${esc(message.unit || 'kg')}</strong><span>${message.market_text ? esc(message.market_text) + ' · ' : ''}chatdan avtomatik ajratildi · ishonchlilik ${Math.round(Number(message.confidence || 0) * 100)}%</span><span class="signal-status">TASDIQLANMAGAN SIGNAL</span></div>` : '';
-  return `<div class="message-row${mine ? ' mine' : ''}" data-message-id="${message.message_id}"><div class="message-bubble">${mine ? '' : `<div class="message-author">${esc(message.sender_name || 'Foydalanuvchi')}</div>`}<div class="message-body">${esc(message.body)}</div>${signal}<div class="message-meta"><span>${formatTime(message.created_at)}</span>${mine ? '<span>✓</span>' : ''}</div></div></div>`;
+  const reply = message.reply_to_message_id ? `<div class="reply-snippet"><strong>${esc(message.reply_sender_name || 'Foydalanuvchi')}</strong><span>${esc(message.reply_body || 'Javob berilgan xabar')}</span></div>` : '';
+  const signal = message.signal_id ? `<div class="price-signal"><strong>📈 ${esc(message.product_text)} · ${money(message.price_min)}${Number(message.price_max) !== Number(message.price_min) ? ' – ' + money(message.price_max) : ''}/${esc(message.unit || 'kg')}</strong><span>${message.market_text ? esc(message.market_text) + ' · ' : ''}chatdan avtomatik ajratildi · ishonchlilik ${Math.round(Number(message.confidence || 0) * 100)}%</span><span class="signal-status">TASDIQLANMAGAN SIGNAL</span></div>` : '';
+  const actions = `<div class="message-actions"><button class="msg-action" data-msg-action="reply" title="Javob berish">↩</button>${mine ? '<button class="msg-action" data-msg-action="edit" title="Tahrirlash">✎</button><button class="msg-action" data-msg-action="delete" title="O‘chirish">×</button>' : ''}</div>`;
+  return `<div class="message-row${mine ? ' mine' : ''}" data-message-id="${message.message_id}"><div class="message-bubble">${actions}${reply}${mine ? '' : `<div class="message-author">${esc(message.sender_name || 'Foydalanuvchi')}</div>`}<div class="message-body">${esc(message.body)}</div>${signal}<div class="message-meta">${message.edited_at ? '<span class="edited-label">tahrirlangan</span>' : ''}<span>${formatTime(message.created_at)}</span>${mine ? '<span>✓✓</span>' : ''}</div></div></div>`;
 }
 
 function addMessage(message, shouldScroll = false, prepend = false) {
   const id = String(message.message_id);
   if (state.messages.has(id)) return;
   state.messages.set(id, message);
-  const temp = document.createElement('div');
-  temp.innerHTML = messageHtml(message);
-  const node = temp.firstElementChild;
+  const temp = document.createElement('div'); temp.innerHTML = messageHtml(message); const node = temp.firstElementChild;
   if (prepend) $('messages').prepend(node); else $('messages').appendChild(node);
   if (shouldScroll) scrollBottom();
 }
 
-function scrollBottom() {
-  const scroller = $('messageScroll');
-  requestAnimationFrame(() => { scroller.scrollTop = scroller.scrollHeight; });
+function replaceMessage(message) {
+  const old = document.querySelector(`[data-message-id="${message.message_id}"]`);
+  if (!old) return;
+  const temp = document.createElement('div'); temp.innerHTML = messageHtml(message); old.replaceWith(temp.firstElementChild);
 }
 
+function scrollBottom() { const scroller = $('messageScroll'); requestAnimationFrame(() => { scroller.scrollTop = scroller.scrollHeight; }); }
+
+function setReply(message) {
+  state.replyTo = message;
+  $('replyAuthor').textContent = message.sender_name || 'Foydalanuvchi';
+  $('replyText').textContent = message.body;
+  $('replyPreview').classList.remove('hidden'); $('messageInput').focus();
+}
+function clearReply() { state.replyTo = null; $('replyPreview')?.classList.add('hidden'); }
+
 async function sendMessage(event) {
-  event.preventDefault();
-  if (!state.active) return;
-  const input = $('messageInput');
-  const body = input.value.trim();
-  if (!body) return;
-  input.value = '';
-  resizeComposer();
+  event.preventDefault(); if (!state.active) return;
+  const input = $('messageInput'); const body = input.value.trim(); if (!body) return;
+  const replyId = state.replyTo?.message_id || null; input.value = ''; resizeComposer(); clearReply();
   try {
-    const message = await api(`/api/chat/spaces/${state.active.space_id}/messages`, { method: 'POST', body: JSON.stringify({ body }) });
-    addMessage(message, true);
-    loadSpaces();
-  } catch (error) {
-    input.value = body;
-    resizeComposer();
-    toast(error.message);
-  }
+    const message = await api(`/api/chat/spaces/${state.active.space_id}/messages`, { method: 'POST', body: JSON.stringify({ body, reply_to_message_id: replyId }) });
+    addMessage(message, true); loadSpaces();
+  } catch (error) { input.value = body; resizeComposer(); toast(error.message); }
+}
+
+async function editMessage(message) {
+  const body = prompt('Xabarni tahrirlang:', message.body);
+  if (body == null || !body.trim() || body.trim() === message.body) return;
+  try {
+    const updated = await api(`/api/chat/messages/${message.message_id}`, { method:'PATCH', body:JSON.stringify({ body: body.trim() }) });
+    state.messages.set(String(updated.message_id), updated); replaceMessage(updated); toast('Xabar tahrirlandi.');
+  } catch (error) { toast(error.message); }
+}
+
+async function deleteMessage(message) {
+  if (!confirm('Xabarni o‘chirasizmi?')) return;
+  try { await api(`/api/chat/messages/${message.message_id}`, { method:'DELETE' }); state.messages.delete(String(message.message_id)); document.querySelector(`[data-message-id="${message.message_id}"]`)?.remove(); toast('Xabar o‘chirildi.'); }
+  catch (error) { toast(error.message); }
 }
 
 async function joinActive() {
   if (!state.active) return;
-  try {
-    await api(`/api/chat/spaces/${state.active.space_id}/join`, { method: 'POST' });
-    toast(state.active.space_type === 'channel' ? 'Kanalga obuna bo‘ldingiz.' : 'Guruhga qo‘shildingiz.');
-    await openSpace(state.active.space_id);
-    loadSpaces();
-  } catch (error) { toast(error.message); }
+  try { await api(`/api/chat/spaces/${state.active.space_id}/join`, { method: 'POST' }); toast(state.active.space_type === 'channel' ? 'Kanalga obuna bo‘ldingiz.' : 'Guruhga qo‘shildingiz.'); await openSpace(state.active.space_id); loadSpaces(); }
+  catch (error) { toast(error.message); }
 }
 
 async function leaveActive() {
-  if (!state.active) return;
-  if (!confirm('Ushbu chatni tark etasizmi?')) return;
-  try {
-    await api(`/api/chat/spaces/${state.active.space_id}/leave`, { method: 'DELETE' });
-    toast('Chat tark etildi.');
-    closeInfo();
-    await openSpace(state.active.space_id);
-    loadSpaces();
-  } catch (error) { toast(error.message); }
+  if (!state.active || !confirm('Ushbu chatni tark etasizmi?')) return;
+  try { await api(`/api/chat/spaces/${state.active.space_id}/leave`, { method: 'DELETE' }); toast('Chat tark etildi.'); closeInfo(); await openSpace(state.active.space_id); loadSpaces(); }
+  catch (error) { toast(error.message); }
 }
 
-function openCreate() {
-  $('createModal').classList.remove('hidden');
-  setTimeout(() => $('createName').focus(), 100);
-}
+function openCreate() { $('createModal').classList.remove('hidden'); setTimeout(() => $('createName').focus(), 100); }
 function closeCreate() { $('createModal').classList.add('hidden'); $('createMessage').textContent = ''; }
 
 async function createSpace(event) {
-  event.preventDefault();
-  const form = event.currentTarget;
-  const spaceType = new FormData(form).get('space_type');
-  const payload = {
-    space_type: spaceType,
-    name: $('createName').value.trim(),
-    description: $('createDescription').value.trim() || null,
-    district_id: Number($('createDistrict').value) || null,
-    visibility: $('createVisibility').value,
-    avatar_emoji: $('createEmoji').value,
-  };
-  $('createMessage').textContent = 'Yaratilmoqda…';
-  $('createMessage').className = 'form-message';
-  try {
-    const created = await api('/api/chat/spaces', { method: 'POST', body: JSON.stringify(payload) });
-    form.reset();
-    $('createMessage').textContent = '';
-    closeCreate();
-    await loadSpaces();
-    await openSpace(Number(created.space_id));
-    toast(created.space_type === 'channel' ? 'Kanal yaratildi.' : 'Guruh yaratildi.');
-  } catch (error) {
-    $('createMessage').textContent = error.message;
-    $('createMessage').className = 'form-message error';
-  }
+  event.preventDefault(); const form = event.currentTarget; const spaceType = new FormData(form).get('space_type');
+  const payload = { space_type: spaceType, name: $('createName').value.trim(), description: $('createDescription').value.trim() || null, district_id: Number($('createDistrict').value) || null, visibility: $('createVisibility').value, avatar_emoji: $('createEmoji').value };
+  $('createMessage').textContent = 'Yaratilmoqda…'; $('createMessage').className = 'form-message';
+  try { const created = await api('/api/chat/spaces', { method: 'POST', body: JSON.stringify(payload) }); form.reset(); closeCreate(); await loadSpaces(); await openSpace(Number(created.space_id)); toast(created.space_type === 'channel' ? 'Kanal yaratildi.' : 'Guruh yaratildi.'); }
+  catch (error) { $('createMessage').textContent = error.message; $('createMessage').className = 'form-message error'; }
 }
 
-function openInfo() {
-  if (!state.active) return;
-  $('infoPanel').classList.remove('hidden');
-  document.querySelector('.app-shell').classList.add('info-open');
-}
-function closeInfo() {
-  $('infoPanel').classList.add('hidden');
-  document.querySelector('.app-shell').classList.remove('info-open');
-}
+function openInfo() { if (!state.active) return; $('infoPanel').classList.remove('hidden'); document.querySelector('.app-shell').classList.add('info-open'); }
+function closeInfo() { $('infoPanel').classList.add('hidden'); document.querySelector('.app-shell').classList.remove('info-open'); }
 
 async function copyInvite() {
   if (!state.active) return;
-  const url = new URL('/community.html', location.origin);
-  if (state.active.invite_code) url.searchParams.set('invite', state.active.invite_code);
-  else url.searchParams.set('space', state.active.space_id);
-  try { await navigator.clipboard.writeText(url.toString()); toast('Taklif havolasi nusxalandi.'); }
-  catch { prompt('Taklif havolasi:', url.toString()); }
+  const url = new URL('/community.html', location.origin); if (state.active.invite_code) url.searchParams.set('invite', state.active.invite_code); else url.searchParams.set('space', state.active.space_id);
+  try { await navigator.clipboard.writeText(url.toString()); toast('Taklif havolasi nusxalandi.'); } catch { prompt('Taklif havolasi:', url.toString()); }
 }
 
 async function openSignals() {
-  $('signalsModal').classList.remove('hidden');
-  $('signalList').innerHTML = '<div class="empty-card">Yuklanmoqda…</div>';
+  $('signalsModal').classList.remove('hidden'); $('signalList').innerHTML = '<div class="empty-card">Yuklanmoqda…</div>';
   try {
     const rows = await api('/api/chat/price-signals?status=unverified');
-    if (!rows.length) {
-      $('signalList').innerHTML = '<div class="empty-card">Hozircha chatlardan narx signali aniqlanmadi.</div>';
-      return;
-    }
+    if (!rows.length) { $('signalList').innerHTML = '<div class="empty-card">Hozircha chatlardan narx signali aniqlanmadi.</div>'; return; }
     $('signalList').innerHTML = rows.map((row) => `<article class="signal-card"><div><strong>${esc(row.product_text)} · ${money(row.price_min)}${Number(row.price_max)!==Number(row.price_min) ? ' – '+money(row.price_max) : ''}/${esc(row.unit || 'kg')}</strong><p>${esc(row.space_name)}${row.market_text ? ' · '+esc(row.market_text) : ''}${row.district_name ? ' · '+esc(row.district_name) : ''}</p></div><div class="signal-confidence">${Math.round(Number(row.confidence || 0)*100)}%<br><small>tasdiqlanmagan</small></div></article>`).join('');
   } catch (error) { $('signalList').innerHTML = `<div class="empty-card">${esc(error.message)}</div>`; }
 }
 
-function resizeComposer() {
-  const el = $('messageInput');
-  el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 130) + 'px';
-}
+function resizeComposer() { const el = $('messageInput'); el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 130) + 'px'; }
+function emitTyping() { if (!state.socket || !state.active) return; state.socket.emit('chat:typing', { space_id: state.active.space_id, active: true }); clearTimeout(emitTyping.timer); emitTyping.timer = setTimeout(() => state.socket?.emit('chat:typing', { space_id: state.active?.space_id, active: false }), 900); }
 
-function emitTyping() {
-  if (!state.socket || !state.active) return;
-  state.socket.emit('chat:typing', { space_id: state.active.space_id, active: true });
-  clearTimeout(emitTyping.timer);
-  emitTyping.timer = setTimeout(() => state.socket?.emit('chat:typing', { space_id: state.active?.space_id, active: false }), 900);
+function toggleMessageSearch(force) {
+  const bar = $('messageSearchBar'); const show = force ?? bar.classList.contains('hidden'); bar.classList.toggle('hidden', !show); if (show) $('messageSearch').focus(); else { $('messageSearch').value=''; filterMessages(''); }
+}
+function filterMessages(query) {
+  const q = query.trim().toLocaleLowerCase('uz-UZ');
+  document.querySelectorAll('.message-row').forEach((row) => {
+    const body = row.querySelector('.message-body')?.textContent.toLocaleLowerCase('uz-UZ') || '';
+    row.classList.toggle('hidden', Boolean(q) && !body.includes(q)); row.classList.toggle('search-hit', Boolean(q) && body.includes(q));
+  });
 }
 
 async function handleDeepLink() {
-  const params = new URLSearchParams(location.search);
-  const invite = params.get('invite');
-  const space = Number(params.get('space'));
-  if (invite) {
-    try {
-      const result = await api('/api/chat/join-by-invite', { method: 'POST', body: JSON.stringify({ invite_code: invite }) });
-      await loadSpaces();
-      await openSpace(Number(result.space_id));
-      toast('Taklif orqali chatga qo‘shildingiz.');
-      return;
-    } catch (error) { toast(error.message); }
-  }
+  const params = new URLSearchParams(location.search); const invite = params.get('invite'); const space = Number(params.get('space'));
+  if (invite) { try { const result = await api('/api/chat/join-by-invite', { method: 'POST', body: JSON.stringify({ invite_code: invite }) }); await loadSpaces(); await openSpace(Number(result.space_id)); toast('Taklif orqali chatga qo‘shildingiz.'); return; } catch (error) { toast(error.message); } }
   if (Number.isInteger(space) && space > 0) await openSpace(space);
 }
 
@@ -376,45 +352,24 @@ function bindEvents() {
   document.querySelectorAll('[data-filter]').forEach((b) => b.addEventListener('click', () => setFilter(b.dataset.filter)));
   document.querySelectorAll('[data-chip]').forEach((b) => b.addEventListener('click', () => setFilter(b.dataset.chip)));
   $('spaceSearch').addEventListener('input', () => { clearTimeout(state.searchTimer); state.searchTimer = setTimeout(loadSpaces, 260); });
-  $('refreshSpaces').addEventListener('click', loadSpaces);
-  $('newSpaceBtn').addEventListener('click', openCreate);
-  $('newSpaceRail').addEventListener('click', openCreate);
-  $('emptyCreateBtn').addEventListener('click', openCreate);
-  document.querySelectorAll('[data-close-modal]').forEach((b) => b.addEventListener('click', closeCreate));
-  $('createSpaceForm').addEventListener('submit', createSpace);
-  $('composer').addEventListener('submit', sendMessage);
-  $('messageInput').addEventListener('input', () => { resizeComposer(); emitTyping(); });
-  $('messageInput').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('composer').requestSubmit(); } });
-  $('joinBtn').addEventListener('click', joinActive);
-  $('joinGateBtn').addEventListener('click', joinActive);
-  $('chatInfoBtn').addEventListener('click', openInfo);
-  $('closeInfo').addEventListener('click', closeInfo);
-  $('leaveBtn').addEventListener('click', leaveActive);
-  $('inviteBtn').addEventListener('click', copyInvite);
-  $('loadMoreBtn').addEventListener('click', () => loadMessages(true));
-  $('signalsBtn').addEventListener('click', openSignals);
-  document.querySelectorAll('[data-close-signals]').forEach((b) => b.addEventListener('click', () => $('signalsModal').classList.add('hidden')));
+  $('refreshSpaces').addEventListener('click', loadSpaces); $('newSpaceBtn').addEventListener('click', openCreate); $('newSpaceRail').addEventListener('click', openCreate); $('emptyCreateBtn').addEventListener('click', openCreate);
+  $('browsePublicBtn').addEventListener('click', () => { $('spaceSearch').focus(); setFilter('all'); });
+  document.querySelectorAll('[data-close-modal]').forEach((b) => b.addEventListener('click', closeCreate)); $('createSpaceForm').addEventListener('submit', createSpace);
+  $('composer').addEventListener('submit', sendMessage); $('messageInput').addEventListener('input', () => { resizeComposer(); emitTyping(); }); $('messageInput').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('composer').requestSubmit(); } });
+  $('messages').addEventListener('click', (e) => { const button = e.target.closest('[data-msg-action]'); if (!button) return; const row = button.closest('[data-message-id]'); const message = state.messages.get(String(row?.dataset.messageId)); if (!message) return; if (button.dataset.msgAction === 'reply') setReply(message); if (button.dataset.msgAction === 'edit') editMessage(message); if (button.dataset.msgAction === 'delete') deleteMessage(message); });
+  $('cancelReply').addEventListener('click', clearReply); $('joinBtn').addEventListener('click', joinActive); $('joinGateBtn').addEventListener('click', joinActive); $('chatInfoBtn').addEventListener('click', openInfo); $('closeInfo').addEventListener('click', closeInfo); $('leaveBtn').addEventListener('click', leaveActive); $('inviteBtn').addEventListener('click', copyInvite); $('loadMoreBtn').addEventListener('click', () => loadMessages(true));
+  $('signalsBtn').addEventListener('click', openSignals); document.querySelectorAll('[data-close-signals]').forEach((b) => b.addEventListener('click', () => $('signalsModal').classList.add('hidden')));
   $('priceHintBtn').addEventListener('click', () => { $('messageInput').value = 'Urgut bozorida pomidor 12 ming so‘m/kg'; resizeComposer(); $('messageInput').focus(); });
+  $('headerSearchBtn').addEventListener('click', () => toggleMessageSearch()); $('closeMessageSearch').addEventListener('click', () => toggleMessageSearch(false)); $('messageSearch').addEventListener('input', (e) => filterMessages(e.target.value));
   $('mobileBack').addEventListener('click', () => document.querySelector('.app-shell').classList.remove('chat-open'));
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeCreate(); closeInfo(); $('signalsModal').classList.add('hidden'); } });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeCreate(); closeInfo(); $('signalsModal').classList.add('hidden'); toggleMessageSearch(false); clearReply(); } });
 }
 
 async function boot() {
   bindEvents();
-  if (!state.token) {
-    $('loginModal').classList.remove('hidden');
-    return;
-  }
-  try {
-    await loadDistricts();
-    await loadProfile();
-    connectSocket();
-    await loadSpaces();
-    await handleDeepLink();
-  } catch (error) {
-    console.error(error);
-    toast(error.message);
-  }
+  if (!state.token) { $('loginModal').classList.remove('hidden'); return; }
+  try { await loadDistricts(); await loadProfile(); connectSocket(); await loadSpaces(); await handleDeepLink(); }
+  catch (error) { console.error(error); toast(error.message); }
 }
 
 boot();
