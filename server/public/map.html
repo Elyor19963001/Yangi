@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="Qishloq Raqamli Platformasi: bozorlar, oshxonalar, taksi, dorixona va boshqa yaqin xizmatlar xaritasi" />
+  <title>Xarita va yaqin xizmatlar · Qishloq Raqamli Platformasi</title>
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="/map.css" />
+  <script src="/vendor/leaflet/leaflet.js" defer></script>
+  <script src="/map.js" defer></script>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <div class="brand-block">
+        <a class="back-link" href="/" aria-label="Bosh sahifa">←</a>
+        <div class="brand-mark">QR</div>
+        <div><span class="eyebrow">JOY VA XIZMATLAR · v0.6</span><h1>Xarita va yaqin xizmatlar</h1></div>
+      </div>
+      <div class="top-actions">
+        <a class="ghost-btn" href="/community.html">Chat</a>
+        <button class="primary-btn" id="locateBtn">⌖ Mening joylashuvim</button>
+      </div>
+    </header>
+
+    <section class="weather-strip" id="weatherStrip">
+      <div class="weather-main"><span class="weather-icon" id="weatherIcon">☀️</span><div><small id="weatherLocation">Ob-havo yuklanmoqda…</small><strong id="weatherTemp">—</strong><span id="weatherCondition">—</span></div></div>
+      <div class="weather-metrics"><div><span>Namlik</span><strong id="weatherHumidity">—</strong></div><div><span>Shamol</span><strong id="weatherWind">—</strong></div><div><span>Yomg‘ir</span><strong id="weatherRain">—</strong></div></div>
+      <div class="agro-advice"><span>🌾 Agro signal</span><strong id="agroAdvice">Joylashuv aniqlansa tavsiya chiqadi.</strong></div>
+      <button class="forecast-toggle" id="forecastToggle">5 kunlik prognoz ▾</button>
+    </section>
+    <div class="forecast-row hidden" id="forecastRow"></div>
+
+    <main class="workspace">
+      <aside class="services-panel" id="servicesPanel">
+        <div class="panel-title"><div><span class="eyebrow">MENGA YAQIN</span><h2>Xizmatlar</h2></div><button class="icon-btn" id="refreshBtn" title="Yangilash">↻</button></div>
+
+        <div class="search-box"><span>⌕</span><input id="placeSearch" type="search" placeholder="Natijalardan qidiring" /></div>
+
+        <div class="category-grid" id="categoryGrid"></div>
+
+        <div class="filter-row">
+          <label>Radius<select id="radiusSelect"><option value="2000">2 km</option><option value="5000" selected>5 km</option><option value="10000">10 km</option></select></label>
+          <button class="soft-btn" id="suggestBtn">＋ Joy qo‘shish</button>
+        </div>
+
+        <div class="source-note"><span class="live-dot"></span><span><strong>Jonli kashfiyot:</strong> OpenStreetMap + platformada tasdiqlangan joylar. Foydalanuvchi lokatsiyasi bazaga saqlanmaydi.</span></div>
+
+        <div class="result-summary"><span id="resultCount">0 ta joy</span><span id="sourceStatus">—</span></div>
+        <div class="place-list" id="placeList"><div class="empty-state">Joylashuv aniqlanmoqda…</div></div>
+      </aside>
+
+      <section class="map-stage">
+        <div id="map" aria-label="Yaqin xizmatlar xaritasi"></div>
+        <div class="map-badge"><strong id="mapCenterLabel">Samarqand</strong><span id="mapPrivacy">Lokatsiya faqat yaqin xizmatni topish uchun ishlatiladi</span></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop hidden" id="suggestModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="suggestTitle">
+      <header><div><span class="eyebrow">FOYDALANUVCHI TAKLIFI</span><h2 id="suggestTitle">Xaritaga joy qo‘shish</h2></div><button class="icon-btn" id="closeSuggest">×</button></header>
+      <p class="modal-note">Taklif darhol ommaga chiqmaydi. Operator tekshirganidan keyin “tasdiqlangan” joy sifatida ko‘rsatiladi.</p>
+      <form id="suggestForm">
+        <div class="form-grid"><label>Kategoriya<select id="suggestCategory" required></select></label><label>Joy nomi<input id="suggestName" maxlength="180" required placeholder="Masalan: Dehqon bozori" /></label></div>
+        <label>Manzil<input id="suggestAddress" maxlength="350" placeholder="Ko‘cha, mahalla yoki mo‘ljal" /></label>
+        <div class="form-grid"><label>Telefon<input id="suggestPhone" maxlength="60" placeholder="+998..." /></label><label>Ish vaqti<input id="suggestHours" maxlength="180" placeholder="08:00–20:00" /></label></div>
+        <label>Tavsif<textarea id="suggestDescription" rows="3" maxlength="700" placeholder="Qisqa ma’lumot"></textarea></label>
+        <div class="coords-card"><div><span>Koordinata</span><strong id="suggestCoords">—</strong></div><button type="button" class="soft-btn" id="useMapCenter">Xarita markazini olish</button></div>
+        <div class="modal-actions"><button type="button" class="soft-btn" id="cancelSuggest">Bekor qilish</button><button type="submit" class="primary-btn">Tekshiruvga yuborish</button></div>
+        <div class="form-message" id="suggestMessage"></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="loginModal">
+    <div class="modal compact"><div class="login-icon">🔐</div><h2>Avval tizimga kiring</h2><p>Yaqin xizmatlar va ob-havo modulidan foydalanish uchun OTP orqali tizimga kiring.</p><a class="primary-btn full" href="/">Kirish / ro‘yxatdan o‘tish</a></div>
+  </div>
+
+  <div class="toast hidden" id="toast"></div>
+</body>
+</html>
