@@ -29,6 +29,51 @@ CREATE TABLE IF NOT EXISTS study_participants (
   notes TEXT
 );
 
+ALTER TABLE study_participants ADD COLUMN IF NOT EXISTS consent_research BOOLEAN DEFAULT FALSE;
+ALTER TABLE study_participants ADD COLUMN IF NOT EXISTS research_consent_version VARCHAR(30);
+ALTER TABLE study_participants ADD COLUMN IF NOT EXISTS research_consented_at TIMESTAMPTZ;
+ALTER TABLE study_participants ADD COLUMN IF NOT EXISTS consent_withdrawn_at TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS consent_records (
+  consent_record_id BIGSERIAL PRIMARY KEY,
+  study_id UUID NOT NULL REFERENCES study_participants(study_id) ON DELETE CASCADE,
+  consent_scope VARCHAR(40) NOT NULL CHECK (consent_scope IN ('research','analytics')),
+  consent_version VARCHAR(30) NOT NULL,
+  accepted BOOLEAN NOT NULL,
+  recorded_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS survey_responses (
+  response_id BIGSERIAL PRIMARY KEY,
+  study_id UUID NOT NULL REFERENCES study_participants(study_id) ON DELETE CASCADE,
+  wave VARCHAR(20) NOT NULL CHECK (wave IN ('baseline','midline','endline')),
+  district_id INT REFERENCES districts(district_id),
+  age_group VARCHAR(20),
+  gender VARCHAR(30),
+  education_level VARCHAR(60),
+  household_size INT CHECK (household_size BETWEEN 1 AND 30),
+  employment_status VARCHAR(60),
+  monthly_household_income_uzs NUMERIC(14,2) CHECK (monthly_household_income_uzs >= 0),
+  internet_access BOOLEAN,
+  internet_type VARCHAR(60),
+  monthly_internet_cost_uzs NUMERIC(12,2) CHECK (monthly_internet_cost_uzs >= 0),
+  internet_quality SMALLINT CHECK (internet_quality BETWEEN 1 AND 5),
+  smartphone_access BOOLEAN,
+  computer_access BOOLEAN,
+  digital_skills SMALLINT CHECK (digital_skills BETWEEN 1 AND 5),
+  egov_use BOOLEAN,
+  digital_payment_use BOOLEAN,
+  ecommerce_use BOOLEAN,
+  online_selling_use BOOLEAN,
+  price_knowledge SMALLINT CHECK (price_knowledge BETWEEN 0 AND 10),
+  financial_services_use BOOLEAN,
+  platform_usage_frequency SMALLINT CHECK (platform_usage_frequency BETWEEN 0 AND 30),
+  nps SMALLINT CHECK (nps BETWEEN 0 AND 10),
+  submitted_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(study_id, wave)
+);
+
 CREATE TABLE IF NOT EXISTS otp_codes (
   otp_id BIGSERIAL PRIMARY KEY,
   user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
@@ -104,5 +149,7 @@ CREATE INDEX IF NOT EXISTS idx_activity_study_time ON user_activity(study_id, ti
 CREATE INDEX IF NOT EXISTS idx_activity_feature_time ON user_activity(feature, timestamp);
 CREATE INDEX IF NOT EXISTS idx_prices_date ON prices(price_date DESC);
 CREATE INDEX IF NOT EXISTS idx_listings_status_created ON listings(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_survey_wave ON survey_responses(wave, submitted_at DESC);
+CREATE INDEX IF NOT EXISTS idx_consent_study ON consent_records(study_id, recorded_at DESC);
 
 COMMIT;
