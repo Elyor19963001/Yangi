@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dala namunalari · Agro Intelligence</title>
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="/agro-samples.css" />
+  <script src="/vendor/leaflet/leaflet.js" defer></script>
+  <script src="/agro-samples.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a href="/agro.html" class="back">← Agro Intelligence</a>
+    <div><span class="eyebrow">GROUND TRUTH · v0.8</span><h1>Dala konturini belgilash</h1></div>
+    <button id="locateBtn" class="btn secondary">⌖ Joylashuvim</button>
+  </header>
+
+  <main class="layout">
+    <section class="map-wrap">
+      <div class="map-toolbar">
+        <div><strong id="vertexCount">0 nuqta</strong><span>Xaritada dala chegarasi bo‘ylab kamida 3 nuqta bosing.</span></div>
+        <div class="actions"><button id="undoBtn" class="btn ghost">↶ Oxirgi nuqta</button><button id="clearBtn" class="btn ghost">Tozalash</button></div>
+      </div>
+      <div id="map"></div>
+      <div class="map-note">Bu modul ekin turini sun’iy yo‘ldoshdan avtomatik “fakt” deb belgilamaydi. Siz kiritgan dala namunasi avval operator tomonidan tekshiriladi.</div>
+    </section>
+
+    <aside class="form-panel">
+      <span class="eyebrow">REFERENCE SAMPLE</span>
+      <h2>Dala ma’lumoti</h2>
+      <p class="lead">Modelni o‘qitish uchun dalada tasdiqlangan ekin turi va poligon kerak.</p>
+      <form id="sampleForm">
+        <label>Tuman<select id="districtSelect" required><option value="">Tuman tanlang</option></select></label>
+        <label>Ekin turi<input id="cropName" list="cropOptions" maxlength="100" required placeholder="Masalan: Bug‘doy" /></label>
+        <datalist id="cropOptions"><option value="Bug‘doy"><option value="Paxta"><option value="Uzum"><option value="Kartoshka"><option value="Pomidor"><option value="Piyoz"><option value="Makkajo‘xori"><option value="Mevali bog‘"></datalist>
+        <div class="two"><label>Mavsum<input id="season" value="2026" maxlength="20" required /></label><label>Kuzatuv sanasi<input id="observedAt" type="date" /></label></div>
+        <label>Izoh<textarea id="notes" rows="4" maxlength="700" placeholder="Masalan: fermer bilan joyida tasdiqlandi, hosil yig‘imi boshlanmagan"></textarea></label>
+        <div class="sample-status"><span>Kontur</span><strong id="polygonStatus">Belgilanmagan</strong></div>
+        <button type="submit" class="btn primary full">Tekshiruvga yuborish</button>
+        <div id="message" class="message"></div>
+      </form>
+      <section class="rules"><strong>Modelga kirish qoidasi</strong><p>Namuna `pending` holatda saqlanadi. Faqat operator `verified` qilgandan keyin Sentinel-2 vaqt qatori feature’lari olinadi va ML modelga qo‘shiladi.</p></section>
+    </aside>
+  </main>
+
+  <div id="loginModal" class="modal hidden"><div><h2>Avval tizimga kiring</h2><p>Dala namunasini kim yuborganini audit qilish uchun foydalanuvchi sessiyasi kerak.</p><a href="/" class="btn primary full">Kirish</a></div></div>
+  <div id="toast" class="toast hidden"></div>
+</body>
+</html>
