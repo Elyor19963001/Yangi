@@ -21,6 +21,7 @@ const survey = require('./routes/survey');
 const chat = require('./routes/chat');
 const places = require('./routes/places');
 const agro = require('./routes/agro');
+const agroPipeline = require('./routes/agroPipeline');
 
 if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is required');
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required');
@@ -60,7 +61,7 @@ app.use(cors({
   },
   credentials: true,
 }));
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '2mb' }));
 app.use(rateLimit({ windowMs: 60_000, limit: 240 }));
 
 const publicDir = path.join(__dirname, '..', 'public');
@@ -70,7 +71,7 @@ app.use('/vendor/leaflet', express.static(path.join(__dirname, '..', 'node_modul
   immutable: true,
 }));
 
-app.get('/health', (_req, res) => res.json({ ok: true, version: '0.7.0' }));
+app.get('/health', (_req, res) => res.json({ ok: true, version: '0.8.0' }));
 app.use('/api/auth', auth);
 app.use('/api/prices', prices);
 app.use('/api/listings', listings);
@@ -83,6 +84,7 @@ app.use('/api/survey', survey);
 app.use('/api/chat', chat);
 app.use('/api/places', places);
 app.use('/api/agro', agro);
+app.use('/api/agro/pipeline', agroPipeline);
 
 app.get('/', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')));
 
@@ -156,4 +158,4 @@ io.on('connection', (socket) => {
 });
 
 const port = Number(process.env.PORT || 4000);
-server.listen(port, () => console.log(`API + realtime chat + maps + agro intelligence listening on http://localhost:${port}`));
+server.listen(port, () => console.log(`API + realtime chat + maps + agro ML pipeline listening on http://localhost:${port}`));
