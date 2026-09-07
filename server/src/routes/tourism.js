@@ -10,19 +10,20 @@ const OVERPASS_URLS = [
   'https://overpass.kumi.systems/api/interpreter',
 ];
 const OSRM_URL = 'https://router.project-osrm.org';
+const OPEN_METEO_URL = 'https://api.open-meteo.com/v1/forecast';
 const CACHE_MS = 30 * 60 * 1000;
 const poiCache = new Map();
 
 const CURATED_POIS = [
-  { id:'wikidata/Q1373583', name:'Registon maydoni', latitude:39.654722, longitude:66.975556, category:'historic', wikidata:'Q1373583', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q1373583' },
-  { id:'wikidata/Q1256223', name:'Go‘ri Amir maqbarasi', latitude:39.648333, longitude:66.968889, category:'historic', wikidata:'Q1256223', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q1256223' },
-  { id:'wikidata/Q679218', name:'Bibixonim masjidi', latitude:39.660556, longitude:66.979722, category:'pilgrimage', wikidata:'Q679218', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q679218' },
-  { id:'wikidata/Q671935', name:'Shohi Zinda majmuasi', latitude:39.662620, longitude:66.987878, category:'pilgrimage', wikidata:'Q671935', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q671935' },
-  { id:'unesco/ulugh-beg-observatory', name:'Ulug‘bek rasadxonasi', latitude:39.674722, longitude:67.005556, category:'historic', wikidata:null, source:'UNESCO', source_url:'https://www.unesco.org/en/astronomy-and-world-heritage/ulugh-beg-observatory' },
-  { id:'wikidata/Q4306302', name:'Afrosiyob muzeyi', latitude:39.669339, longitude:66.993350, category:'museum', wikidata:'Q4306302', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q4306302' },
-  { id:'wikidata/Q13534449', name:'Siyob bozori', latitude:39.661893, longitude:66.979915, category:'market', wikidata:'Q13534449', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q13534449' },
-  { id:'wikidata/Q4273779', name:'Ruhobod maqbarasi', latitude:39.650861, longitude:66.968208, category:'historic', wikidata:'Q4273779', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q4273779' },
-  { id:'wikidata/Q13201584', name:'Hazrati Xizr masjidi', latitude:39.663453, longitude:66.983256, category:'pilgrimage', wikidata:'Q13201584', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q13201584' },
+  { id:'wikidata/Q1373583', name:'Registon maydoni', latitude:39.654722, longitude:66.975556, category:'historic', weather_resilience:0, wikidata:'Q1373583', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q1373583' },
+  { id:'wikidata/Q1256223', name:'Go‘ri Amir maqbarasi', latitude:39.648333, longitude:66.968889, category:'historic', weather_resilience:2, wikidata:'Q1256223', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q1256223' },
+  { id:'wikidata/Q679218', name:'Bibixonim masjidi', latitude:39.660556, longitude:66.979722, category:'pilgrimage', weather_resilience:1, wikidata:'Q679218', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q679218' },
+  { id:'wikidata/Q671935', name:'Shohi Zinda majmuasi', latitude:39.662620, longitude:66.987878, category:'pilgrimage', weather_resilience:1, wikidata:'Q671935', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q671935' },
+  { id:'unesco/ulugh-beg-observatory', name:'Ulug‘bek rasadxonasi', latitude:39.674722, longitude:67.005556, category:'historic', weather_resilience:1, wikidata:null, source:'UNESCO', source_url:'https://www.unesco.org/en/astronomy-and-world-heritage/ulugh-beg-observatory' },
+  { id:'wikidata/Q4306302', name:'Afrosiyob muzeyi', latitude:39.669339, longitude:66.993350, category:'museum', weather_resilience:3, wikidata:'Q4306302', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q4306302' },
+  { id:'wikidata/Q13534449', name:'Siyob bozori', latitude:39.661893, longitude:66.979915, category:'market', weather_resilience:0, wikidata:'Q13534449', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q13534449' },
+  { id:'wikidata/Q4273779', name:'Ruhobod maqbarasi', latitude:39.650861, longitude:66.968208, category:'historic', weather_resilience:2, wikidata:'Q4273779', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q4273779' },
+  { id:'wikidata/Q13201584', name:'Hazrati Xizr masjidi', latitude:39.663453, longitude:66.983256, category:'pilgrimage', weather_resilience:1, wikidata:'Q13201584', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q13201584' },
 ];
 
 const PRIORITY_PATTERNS = [
@@ -170,6 +171,13 @@ function categoryFor(tags = {}) {
   return 'heritage';
 }
 
+function resilienceFor(tags = {}, category) {
+  if (category === 'museum' || tags.indoor === 'yes') return 3;
+  if (tags.building && category !== 'market') return 2;
+  if (category === 'pilgrimage') return 1;
+  return 0;
+}
+
 function normalizePoiKey(name) {
   return String(name || '').toLocaleLowerCase('uz-UZ').replace(/[ʻʼ’`´]/g, "'").replace(/[^a-zа-я0-9']/gi, '');
 }
@@ -195,6 +203,7 @@ function parseOverpassElements(elements = []) {
     const latitude = number(el.lat ?? el.center?.lat);
     const longitude = number(el.lon ?? el.center?.lon);
     if (!name || !validCoord(latitude, longitude)) continue;
+    const category = categoryFor(tags);
     rows.push({
       id: `${el.type}/${el.id}`,
       osm_type: el.type,
@@ -202,7 +211,8 @@ function parseOverpassElements(elements = []) {
       name,
       latitude,
       longitude,
-      category: categoryFor(tags),
+      category,
+      weather_resilience: resilienceFor(tags, category),
       historic: tags.historic || null,
       tourism: tags.tourism || null,
       religion: tags.religion || null,
@@ -228,7 +238,7 @@ function mergeWithCurated(external = []) {
 }
 
 async function discoverHeritagePois() {
-  const key = 'samarkand-heritage-v3';
+  const key = 'samarkand-heritage-v4';
   const cached = poiCache.get(key);
   if (cached && Date.now() - cached.at < CACHE_MS) return cached.result;
   const radius = 16000;
@@ -242,7 +252,7 @@ async function discoverHeritagePois() {
   const requests = OVERPASS_URLS.map((endpoint) => axios.post(endpoint, requestBody, {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'User-Agent': 'QishloqRaqamliPlatformasi-TourPlanner/1.0 (+https://phd-api-production-d2e5.up.railway.app)',
+      'User-Agent': 'QishloqRaqamliPlatformasi-TourPlanner/1.2 (+https://phd-api-production-d2e5.up.railway.app)',
     },
     timeout: 9000,
     maxContentLength: 6 * 1024 * 1024,
@@ -257,7 +267,7 @@ async function discoverHeritagePois() {
       external_count: winner.rows.length,
       rows: mergeWithCurated(winner.rows),
     };
-  } catch (error) {
+  } catch {
     console.warn('Overpass unavailable; curated fallback active');
     result = {
       provider: 'curated-fallback',
@@ -268,6 +278,80 @@ async function discoverHeritagePois() {
   }
   poiCache.set(key, { at: Date.now(), result });
   return result;
+}
+
+function dateStringTashkent() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tashkent', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+}
+
+function addDate(dateText, days) {
+  const [y, m, d] = String(dateText).split('-').map(Number);
+  if (![y, m, d].every(Number.isFinite)) return null;
+  const date = new Date(Date.UTC(y, m - 1, d));
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function dayDiff(a, b) {
+  return Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86400000);
+}
+
+function normalizeTripStart(raw) {
+  const value = /^\d{4}-\d{2}-\d{2}$/.test(String(raw || '')) ? String(raw) : dateStringTashkent();
+  const today = dateStringTashkent();
+  const diff = dayDiff(today, value);
+  if (!Number.isFinite(diff) || diff < 0 || diff > 14) return { date: value, forecastable: false, warning: 'Ob-havo asosida moslashtirish uchun sana bugundan 14 kun ichida bo‘lishi kerak.' };
+  return { date: value, forecastable: true, warning: null };
+}
+
+function weatherRisk(row = {}) {
+  const code = Number(row.weather_code);
+  const rain = Number(row.precipitation_probability_max_pct || 0);
+  const max = Number(row.temperature_max_c);
+  const min = Number(row.temperature_min_c);
+  const wind = Number(row.wind_speed_max_kmh || 0);
+  if (code >= 95) return { type: 'storm', severity: 5, label: 'Momaqaldiroq', advice: 'Yopiq obyektlarni ustuvor qiling va tashqi nuqtalarni qisqartiring.' };
+  if ((code >= 51 && code <= 82) || rain >= 60) return { type: 'rain', severity: 4, label: 'Yomg‘ir xavfi', advice: 'Muzey va yopiqroq obyektlar oldinga surildi.' };
+  if (wind >= 40) return { type: 'wind', severity: 3, label: 'Kuchli shamol', advice: 'Ochiq maydonlarda vaqt qisqartirildi.' };
+  if (max >= 34) return { type: 'hot', severity: 3, label: 'Issiq', advice: 'Ochiq obyektlar ertaroq vaqtga surildi.' };
+  if (min <= 2) return { type: 'cold', severity: 2, label: 'Sovuq', advice: 'Yopiqroq obyektlar ustuvorlashtirildi.' };
+  return { type: 'normal', severity: 0, label: 'Qulay', advice: 'Standart masofa optimizatsiyasi ishlatildi.' };
+}
+
+async function getTripWeather(startMeta, days) {
+  if (!startMeta.forecastable) return { rows: [], source: 'unavailable', warning: startMeta.warning };
+  try {
+    const endDate = addDate(startMeta.date, days - 1);
+    const response = await axios.get(OPEN_METEO_URL, {
+      params: {
+        latitude: CENTER.latitude,
+        longitude: CENTER.longitude,
+        timezone: 'Asia/Tashkent',
+        start_date: startMeta.date,
+        end_date: endDate,
+        daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max',
+      },
+      timeout: 9000,
+    });
+    const d = response.data?.daily || {};
+    const rows = Array.from({ length: Math.min(days, d.time?.length || 0) }, (_, index) => {
+      const row = {
+        day_number: index + 1,
+        date: d.time?.[index] || addDate(startMeta.date, index),
+        weather_code: d.weather_code?.[index] ?? null,
+        temperature_max_c: d.temperature_2m_max?.[index] ?? null,
+        temperature_min_c: d.temperature_2m_min?.[index] ?? null,
+        precipitation_probability_max_pct: d.precipitation_probability_max?.[index] ?? null,
+        wind_speed_max_kmh: d.wind_speed_10m_max?.[index] ?? null,
+        source: 'Open-Meteo',
+      };
+      return { ...row, risk: weatherRisk(row) };
+    });
+    return { rows, source: rows.length ? 'Open-Meteo' : 'unavailable', warning: rows.length ? null : 'Tanlangan sanalar uchun prognoz topilmadi.' };
+  } catch (error) {
+    console.warn('Tour weather unavailable:', error.response?.status || error.message);
+    return { rows: [], source: 'unavailable', warning: 'Ob-havo xizmati hozir javob bermadi; marshrut ob-havosiz tuzildi.' };
+  }
 }
 
 function nearestOrder(rows, start) {
@@ -321,6 +405,54 @@ function splitDays(ordered, days) {
   return groups;
 }
 
+function rebalanceForWeather(groups, weatherRows, enabled) {
+  const result = groups.map((group) => [...group]);
+  if (!enabled || !weatherRows.length || result.length < 2) return result;
+  const risky = weatherRows
+    .map((weather, index) => ({ index, severity: weather.risk?.severity || 0 }))
+    .filter((row) => row.severity >= 3)
+    .sort((a, b) => b.severity - a.severity);
+  for (const target of risky) {
+    const targetGroup = result[target.index] || [];
+    if (!targetGroup.length) continue;
+    let weakestIndex = 0;
+    targetGroup.forEach((poi, index) => {
+      if ((poi.weather_resilience || 0) < (targetGroup[weakestIndex]?.weather_resilience || 0)) weakestIndex = index;
+    });
+    let donor = null;
+    result.forEach((group, groupIndex) => {
+      if (groupIndex === target.index) return;
+      group.forEach((poi, poiIndex) => {
+        const score = Number(poi.weather_resilience || 0);
+        if (!donor || score > donor.score) donor = { groupIndex, poiIndex, score };
+      });
+    });
+    const weakest = Number(targetGroup[weakestIndex]?.weather_resilience || 0);
+    if (donor && donor.score - weakest >= 2) {
+      const incoming = result[donor.groupIndex][donor.poiIndex];
+      const outgoing = result[target.index][weakestIndex];
+      result[target.index][weakestIndex] = incoming;
+      result[donor.groupIndex][donor.poiIndex] = outgoing;
+    }
+  }
+  return result;
+}
+
+function weatherAwareOrder(rows, start, weather, enabled) {
+  const base = nearestOrder(rows, start);
+  if (!enabled || !weather?.risk || weather.risk.type === 'normal') return base;
+  const type = weather.risk.type;
+  return base
+    .map((poi, index) => ({ poi, index }))
+    .sort((a, b) => {
+      const ar = Number(a.poi.weather_resilience || 0);
+      const br = Number(b.poi.weather_resilience || 0);
+      if (type === 'hot') return ar - br || a.index - b.index;
+      return br - ar || a.index - b.index;
+    })
+    .map((row) => row.poi);
+}
+
 async function routeDriving(start, stops) {
   const points = [start, ...stops];
   if (points.length < 2) return null;
@@ -363,18 +495,24 @@ function routeFallback(start, stops, walking) {
   };
 }
 
-function visitMinutes(poi, intent) {
-  if (poi.category === 'museum') return intent.pace === 'relaxed' ? 90 : 75;
-  if (PRIORITY_PATTERNS.some((rx) => rx.test(poi.name))) return intent.pace === 'active' ? 60 : 80;
-  return intent.pace === 'relaxed' ? 65 : 50;
+function visitMinutes(poi, intent, weather, adaptive) {
+  let minutes = poi.category === 'museum' ? (intent.pace === 'relaxed' ? 90 : 75)
+    : PRIORITY_PATTERNS.some((rx) => rx.test(poi.name)) ? (intent.pace === 'active' ? 60 : 80)
+      : intent.pace === 'relaxed' ? 65 : 50;
+  if (adaptive && weather?.risk?.severity >= 3) {
+    if ((poi.weather_resilience || 0) >= 2) minutes += 10;
+    else minutes = Math.max(35, minutes - 15);
+  }
+  return minutes;
 }
 
-function daySchedule(dayStops, route, intent, dayIndex) {
-  let cursor = 9 * 60;
+function daySchedule(dayStops, route, intent, dayIndex, weather, adaptive) {
+  const risk = weather?.risk || { type: 'normal', advice: null };
+  let cursor = risk.type === 'hot' && adaptive ? 8 * 60 : risk.severity >= 3 && adaptive ? 9 * 60 + 30 : 9 * 60;
   const rows = dayStops.map((poi, index) => {
     if (index > 0) cursor += Math.max(8, Math.round((route?.duration_min || 45) / Math.max(1, dayStops.length)));
-    if (index === Math.ceil(dayStops.length / 2) && intent.interests.includes('gastronomy')) cursor += 60;
-    const visit = visitMinutes(poi, intent);
+    if (index === Math.ceil(dayStops.length / 2) && intent.interests.includes('gastronomy')) cursor += risk.type === 'hot' && adaptive ? 90 : 60;
+    const visit = visitMinutes(poi, intent, weather, adaptive);
     const startMinutes = cursor;
     cursor += visit;
     const fmt = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
@@ -382,30 +520,37 @@ function daySchedule(dayStops, route, intent, dayIndex) {
   });
   return {
     day: dayIndex + 1,
+    date: weather?.date || null,
     title: `${dayIndex + 1}-kun`,
     stops: rows,
     route,
+    weather: weather || null,
+    weather_adapted: Boolean(adaptive && risk.severity > 0),
+    adaptation_note: adaptive && risk.severity > 0 ? risk.advice : null,
     distance_km: Number(((route?.distance_m || 0) / 1000).toFixed(1)),
     transfer_minutes: route?.duration_min || 0,
-    meal_break: intent.interests.includes('gastronomy') ? 'Kun o‘rtasida milliy taomlar uchun 60 daqiqalik tanaffus rejalashtirilgan.' : null,
+    meal_break: intent.interests.includes('gastronomy') ? (risk.type === 'hot' && adaptive ? 'Issiq vaqt oralig‘ida 90 daqiqalik tushlik va dam olish tanaffusi rejalashtirildi.' : 'Kun o‘rtasida milliy taomlar uchun 60 daqiqalik tanaffus rejalashtirilgan.') : null,
   };
 }
 
-function localizedSummary(intent, count) {
-  if (intent.language === 'ru') return `${intent.days}-дневный маршрут по Самарканду: ${count} достопримечательностей. Маршрут оптимизирован по расстоянию и вашим предпочтениям.`;
-  if (intent.language === 'en') return `${intent.days}-day Samarkand itinerary with ${count} heritage stops, optimized for distance and your preferences.`;
-  return `Samarqand bo‘yicha ${intent.days} kunlik marshrut: ${count} ta tarixiy/turistik nuqta masofa va istaklaringiz bo‘yicha tartiblandi.`;
+function localizedSummary(intent, count, adaptedDays) {
+  if (intent.language === 'ru') return `${intent.days}-дневный маршрут по Самарканду: ${count} достопримечательностей.${adaptedDays ? ` ${adaptedDays} дн. скорректировано по погоде.` : ''}`;
+  if (intent.language === 'en') return `${intent.days}-day Samarkand itinerary with ${count} heritage stops.${adaptedDays ? ` ${adaptedDays} day(s) weather-adapted.` : ''}`;
+  return `Samarqand bo‘yicha ${intent.days} kunlik marshrut: ${count} ta tarixiy/turistik nuqta.${adaptedDays ? ` ${adaptedDays} kun ob-havoga moslashtirildi.` : ''}`;
 }
 
 router.get('/status', (_req, res) => {
   res.json({
-    version: '1.0.0',
+    version: '1.2.0',
     openai_configured: Boolean(process.env.OPENAI_API_KEY),
     openai_model: process.env.OPENAI_API_KEY ? (process.env.OPENAI_MODEL || 'gpt-5.6-luna') : null,
     poi_source: 'Verified curated Samarkand anchors + OpenStreetMap/Overpass enrichment',
     routing_source: 'OSRM driving + geodesic fallback',
+    weather_source: 'Open-Meteo',
+    weather_adaptive_routing: true,
+    forecast_window_days: 14,
     curated_poi_count: CURATED_POIS.length,
-    note: 'Ish vaqti, chipta narxi va kirish qoidalari xarita manbalarida to‘liq bo‘lmasligi mumkin; safardan oldin rasmiy manbadan tekshirish kerak.',
+    note: 'Ob-havo moslashuvi tavsiyaviy. Ish vaqti, chipta narxi, vaqtinchalik yopilish va kirish qoidalarini rasmiy manbadan tekshirish kerak.',
   });
 });
 
@@ -423,38 +568,51 @@ router.post('/plan', asyncHandler(async (req, res) => {
     ? haversine(requestedStart.latitude, requestedStart.longitude, CENTER.latitude, CENTER.longitude) > 30000
     : false;
   const start = requestedStart && !startOutsideSamarkand ? requestedStart : CENTER;
+  const tripStart = normalizeTripStart(req.body.start_date);
+  const weatherAdaptive = req.body.weather_adaptive !== false;
 
-  const discovered = await discoverHeritagePois();
+  const [discovered, weatherBundle] = await Promise.all([
+    discoverHeritagePois(),
+    getTripWeather(tripStart, intent.days),
+  ]);
   const ordered = selectPois(discovered.rows, intent, start);
   if (ordered.length < intent.days * 2) return res.status(422).json({ error: 'Marshrut uchun yetarli xarita obyektlari topilmadi.' });
-  const groups = splitDays(ordered, intent.days);
+  const rawGroups = splitDays(ordered, intent.days);
+  const groups = rebalanceForWeather(rawGroups, weatherBundle.rows, weatherAdaptive);
   const days = [];
   for (let i = 0; i < groups.length; i += 1) {
-    const stops = nearestOrder(groups[i], start);
+    const weather = weatherBundle.rows[i] || null;
+    const stops = weatherAwareOrder(groups[i], start, weather, weatherAdaptive);
     let route = null;
     if (intent.transport !== 'walking') route = await routeDriving(start, stops);
     if (!route) route = routeFallback(start, stops, intent.transport === 'walking');
-    days.push(daySchedule(stops, route, intent, i));
+    days.push(daySchedule(stops, route, intent, i, weather, weatherAdaptive));
   }
 
   const totalStops = days.reduce((sum, day) => sum + day.stops.length, 0);
+  const adaptedDays = days.filter((day) => day.weather_adapted).length;
   res.json({
-    version: '1.0.0',
+    version: '1.2.0',
     prompt,
     intent,
     start,
-    summary: localizedSummary(intent, totalStops),
+    trip_start_date: tripStart.date,
+    weather_adaptive: weatherAdaptive,
+    summary: localizedSummary(intent, totalStops, adaptedDays),
     days,
     sources: {
       places: discovered.provider === 'curated-fallback' ? 'Verified curated Samarkand reference catalog' : 'Curated Samarkand references + OpenStreetMap contributors via Overpass API',
       places_provider: discovered.provider,
       external_poi_count: discovered.external_count,
       routing: [...new Set(days.map((d) => d.route?.source).filter(Boolean))],
+      weather: weatherBundle.source,
       ai: intent.engine === 'openai' ? `OpenAI ${intent.model || ''}`.trim() : 'Local multilingual preference parser',
     },
     warnings: [
       startOutsideSamarkand ? 'Sizning geolokatsiyangiz Samarqand markazidan 30 km dan uzoq bo‘lgani uchun tur Samarqand markazidan boshlandi.' : null,
+      weatherBundle.warning,
       discovered.provider === 'curated-fallback' ? 'OpenStreetMap real-vaqt katalogi sekin javob berdi; marshrut tasdiqlangan tayanch obyektlar katalogidan tuzildi.' : null,
+      weatherAdaptive && weatherBundle.rows.length ? 'Yomg‘ir, kuchli shamol, keskin issiq yoki sovuq aniqlansa, obyektlarning kunlar va kun ichidagi tartibi avtomatik qayta optimallashtiriladi.' : null,
       'Marshrut tavsiya xarakterida. Ish vaqti, chipta narxi, vaqtinchalik yopilish va kirish qoidalarini rasmiy manbalardan tekshiring.',
       intent.transport === 'walking' ? 'Piyoda rejimida yo‘l chizig‘i geodezik taxmin; piyodalar yo‘laklari bo‘yicha professional routing keyingi bosqichda ulanadi.' : null,
     ].filter(Boolean),
@@ -468,7 +626,7 @@ async function runStartupSmoke() {
     const selected = selectPois(discovered.rows, intent, CENTER).slice(0, 4);
     const route = selected.length ? (await routeDriving(CENTER, selected) || routeFallback(CENTER, selected, false)) : null;
     const names = selected.map((p) => p.name).join(' | ');
-    console.log(`[tour-smoke] provider=${discovered.provider} pois=${discovered.rows.length} external=${discovered.external_count} sample=${names || 'none'} route=${route?.source || 'none'} geometry=${route?.geometry?.type || 'none'}`);
+    console.log(`[tour-smoke] v=1.2 provider=${discovered.provider} pois=${discovered.rows.length} external=${discovered.external_count} sample=${names || 'none'} route=${route?.source || 'none'} geometry=${route?.geometry?.type || 'none'}`);
   } catch (error) {
     console.warn(`[tour-smoke] failed=${error.response?.status || error.message}`);
   }
