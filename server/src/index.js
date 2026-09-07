@@ -19,13 +19,29 @@ const research = require('./routes/research');
 const meta = require('./routes/meta');
 const survey = require('./routes/survey');
 const chat = require('./routes/chat');
+const places = require('./routes/places');
 
 if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is required');
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required');
 
 const app = express();
 app.set('trust proxy', 1);
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'blob:', 'https://tile.openstreetmap.org'],
+      connectSrc: ["'self'", 'ws:', 'wss:'],
+      fontSrc: ["'self'", 'data:'],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      frameAncestors: ["'self'"],
+    },
+  },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+}));
 
 const allowedOrigins = (process.env.CLIENT_ORIGIN || '')
   .split(',')
@@ -48,8 +64,12 @@ app.use(rateLimit({ windowMs: 60_000, limit: 240 }));
 
 const publicDir = path.join(__dirname, '..', 'public');
 app.use(express.static(publicDir));
+app.use('/vendor/leaflet', express.static(path.join(__dirname, '..', 'node_modules', 'leaflet', 'dist'), {
+  maxAge: '30d',
+  immutable: true,
+}));
 
-app.get('/health', (_req, res) => res.json({ ok: true, version: '0.5.0' }));
+app.get('/health', (_req, res) => res.json({ ok: true, version: '0.6.0' }));
 app.use('/api/auth', auth);
 app.use('/api/prices', prices);
 app.use('/api/listings', listings);
@@ -60,6 +80,7 @@ app.use('/api/research', research);
 app.use('/api/meta', meta);
 app.use('/api/survey', survey);
 app.use('/api/chat', chat);
+app.use('/api/places', places);
 
 app.get('/', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')));
 
@@ -133,4 +154,4 @@ io.on('connection', (socket) => {
 });
 
 const port = Number(process.env.PORT || 4000);
-server.listen(port, () => console.log(`API + realtime chat listening on http://localhost:${port}`));
+server.listen(port, () => console.log(`API + realtime chat + maps listening on http://localhost:${port}`));
