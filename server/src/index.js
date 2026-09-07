@@ -74,7 +74,7 @@ app.use('/vendor/leaflet', express.static(path.join(__dirname, '..', 'node_modul
   immutable: true,
 }));
 
-app.get('/health', (_req, res) => res.json({ ok: true, version: '1.1.0' }));
+app.get('/health', (_req, res) => res.json({ ok: true, version: '1.2.0' }));
 app.use('/api/auth', auth);
 app.use('/api/prices', prices);
 app.use('/api/listings', listings);
@@ -164,4 +164,4 @@ io.on('connection', (socket) => {
 });
 
 const port = Number(process.env.PORT || 4000);
-server.listen(port, () => console.log(`API + chat + maps + agro ML + AI tourism context v1.1.0 listening on http://localhost:${port}`));
+server.listen(port, () => console.log(`API + chat + maps + agro ML + weather-adaptive AI tourism v1.2.0 listening on http://localhost:${port}`));
