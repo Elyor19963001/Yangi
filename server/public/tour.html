@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="Samarqand uchun AI sayohat rejalashtiruvchi va interaktiv marshrut" />
+  <title>AI Samarqand Tour Planner</title>
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="/tour.css" />
+  <script src="/vendor/leaflet/leaflet.js" defer></script>
+  <script src="/tour-app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="back" href="/">← Bosh sahifa</a>
+    <div class="brand"><span class="mark">AI</span><div><span class="eyebrow">SAMARKAND TOUR PLANNER · v1.0</span><h1>Istagingizni yozing — marshrut xaritada chizilsin</h1></div></div>
+    <a class="ghost" href="/map.html">📍 Xizmatlar xaritasi</a>
+  </header>
+
+  <main class="shell">
+    <section class="planner-card">
+      <div class="planner-copy">
+        <span class="eyebrow">TABIIY TILDA SO‘ROV</span>
+        <h2>Samarqand bo‘yicha sayohatingizni ayting</h2>
+        <p>Masalan: “Samarqandning tarixiy qadamjolari bo‘yicha 2 kunlik tur kerak. Ko‘p yurishni xohlamayman, milliy taomlar ham bo‘lsin.”</p>
+      </div>
+      <form id="plannerForm">
+        <textarea id="prompt" rows="4" maxlength="1500" required>Samarqandning tarixiy qadamjolari bo‘yicha 2 kunlik tur kerak. Ko‘p yurishni xohlamayman, milliy taomlar ham bo‘lsin.</textarea>
+        <div class="planner-actions">
+          <label>Kun<select id="days"><option value="1">1 kun</option><option value="2" selected>2 kun</option><option value="3">3 kun</option><option value="4">4 kun</option><option value="5">5 kun</option></select></label>
+          <button class="btn secondary" id="locateBtn" type="button">⌖ Joylashuvimdan boshlash</button>
+          <button class="btn primary" id="planBtn" type="submit">✨ Marshrut yaratish</button>
+        </div>
+        <div class="location-line" id="locationLine">Boshlanish: Samarqand markazi</div>
+        <div class="message" id="message"></div>
+      </form>
+    </section>
+
+    <section class="result-shell hidden" id="resultShell">
+      <aside class="itinerary-panel">
+        <div class="summary-head">
+          <span class="eyebrow">AI ITINERARY</span>
+          <h2 id="summaryTitle">Marshrut tayyor</h2>
+          <p id="summaryText"></p>
+          <div class="badges" id="intentBadges"></div>
+        </div>
+        <div class="day-tabs" id="dayTabs"></div>
+        <div id="dayDetails"></div>
+        <div class="source-note" id="sourceNote"></div>
+      </aside>
+
+      <section class="map-panel">
+        <div id="map"></div>
+        <div class="map-float">
+          <strong id="mapDayTitle">1-kun</strong>
+          <span id="mapDayMeta">Marshrut yuklanmoqda…</span>
+        </div>
+      </section>
+    </section>
+
+    <section class="feature-grid">
+      <article><span>01</span><strong>AI preference parser</strong><p>Kun, tarix, ziyorat, gastronomiya, oilaviy sayohat, kam yurish va transport istagini matndan ajratadi.</p></article>
+      <article><span>02</span><strong>Real xarita obyektlari</strong><p>Tarixiy va turistik nuqtalar OpenStreetMap orqali olinadi; tizim o‘zi yangi obida uydirmaydi.</p></article>
+      <article><span>03</span><strong>Route optimization</strong><p>Nuqtalar masofa bo‘yicha tartiblanadi, kunlarga bo‘linadi va xaritada yo‘nalish sifatida chiziladi.</p></article>
+      <article><span>04</span><strong>Dynamic re-planning</strong><p>Keyingi versiyada ob-havo, ish vaqti, tirbandlik va “bolam charchadi” kabi holatlar bo‘yicha qayta rejalashtiriladi.</p></article>
+    </section>
+  </main>
+  <div class="toast hidden" id="toast"></div>
+</body>
+</html>
