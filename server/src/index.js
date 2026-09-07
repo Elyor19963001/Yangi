@@ -38,7 +38,16 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", 'data:', 'blob:', 'https://tile.openstreetmap.org', 'https://*.tile.openstreetmap.org'],
+      imgSrc: [
+        "'self'",
+        'data:',
+        'blob:',
+        'https://tile.openstreetmap.org',
+        'https://*.tile.openstreetmap.org',
+        'https://server.arcgisonline.com',
+        'https://services.arcgisonline.com',
+        'https://*.arcgisonline.com',
+      ],
       connectSrc: ["'self'", 'ws:', 'wss:'],
       fontSrc: ["'self'", 'data:'],
       objectSrc: ["'none'"],
@@ -75,7 +84,7 @@ app.use('/vendor/leaflet', express.static(path.join(__dirname, '..', 'node_modul
   immutable: true,
 }));
 
-app.get('/health', (_req, res) => res.json({ ok: true, version: '1.3.0' }));
+app.get('/health', (_req, res) => res.json({ ok: true, version: '1.3.1' }));
 app.use('/api/auth', auth);
 app.use('/api/prices', prices);
 app.use('/api/listings', listings);
@@ -166,4 +175,4 @@ io.on('connection', (socket) => {
 });
 
 const port = Number(process.env.PORT || 4000);
-server.listen(port, () => console.log(`API + chat + maps + agro ML + Live GPS AI tourism v1.3.0 listening on http://localhost:${port}`));
+server.listen(port, () => console.log(`API + chat + maps + agro ML + Live GPS AI tourism + hybrid maps v1.3.1 listening on http://localhost:${port}`));
