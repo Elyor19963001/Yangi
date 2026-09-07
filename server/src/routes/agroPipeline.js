@@ -2,7 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const { pool } = require('../config/db');
 const asyncHandler = require('../utils/asyncHandler');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, requireRole } = require('../middleware/auth');
 const { activity } = require('../middleware/activity');
 
 const router = express.Router();
@@ -10,6 +10,8 @@ router.use(requireAuth);
 
 const PILOT_CROPS = ['Bug‘doy', 'Paxta', 'Uzum', 'Kartoshka', 'Pomidor'];
 const SOURCE_METHODS = new Set(['field_gps', 'map_digitized', 'farmer_confirmed', 'official_record']);
+const operatorAccess = requireRole('admin', 'operator');
+const modelAccess = requireRole('admin', 'researcher');
 
 function int(value) {
   const n = Number(value);
@@ -77,10 +79,6 @@ function geometryAreaHa(geometry) {
   return 0;
 }
 
-function isAdmin(req) {
-  return Boolean(process.env.ADMIN_KEY) && req.get('x-admin-key') === process.env.ADMIN_KEY;
-}
-
 async function workerRequest(method, path, data) {
   const base = String(process.env.AGRO_WORKER_URL || '').replace(/\/$/, '');
   if (!base) {
@@ -114,7 +112,7 @@ router.get('/health', activity('view', 'agro_ml_worker'), asyncHandler(async (_r
 }));
 
 router.get('/pilot-crops', (_req, res) => {
-  res.json({ version: '0.8.1', crops: PILOT_CROPS, min_area_ha: 0.02, max_area_ha: 5000 });
+  res.json({ version: '0.9.0', crops: PILOT_CROPS, min_area_ha: 0.02, max_area_ha: 5000 });
 });
 
 router.get('/readiness', activity('view', 'agro_ml_readiness'), asyncHandler(async (req, res) => {
@@ -173,8 +171,7 @@ router.get('/my-samples', activity('view', 'agro_my_ground_truth'), asyncHandler
   res.json(result.rows);
 }));
 
-router.get('/samples', asyncHandler(async (req, res) => {
-  if (!isAdmin(req)) return res.status(403).json({ error: 'Admin ruxsati kerak' });
+router.get('/samples', operatorAccess, asyncHandler(async (req, res) => {
   const status = ['pending', 'verified', 'rejected'].includes(req.query.status) ? req.query.status : null;
   const districtId = int(req.query.district_id);
   const season = text(req.query.season, 20);
@@ -195,8 +192,7 @@ router.get('/samples', asyncHandler(async (req, res) => {
   res.json(result.rows);
 }));
 
-router.patch('/admin/samples/:sampleId', asyncHandler(async (req, res) => {
-  if (!isAdmin(req)) return res.status(403).json({ error: 'Admin ruxsati kerak' });
+router.patch('/admin/samples/:sampleId', operatorAccess, asyncHandler(async (req, res) => {
   const sampleId = int(req.params.sampleId);
   const status = ['verified', 'rejected', 'pending'].includes(req.body.verification_status) ? req.body.verification_status : null;
   const season = text(req.body.season, 20) || null;
@@ -207,20 +203,20 @@ router.patch('/admin/samples/:sampleId', asyncHandler(async (req, res) => {
         SET verification_status=$1,
             season=COALESCE($2, season),
             verification_notes=$3,
+            verified_by=CASE WHEN $1='verified' THEN $4 ELSE verified_by END,
             verified_at=CASE WHEN $1='verified' THEN NOW() ELSE NULL END,
             feature_status=CASE WHEN $1='verified' THEN 'pending' ELSE feature_status END,
             feature_json=CASE WHEN $1='verified' THEN NULL ELSE feature_json END,
             feature_updated_at=CASE WHEN $1='verified' THEN NULL ELSE feature_updated_at END
-      WHERE sample_id=$4
+      WHERE sample_id=$5
       RETURNING sample_id, crop_name, season, verification_status, feature_status, verification_notes, verified_at`,
-    [status, season, verificationNotes, sampleId]
+    [status, season, verificationNotes, req.user.user_id, sampleId]
   );
   if (!result.rows[0]) return res.status(404).json({ error: 'Sample topilmadi' });
   res.json(result.rows[0]);
 }));
 
-router.post('/admin/extract-sample/:sampleId', asyncHandler(async (req, res) => {
-  if (!isAdmin(req)) return res.status(403).json({ error: 'Admin ruxsati kerak' });
+router.post('/admin/extract-sample/:sampleId', operatorAccess, asyncHandler(async (req, res) => {
   const sampleId = int(req.params.sampleId);
   if (!sampleId) return res.status(400).json({ error: 'Noto‘g‘ri sample id' });
   try {
@@ -230,8 +226,7 @@ router.post('/admin/extract-sample/:sampleId', asyncHandler(async (req, res) => 
   }
 }));
 
-router.post('/admin/train', asyncHandler(async (req, res) => {
-  if (!isAdmin(req)) return res.status(403).json({ error: 'Admin ruxsati kerak' });
+router.post('/admin/train', modelAccess, asyncHandler(async (req, res) => {
   const districtId = int(req.body.district_id);
   const season = text(req.body.season, 20);
   if (!districtId || !season) return res.status(400).json({ error: 'district_id va season kerak' });
