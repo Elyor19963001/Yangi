@@ -169,7 +169,7 @@ function poiScore(poi, intent) {
 }
 
 async function discoverHeritagePois() {
-  const key = 'samarkand-heritage-v1';
+  const key = 'samarkand-heritage-v2';
   const cached = poiCache.get(key);
   if (cached && Date.now() - cached.at < CACHE_MS) return cached.rows;
   const radius = 16000;
@@ -249,8 +249,13 @@ function selectPois(pois, intent, start) {
   const perDay = intent.pace === 'relaxed' || intent.low_walking ? 4 : intent.pace === 'active' ? 6 : 5;
   const target = clamp(intent.days * perDay, intent.days * 3, 26);
   const scored = pois
-    .map((poi) => ({ ...poi, score: poiScore(poi, intent), distance_from_start_m: Math.round(haversine(start.latitude, start.longitude, poi.latitude, poi.longitude)) }))
-    .filter((poi) => poi.distance_from_start_m <= 22000)
+    .map((poi) => ({
+      ...poi,
+      score: poiScore(poi, intent),
+      distance_from_center_m: Math.round(haversine(CENTER.latitude, CENTER.longitude, poi.latitude, poi.longitude)),
+      distance_from_start_m: Math.round(haversine(start.latitude, start.longitude, poi.latitude, poi.longitude)),
+    }))
+    .filter((poi) => poi.distance_from_center_m <= 22000)
     .sort((a, b) => b.score - a.score || a.distance_from_start_m - b.distance_from_start_m);
   const selected = [];
   const seen = new Set();
@@ -367,9 +372,13 @@ router.post('/plan', asyncHandler(async (req, res) => {
   const intent = await parseIntentWithOpenAI(prompt, fallback);
   const startLat = number(req.body.start_latitude);
   const startLon = number(req.body.start_longitude);
-  const start = validCoord(startLat, startLon)
+  const requestedStart = validCoord(startLat, startLon)
     ? { latitude: startLat, longitude: startLon, name: text(req.body.start_name, 120) || 'Boshlanish nuqtasi' }
-    : CENTER;
+    : null;
+  const startOutsideSamarkand = requestedStart
+    ? haversine(requestedStart.latitude, requestedStart.longitude, CENTER.latitude, CENTER.longitude) > 30000
+    : false;
+  const start = requestedStart && !startOutsideSamarkand ? requestedStart : CENTER;
 
   let pois;
   try {
@@ -404,10 +413,29 @@ router.post('/plan', asyncHandler(async (req, res) => {
       ai: intent.engine === 'openai' ? `OpenAI ${intent.model || ''}`.trim() : 'Local multilingual preference parser',
     },
     warnings: [
+      startOutsideSamarkand ? 'Sizning geolokatsiyangiz Samarqand markazidan 30 km dan uzoq bo‘lgani uchun tur Samarqand markazidan boshlandi.' : null,
       'Marshrut tavsiya xarakterida. Ish vaqti, chipta narxi, vaqtinchalik yopilish va kirish qoidalarini rasmiy manbalardan tekshiring.',
       intent.transport === 'walking' ? 'Piyoda rejimida yo‘l chizig‘i geodezik taxmin; piyodalar yo‘laklari bo‘yicha professional routing keyingi bosqichda ulanadi.' : null,
     ].filter(Boolean),
   });
 }));
+
+async function runStartupSmoke() {
+  try {
+    const intent = fallbackIntent('Samarqand tarixiy qadamjolari bo‘yicha 2 kun, ko‘p yurmay, milliy taomlar bilan', 2);
+    const pois = await discoverHeritagePois();
+    const selected = selectPois(pois, intent, CENTER).slice(0, 4);
+    const route = selected.length ? (await routeDriving(CENTER, selected) || routeFallback(CENTER, selected, false)) : null;
+    const names = selected.map((p) => p.name).join(' | ');
+    console.log(`[tour-smoke] overpass=ok pois=${pois.length} sample=${names || 'none'} route=${route?.source || 'none'} geometry=${route?.geometry?.type || 'none'}`);
+  } catch (error) {
+    console.warn(`[tour-smoke] failed=${error.response?.status || error.message}`);
+  }
+}
+
+if (process.env.TOUR_STARTUP_SMOKE !== 'false') {
+  const timer = setTimeout(runStartupSmoke, 2500);
+  if (typeof timer.unref === 'function') timer.unref();
+}
 
 module.exports = router;
