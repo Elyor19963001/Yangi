@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ilmiy so‘rovnoma · Qishloq Raqamli Platformasi</title>
+  <link rel="stylesheet" href="/research.css" />
+  <script src="/research-app.js" defer></script>
+</head>
+<body>
+  <header class="topbar"><div class="inner"><a href="/">← Platformaga qaytish</a><strong>PhD Research Data Collection · v0.3</strong></div></header>
+  <main class="page">
+    <section class="hero">
+      <span class="eyebrow">ILMIY SO‘ROVNOMA</span>
+      <h1>Qishloq uy xo‘jaliklarining raqamli imkoniyatlari va iqtisodiy faolligi</h1>
+      <p>So‘rovnoma baseline, midline va endline bosqichlarida bir xil anonim <code>study_id</code> orqali bog‘lanadi. Ilmiy bazaga ism va telefon kiritilmaydi.</p>
+      <div id="loginNotice" class="notice warning">Avval bosh sahifada OTP orqali tizimga kiring.</div>
+      <div id="studyStatus" class="status hidden"></div>
+    </section>
+
+    <section id="consentCard" class="card hidden">
+      <h2>1. Tadqiqotda ishtirok etishga rozilik</h2>
+      <p>Ushbu tadqiqot qishloq hududlarida internet va raqamli xizmatlardan foydalanishning iqtisodiy natijalarga ta’sirini baholash uchun o‘tkaziladi. Ishtirok ixtiyoriy. Siz istalgan vaqtda rozilikni qaytarib olishingiz mumkin.</p>
+      <div class="consent-grid">
+        <div><strong>Yig‘iladi</strong><span>yosh guruhi, tuman, ta’lim, bandlik, uy xo‘jaligi hajmi, daromad, internet, raqamli ko‘nikmalar va xizmatlardan foydalanish</span></div>
+        <div><strong>Yig‘ilmaydi</strong><span>JShShIR, pasport raqami, bank karta ma’lumotlari, biometrika va aniq uy manzili</span></div>
+        <div><strong>Ilmiy bazada</strong><span>faqat <code>study_id</code> va tadqiqot ko‘rsatkichlari saqlanadi</span></div>
+      </div>
+      <label class="check"><input id="researchConsent" type="checkbox" /> <span>Ma’lumotlarimni ushbu ilmiy tadqiqot doirasida qayta ishlashga roziman.</span></label>
+      <button id="saveConsent" class="btn primary">Rozilikni tasdiqlash</button>
+      <button id="withdrawConsent" class="btn danger hidden">Rozilikni qaytarib olish</button>
+      <div id="consentMessage" class="message"></div>
+    </section>
+
+    <section id="surveyCard" class="card hidden">
+      <div class="survey-head"><div><h2>2. Respondent so‘rovnomasi</h2><p>Har bir bosqich bo‘yicha bitta javob saqlanadi; qayta yuborilsa yangilanadi.</p></div>
+        <label>Bosqich<select id="wave"><option value="baseline">Baseline (T0)</option><option value="midline">Midline (T3)</option><option value="endline">Endline (T6)</option></select></label>
+      </div>
+      <form id="surveyForm" class="form-grid">
+        <label>Tuman<select id="district_id" required></select></label>
+        <label>Yosh guruhi<select id="age_group"><option value="18-24">18–24</option><option value="25-34">25–34</option><option value="35-44">35–44</option><option value="45-54">45–54</option><option value="55-64">55–64</option><option value="65+">65+</option></select></label>
+        <label>Jins<select id="gender"><option value="">Javob bermaslik</option><option value="male">Erkak</option><option value="female">Ayol</option><option value="prefer_not">Ko‘rsatmaslik</option></select></label>
+        <label>Ta’lim darajasi<select id="education_level"><option value="secondary">Umumiy o‘rta</option><option value="vocational">Kasbiy</option><option value="bachelor">Bakalavr</option><option value="master_plus">Magistr va undan yuqori</option><option value="other">Boshqa</option></select></label>
+        <label>Uy xo‘jaligi a’zolari soni<input id="household_size" type="number" min="1" max="30" /></label>
+        <label>Bandlik holati<select id="employment_status"><option value="employed">Band</option><option value="self_employed">O‘zini o‘zi band qilgan</option><option value="business">Tadbirkor</option><option value="unemployed">Ishsiz</option><option value="student">Talaba</option><option value="retired">Pensioner</option><option value="other">Boshqa</option></select></label>
+        <label>Oylik uy xo‘jaligi daromadi, so‘m <span class="optional">ixtiyoriy</span><input id="monthly_household_income_uzs" type="number" min="0" step="1000" /></label>
+        <label>Internetga kirish bormi?<select id="internet_access"><option value="true">Ha</option><option value="false">Yo‘q</option></select></label>
+        <label>Internet turi<select id="internet_type"><option value="mobile">Mobil internet</option><option value="fiber">Optik/tolali</option><option value="adsl">ADSL</option><option value="other">Boshqa</option><option value="none">Yo‘q</option></select></label>
+        <label>Internet uchun oylik xarajat, so‘m<input id="monthly_internet_cost_uzs" type="number" min="0" step="1000" /></label>
+        <label>Internet sifati (1–5)<input id="internet_quality" type="range" min="1" max="5" value="3" /><output id="internet_quality_out">3</output></label>
+        <label>Raqamli ko‘nikma (1–5)<input id="digital_skills" type="range" min="1" max="5" value="3" /><output id="digital_skills_out">3</output></label>
+        <label>Smartfon mavjud<select id="smartphone_access"><option value="true">Ha</option><option value="false">Yo‘q</option></select></label>
+        <label>Kompyuter mavjud<select id="computer_access"><option value="true">Ha</option><option value="false">Yo‘q</option></select></label>
+        <label>E-gov xizmatlaridan foydalanadi<select id="egov_use"><option value="true">Ha</option><option value="false">Yo‘q</option></select></label>
+        <label>Raqamli to‘lovlardan foydalanadi<select id="digital_payment_use"><option value="true">Ha</option><option value="false">Yo‘q</option></select></label>
+        <label>Onlayn xarid qiladi<select id="ecommerce_use"><option value="true">Ha</option><option value="false">Yo‘q</option></select></label>
+        <label>Internet orqali mahsulot sotadi<select id="online_selling_use"><option value="true">Ha</option><option value="false">Yo‘q</option></select></label>
+        <label>Narxlarni bilish darajasi (0–10)<input id="price_knowledge" type="number" min="0" max="10" value="5" /></label>
+        <label>Raqamli moliyaviy xizmatlardan foydalanadi<select id="financial_services_use"><option value="true">Ha</option><option value="false">Yo‘q</option></select></label>
+        <label>Platformadan foydalanish, oyiga necha kun<input id="platform_usage_frequency" type="number" min="0" max="30" value="0" /></label>
+        <label>NPS: platformani tavsiya qilish ehtimoli (0–10)<input id="nps" type="number" min="0" max="10" value="5" /></label>
+        <div class="full actions"><button class="btn primary" type="submit">So‘rovnomani saqlash</button><button class="btn secondary" id="loadWave" type="button">Oldingi javobni yuklash</button></div>
+        <div id="surveyMessage" class="message full"></div>
+      </form>
+    </section>
+
+    <section class="card safeguard"><h2>Ma’lumotlar xavfsizligi</h2><p>Bu versiyada ilmiy javoblar foydalanuvchi telefoni va ismidan ajratilgan <code>study_id</code> bilan saqlanadi. Real fuqarolar bilan pilot boshlanishidan oldin server joylashuvi, etik rozilik hujjati va tashkilotning shaxsga doir ma’lumotlar bo‘yicha ichki tartibi yakuniy tasdiqlanishi kerak.</p></section>
+  </main>
+</body>
+</html>
