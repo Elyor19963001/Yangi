@@ -82,7 +82,7 @@
         return;
       }
 
-      window.QRP3D?.close?.();
+      if (activeMode === '3d') window.QRP3D?.close?.();
       const config = configs[safeMode];
       if (activeBase) map.removeLayer(activeBase);
       if (activeOverlay) map.removeLayer(activeOverlay);
