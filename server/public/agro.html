@@ -16,9 +16,9 @@
       <div class="brand-block">
         <a class="back-link" href="/" aria-label="Bosh sahifa">←</a>
         <div class="brand-mark">AI</div>
-        <div><span class="eyebrow">AGRO INTELLIGENCE · v0.7</span><h1>Sun’iy yo‘ldosh va bozor signallari</h1></div>
+        <div><span class="eyebrow">AGRO INTELLIGENCE · v0.8</span><h1>Sun’iy yo‘ldosh va bozor signallari</h1></div>
       </div>
-      <nav class="top-actions"><a class="ghost-btn" href="/map.html">📍 Xizmatlar xaritasi</a><a class="ghost-btn" href="/community.html">💬 Chat</a></nav>
+      <nav class="top-actions"><a class="ghost-btn" href="/agro-samples.html">🧭 Dala namunasini kiritish</a><a class="ghost-btn" href="/map.html">📍 Xizmatlar xaritasi</a><a class="ghost-btn" href="/community.html">💬 Chat</a></nav>
     </header>
 
     <section class="control-strip">
@@ -64,18 +64,18 @@
         </section>
 
         <section class="source-card">
-          <div class="source-icon">S2</div><div><strong>Sentinel-2 L2A</strong><p>Copernicus Data Space STAC katalogidan joriy metadata. Crop-classification uchun vaqt qatori va reference data talab qilinadi.</p></div>
+          <div class="source-icon">S2</div><div><strong>Sentinel-2 L2A</strong><p>Copernicus Data Space STAC katalogidan joriy metadata. ML worker poligonlar uchun Sentinel-2 vaqt qatori xususiyatlarini hisoblashga tayyor.</p></div>
         </section>
         <section class="source-card">
-          <div class="source-icon wc">WC</div><div><strong>ESA WorldCereal</strong><p>2021 global 10 m crop/cropland reference mahsulotlari va custom crop mapping processing tizimi.</p></div>
+          <div class="source-icon wc">GT</div><div><strong>Ground truth</strong><p>Dalada tekshirilgan poligonlar alohida yig‘iladi. Faqat operator tasdiqlagan namuna modelni o‘qitishga kiradi.</p></div>
         </section>
 
         <section class="method-card">
-          <span class="eyebrow">METODOLOGIYA</span>
-          <ol><li>Sentinel-2 L2A sahnalarini tanlash</li><li>Bulutni filtrlash va vegetatsiya vaqt qatori</li><li>Ground-truth / WorldCereal reference</li><li>Crop classification va confidence</li><li>Operator verifikatsiyasi</li><li>Published qatlam → savdogar/iste’molchi</li></ol>
+          <span class="eyebrow">METODOLOGIYA · v0.8</span>
+          <ol><li>Dala konturini va ekin turini ground-truth sifatida yig‘ish</li><li>Operator verifikatsiyasi</li><li>Sentinel-2 L2A vaqt qatori</li><li>NDVI, NDMI, NDWI va spektral feature’lar</li><li>Random Forest + cross-validation</li><li>Tekshirilgan model natijasi → published qatlam</li></ol>
         </section>
 
-        <section class="warning-card"><strong>⚠️ Muhim</strong><p>Platforma sun’iy yo‘ldoshdan taxmin qilingan ekinni “rasmiy fakt” deb chiqarmaydi. `published` status faqat model natijasi tekshirilgandan keyin beriladi.</p></section>
+        <section class="warning-card"><strong>⚠️ Muhim</strong><p>Hozir ekin poligonlari ataylab uydirma ma’lumot bilan to‘ldirilmaydi. Real `published` crop qatlam faqat yetarli verified ground-truth va model validatsiyasidan keyin paydo bo‘ladi.</p></section>
       </aside>
     </main>
   </div>
