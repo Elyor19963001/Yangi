@@ -1,12 +1,12 @@
 {
   "name": "phd-rural-platform-server",
-  "version": "0.1.0",
+  "version": "0.4.0",
   "private": true,
   "type": "commonjs",
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
-    "check": "node --check src/index.js",
+    "check": "node --check src/index.js && node --check src/routes/chat.js",
     "db:migrate": "node scripts/migrate.js",
     "db:seed": "node scripts/seed.js"
   },
@@ -19,7 +19,8 @@
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.13.1"
+    "pg": "^8.13.1",
+    "socket.io": "^4.8.1"
   },
   "engines": {
     "node": ">=20 <23"
