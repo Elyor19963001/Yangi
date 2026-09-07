@@ -13,6 +13,7 @@ const programs = require('./routes/programs');
 const profile = require('./routes/profile');
 const research = require('./routes/research');
 const meta = require('./routes/meta');
+const survey = require('./routes/survey');
 
 if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is required');
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required');
@@ -41,8 +42,7 @@ app.use(rateLimit({ windowMs: 60_000, limit: 180 }));
 const publicDir = path.join(__dirname, '..', 'public');
 app.use(express.static(publicDir));
 
-app.get('/health', (_req, res) => res.json({ ok: true, version: '0.2.0' }));
-app.use('/api/meta', meta);
+app.get('/health', (_req, res) => res.json({ ok: true, version: '0.3.0' }));
 app.use('/api/auth', auth);
 app.use('/api/prices', prices);
 app.use('/api/listings', listings);
@@ -50,6 +50,8 @@ app.use('/api/weather', weather);
 app.use('/api/programs', programs);
 app.use('/api/user/profile', profile);
 app.use('/api/research', research);
+app.use('/api/meta', meta);
+app.use('/api/survey', survey);
 
 app.get('/', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')));
 
