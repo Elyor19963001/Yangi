@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Agro operator paneli · Qishloq Raqamli Platformasi</title>
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="/agro-admin.css" />
+  <script src="/vendor/leaflet/leaflet.js" defer></script>
+  <script src="/agro-admin.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="back" href="/agro.html">← Agro Intelligence</a>
+    <div><span class="eyebrow">OPERATOR QA · v0.8.1</span><h1>Ground-truth va ML boshqaruvi</h1></div>
+    <a class="btn secondary" href="/agro-samples.html">＋ Namuna yig‘ish</a>
+  </header>
+
+  <section class="auth-strip">
+    <label>Operator kaliti<input id="adminKey" type="password" autocomplete="off" placeholder="ADMIN_KEY" /></label>
+    <button id="connectBtn" class="btn primary">Operator rejimini ochish</button>
+    <span id="workerBadge" class="badge muted">Worker tekshirilmagan</span>
+  </section>
+
+  <main class="dashboard">
+    <aside class="samples-panel">
+      <div class="panel-head"><div><span class="eyebrow">QA QUEUE</span><h2>Dala namunalari</h2></div><span id="queueCount" class="count">0</span></div>
+      <div class="filters">
+        <select id="districtFilter"><option value="">Barcha tumanlar</option></select>
+        <select id="statusFilter"><option value="pending">Pending</option><option value="verified">Verified</option><option value="rejected">Rejected</option><option value="">Barchasi</option></select>
+        <input id="seasonFilter" value="2026" maxlength="20" aria-label="Mavsum" />
+        <button id="refreshBtn" class="btn ghost">Yangilash</button>
+      </div>
+      <div id="sampleList" class="sample-list"><div class="empty">Operator kalitini kiriting.</div></div>
+    </aside>
+
+    <section class="map-panel">
+      <div id="map"></div>
+      <div class="map-caption"><strong id="mapTitle">Namuna tanlanmagan</strong><span id="mapMeta">Poligon sifati va joylashuvi shu yerda ko‘riladi.</span></div>
+    </section>
+
+    <aside class="review-panel">
+      <section class="review-card">
+        <span class="eyebrow">SAMPLE REVIEW</span>
+        <h2 id="reviewTitle">Namuna tanlang</h2>
+        <div id="reviewDetails" class="detail-grid"><div><span>Holat</span><strong>—</strong></div><div><span>Maydon</span><strong>—</strong></div></div>
+        <label>Operator izohi<textarea id="verificationNotes" rows="4" maxlength="700" placeholder="Masalan: kontur dalaga mos; ekin turi joyida tasdiqlandi"></textarea></label>
+        <div class="review-actions"><button id="verifyBtn" class="btn primary" disabled>✓ Tasdiqlash</button><button id="rejectBtn" class="btn danger" disabled>✕ Rad etish</button></div>
+        <button id="extractBtn" class="btn secondary full" disabled>Sentinel-2 feature ajratish</button>
+        <div id="actionMessage" class="message"></div>
+      </section>
+
+      <section class="model-card">
+        <span class="eyebrow">MODEL READINESS</span>
+        <h2>Random Forest treningi</h2>
+        <div class="model-controls"><select id="modelDistrict"><option value="">Tumanni tanlang</option></select><input id="modelSeason" value="2026" maxlength="20" /><input id="minSamples" type="number" min="2" max="30" value="30" /></div>
+        <p class="hint">Ilmiy pilot uchun maqsad: har bir ekin sinfida 30–50 ta verified dala. Minimal texnik threshold modelni sinash uchungina.</p>
+        <div class="review-actions"><button id="readinessBtn" class="btn ghost">Tayyorlikni tekshirish</button><button id="trainBtn" class="btn primary">Modelni o‘qitish</button></div>
+        <pre id="readinessBox">Hali tekshirilmagan.</pre>
+      </section>
+
+      <section class="runs-card">
+        <div class="panel-head"><div><span class="eyebrow">MODEL RUNS</span><h2>So‘nggi treninglar</h2></div></div>
+        <div id="runsList" class="runs-list"><div class="empty">Ma’lumot yo‘q.</div></div>
+      </section>
+    </aside>
+  </main>
+
+  <div id="loginModal" class="modal hidden"><div><h2>Avval tizimga kiring</h2><p>Operator paneli foydalanuvchi sessiyasi va alohida ADMIN_KEY talab qiladi.</p><a href="/" class="btn primary full">Kirish</a></div></div>
+  <div id="toast" class="toast hidden"></div>
+</body>
+</html>
