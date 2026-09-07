@@ -29,6 +29,24 @@ function shortId(value) {
   return text.length > 18 ? text.slice(0, 8) + '…' + text.slice(-6) : text;
 }
 
+function safeHttpUrl(value) {
+  try {
+    const url = new URL(String(value));
+    return ['http:', 'https:'].includes(url.protocol) ? url.toString() : null;
+  } catch { return null; }
+}
+
+function weatherEmoji(code) {
+  const n = Number(code);
+  if ([0,1].includes(n)) return '☀️';
+  if ([2,3].includes(n)) return '⛅';
+  if ([45,48].includes(n)) return '🌫️';
+  if ([51,53,55,61,63,65,80,81,82].includes(n)) return '🌧️';
+  if ([71,73,75].includes(n)) return '❄️';
+  if ([95,96,99].includes(n)) return '⛈️';
+  return '🌤️';
+}
+
 async function api(path, options = {}) {
   const headers = { ...(options.headers || {}) };
   if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
@@ -54,7 +72,7 @@ function setMessage(element, message = '', type = '') {
 async function checkServer() {
   try {
     const data = await api('/health');
-    $('serverText').textContent = `Server online · v${data.version || '0.2.0'}`;
+    $('serverText').textContent = `Server online · v${data.version || '0.6.0'}`;
     $('serverPill').classList.add('online');
   } catch {
     $('serverText').textContent = 'Server bilan aloqa yo‘q';
@@ -132,11 +150,7 @@ async function handleRegister(event) {
     state.pendingPhone = phone;
     await api('/api/auth/consent', {
       method: 'POST',
-      body: JSON.stringify({
-        phone,
-        consent_version: 'v1',
-        consent_analytics: consent,
-      }),
+      body: JSON.stringify({ phone, consent_version: 'v1', consent_analytics: consent }),
     });
 
     $('registerForm').classList.add('hidden');
@@ -172,12 +186,8 @@ async function handleOtp(event) {
 
 function switchTab(tab) {
   state.activeTab = tab;
-  document.querySelectorAll('.tab').forEach((button) => {
-    button.classList.toggle('active', button.dataset.tab === tab);
-  });
-  document.querySelectorAll('.panel').forEach((panel) => {
-    panel.classList.toggle('active', panel.dataset.panel === tab);
-  });
+  document.querySelectorAll('.tab').forEach((button) => button.classList.toggle('active', button.dataset.tab === tab));
+  document.querySelectorAll('.panel').forEach((panel) => panel.classList.toggle('active', panel.dataset.panel === tab));
   if (state.token) loadActiveModule();
 }
 
@@ -201,14 +211,7 @@ async function loadPrices() {
       return;
     }
     body.innerHTML = rows.map((row) => `
-      <tr>
-        <td><strong>${escapeHtml(row.product)}</strong></td>
-        <td>${escapeHtml(row.market)}</td>
-        <td class="price-cell">${money(row.price)}</td>
-        <td>${escapeHtml(row.unit || '—')}</td>
-        <td>${escapeHtml(row.price_date ? String(row.price_date).slice(0, 10) : '—')}</td>
-        <td><span class="source-pill">${escapeHtml(row.source || '—')}</span></td>
-      </tr>`).join('');
+      <tr><td><strong>${escapeHtml(row.product)}</strong></td><td>${escapeHtml(row.market)}</td><td class="price-cell">${money(row.price)}</td><td>${escapeHtml(row.unit || '—')}</td><td>${escapeHtml(row.price_date ? String(row.price_date).slice(0, 10) : '—')}</td><td><span class="source-pill">${escapeHtml(row.source || '—')}</span></td></tr>`).join('');
   } catch (error) {
     body.innerHTML = `<tr><td colspan="6" class="error-text">${escapeHtml(error.message)}</td></tr>`;
   }
@@ -224,13 +227,7 @@ async function loadListings() {
       return;
     }
     grid.innerHTML = rows.map((row) => `
-      <article class="listing-card">
-        <div class="listing-top"><span class="listing-label">Sotuvda</span><small>${escapeHtml(row.created_at ? new Date(row.created_at).toLocaleDateString('uz-UZ') : '')}</small></div>
-        <h5>${escapeHtml(row.title)}</h5>
-        <strong class="listing-price">${money(row.price)}</strong>
-        <p>${escapeHtml(row.description || 'Tavsif kiritilmagan.')}</p>
-        <div class="listing-meta"><span>${escapeHtml(row.quantity || '—')} ${escapeHtml(row.unit || '')}</span><span>${escapeHtml(row.seller_name || 'Pilot foydalanuvchi')}</span></div>
-      </article>`).join('');
+      <article class="listing-card"><div class="listing-top"><span class="listing-label">Sotuvda</span><small>${escapeHtml(row.created_at ? new Date(row.created_at).toLocaleDateString('uz-UZ') : '')}</small></div><h5>${escapeHtml(row.title)}</h5><strong class="listing-price">${money(row.price)}</strong><p>${escapeHtml(row.description || 'Tavsif kiritilmagan.')}</p><div class="listing-meta"><span>${escapeHtml(row.quantity || '—')} ${escapeHtml(row.unit || '')}</span><span>${escapeHtml(row.seller_name || 'Pilot foydalanuvchi')}</span></div></article>`).join('');
   } catch (error) {
     grid.innerHTML = `<div class="empty-card error-text">${escapeHtml(error.message)}</div>`;
   }
@@ -269,31 +266,16 @@ async function loadWeather() {
   content.innerHTML = '<div class="empty-card">Ob-havo yuklanmoqda…</div>';
   try {
     const data = await api(`/api/weather/${encodeURIComponent(districtId)}`);
-    if (data.mode === 'demo' || !data.forecast?.length) {
-      content.innerHTML = `
-        <div class="weather-demo">
-          <div class="weather-symbol">🌤️</div>
-          <div><span class="demo-badge">DEMO REJIMI</span><h4>${escapeHtml(data.district || 'Tanlangan tuman')}</h4><p>${escapeHtml(data.message || 'Real ob-havo API kaliti hali ulanmagan.')}</p></div>
-        </div>`;
+    if (data.mode === 'demo' || !data.daily?.length) {
+      content.innerHTML = `<div class="weather-demo"><div class="weather-symbol">🌤️</div><div><span class="demo-badge">JOY ANIQLANMADI</span><h4>${escapeHtml(data.district || 'Tanlangan tuman')}</h4><p>${escapeHtml(data.message || 'Aniq lokatsiya bilan xarita modulidan foydalaning.')}</p><a class="btn btn-primary" href="/map.html">⌖ Xarita va real ob-havo</a></div></div>`;
       return;
     }
 
-    const uniqueDays = [];
-    const seen = new Set();
-    for (const item of data.forecast) {
-      const date = String(item.dt_txt || '').slice(0, 10);
-      if (!date || seen.has(date)) continue;
-      seen.add(date);
-      uniqueDays.push(item);
-      if (uniqueDays.length === 5) break;
-    }
-    content.innerHTML = `<div class="weather-title"><h4>${escapeHtml(data.district)}</h4><span class="live-badge">LIVE</span></div><div class="forecast-grid">${uniqueDays.map((item) => `
-      <article class="forecast-card">
-        <small>${escapeHtml(String(item.dt_txt || '').slice(0, 10))}</small>
-        <div class="forecast-temp">${Math.round(Number(item.main?.temp || 0))}°C</div>
-        <strong>${escapeHtml(item.weather?.[0]?.description || '')}</strong>
-        <span>Namlik: ${escapeHtml(item.main?.humidity || '—')}%</span>
-      </article>`).join('')}</div>`;
+    const current = data.current || {};
+    content.innerHTML = `
+      <div class="weather-title"><div><h4>${escapeHtml(data.district || data.location || 'Tanlangan tuman')}</h4><small>${escapeHtml(current.condition || '')} · ${Math.round(Number(current.temperature_2m || 0))}°C · namlik ${Math.round(Number(current.relative_humidity_2m || 0))}%</small></div><span class="live-badge">LIVE · Open-Meteo</span></div>
+      <div class="forecast-grid">${data.daily.slice(0,5).map((day) => `<article class="forecast-card"><small>${escapeHtml(String(day.date || ''))}</small><div class="forecast-temp">${weatherEmoji(day.weather_code)} ${Math.round(Number(day.temp_max || 0))}°</div><strong>${escapeHtml(day.condition || '')}</strong><span>Min: ${Math.round(Number(day.temp_min || 0))}° · yomg‘ir ${Math.round(Number(day.precipitation_probability_max || 0))}%</span></article>`).join('')}</div>
+      <div class="research-note"><strong>🌾 Agro signal:</strong> ${escapeHtml(data.agro_advice?.[0] || 'Keskin signal aniqlanmadi.')} <a class="text-link" href="/map.html">Yaqin xizmatlar xaritasini ochish →</a></div>`;
   } catch (error) {
     content.innerHTML = `<div class="empty-card error-text">${escapeHtml(error.message)}</div>`;
   }
@@ -308,14 +290,10 @@ async function loadPrograms() {
       grid.innerHTML = '<div class="empty-card">Hozircha faol dastur kiritilmagan.</div>';
       return;
     }
-    grid.innerHTML = rows.map((row) => `
-      <article class="program-card">
-        <div class="program-top"><span class="program-type">${escapeHtml(row.program_type || 'dastur')}</span>${row.valid_to ? `<small>${escapeHtml(String(row.valid_to).slice(0, 10))} gacha</small>` : ''}</div>
-        <h4>${escapeHtml(row.title)}</h4>
-        <p>${escapeHtml(row.summary || 'Qisqa ma’lumot mavjud emas.')}</p>
-        <div class="eligibility"><strong>Kimlar uchun:</strong> ${escapeHtml(row.eligibility || 'Aniqlanmagan')}</div>
-        ${row.source_url ? `<a class="text-link" href="${escapeHtml(row.source_url)}" target="_blank" rel="noopener">Rasmiy manba →</a>` : '<span class="demo-source">Demo ma’lumot</span>'}
-      </article>`).join('');
+    grid.innerHTML = rows.map((row) => {
+      const url = safeHttpUrl(row.source_url);
+      return `<article class="program-card"><div class="program-top"><span class="program-type">${escapeHtml(row.program_type || 'dastur')}</span>${row.valid_to ? `<small>${escapeHtml(String(row.valid_to).slice(0, 10))} gacha</small>` : ''}</div><h4>${escapeHtml(row.title)}</h4><p>${escapeHtml(row.summary || 'Qisqa ma’lumot mavjud emas.')}</p><div class="eligibility"><strong>Kimlar uchun:</strong> ${escapeHtml(row.eligibility || 'Aniqlanmagan')}</div>${url ? `<a class="text-link" href="${escapeHtml(url)}" target="_blank" rel="noopener">Rasmiy manba →</a>` : '<span class="demo-source">Demo ma’lumot</span>'}</article>`;
+    }).join('');
   } catch (error) {
     grid.innerHTML = `<div class="empty-card error-text">${escapeHtml(error.message)}</div>`;
   }
@@ -331,11 +309,7 @@ function bindEvents() {
   });
   $('logoutBtn').addEventListener('click', () => clearSession(true));
   $('listingForm').addEventListener('submit', createListing);
-
-  document.querySelectorAll('.tab').forEach((button) => {
-    button.addEventListener('click', () => switchTab(button.dataset.tab));
-  });
-
+  document.querySelectorAll('.tab').forEach((button) => button.addEventListener('click', () => switchTab(button.dataset.tab)));
   $('activeDistrict').addEventListener('change', () => {
     if (state.activeTab === 'prices') loadPrices();
     if (state.activeTab === 'weather') loadWeather();
