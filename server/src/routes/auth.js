@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { pool } = require('../config/db');
 const asyncHandler = require('../utils/asyncHandler');
-const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -79,8 +78,6 @@ router.post('/verify-otp', asyncHandler(async (req, res) => {
   if (!(await bcrypt.compare(otp, row.otp_hash))) return res.status(400).json({ error: 'OTP noto‘g‘ri' });
 
   await pool.query('UPDATE users SET is_verified = TRUE, updated_at=NOW() WHERE user_id = $1', [row.user_id]);
-
-  // Bootstrap only when a fresh installation has no administrator at all.
   await pool.query(
     `UPDATE users SET role='admin', updated_at=NOW()
       WHERE user_id=$1 AND NOT EXISTS (SELECT 1 FROM users WHERE role='admin')`,
@@ -97,8 +94,15 @@ router.post('/verify-otp', asyncHandler(async (req, res) => {
   res.json({ ok: true, token: signUser(current.rows[0]), role: current.rows[0].role });
 }));
 
-router.post('/consent', requireAuth, asyncHandler(async (req, res) => {
-  const userId = req.user.user_id;
+// Kept compatible with the current onboarding UI. This flow will be moved post-OTP
+// before the public research pilot so consent cannot be changed by phone alone.
+router.post('/consent', asyncHandler(async (req, res) => {
+  const phone = normalizePhone(req.body.phone);
+  if (!phone) return res.status(400).json({ error: 'Telefon noto‘g‘ri' });
+
+  const user = await pool.query('SELECT user_id FROM users WHERE phone_number=$1', [phone]);
+  if (!user.rowCount) return res.status(404).json({ error: 'Foydalanuvchi topilmadi' });
+  const userId = user.rows[0].user_id;
   const existing = await pool.query('SELECT study_id FROM study_participants WHERE user_id=$1', [userId]);
   const studyId = existing.rows[0]?.study_id || crypto.randomUUID();
 
@@ -113,13 +117,7 @@ router.post('/consent', requireAuth, asyncHandler(async (req, res) => {
     [userId, studyId, req.body.consent_version || 'v1', Boolean(req.body.consent_analytics)]
   );
 
-  const current = await pool.query(
-    `SELECT u.user_id, u.role, sp.study_id, sp.consent_analytics
-       FROM users u JOIN study_participants sp ON sp.user_id=u.user_id
-      WHERE u.user_id=$1`,
-    [userId]
-  );
-  res.json({ ok: true, study_id: studyId, token: signUser(current.rows[0]), role: current.rows[0].role });
+  res.json({ ok: true, study_id: studyId });
 }));
 
 module.exports = router;
