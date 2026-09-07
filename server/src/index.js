@@ -49,7 +49,7 @@ app.use(rateLimit({ windowMs: 60_000, limit: 240 }));
 const publicDir = path.join(__dirname, '..', 'public');
 app.use(express.static(publicDir));
 
-app.get('/health', (_req, res) => res.json({ ok: true, version: '0.4.0' }));
+app.get('/health', (_req, res) => res.json({ ok: true, version: '0.5.0' }));
 app.use('/api/auth', auth);
 app.use('/api/prices', prices);
 app.use('/api/listings', listings);
