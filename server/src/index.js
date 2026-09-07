@@ -1,9 +1,13 @@
 require('dotenv').config();
+const http = require('http');
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const path = require('path');
+const jwt = require('jsonwebtoken');
+const { Server } = require('socket.io');
+const { pool } = require('./config/db');
 
 const auth = require('./routes/auth');
 const prices = require('./routes/prices');
@@ -14,6 +18,7 @@ const profile = require('./routes/profile');
 const research = require('./routes/research');
 const meta = require('./routes/meta');
 const survey = require('./routes/survey');
+const chat = require('./routes/chat');
 
 if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is required');
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required');
@@ -27,22 +32,24 @@ const allowedOrigins = (process.env.CLIENT_ORIGIN || '')
   .map((v) => v.trim())
   .filter(Boolean);
 
+function originAllowed(origin) {
+  return !origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin);
+}
+
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
+    if (originAllowed(origin)) return callback(null, true);
     return callback(new Error('CORS origin ruxsat etilmagan'));
   },
   credentials: true,
 }));
 app.use(express.json({ limit: '1mb' }));
-app.use(rateLimit({ windowMs: 60_000, limit: 180 }));
+app.use(rateLimit({ windowMs: 60_000, limit: 240 }));
 
 const publicDir = path.join(__dirname, '..', 'public');
 app.use(express.static(publicDir));
 
-app.get('/health', (_req, res) => res.json({ ok: true, version: '0.3.0' }));
+app.get('/health', (_req, res) => res.json({ ok: true, version: '0.4.0' }));
 app.use('/api/auth', auth);
 app.use('/api/prices', prices);
 app.use('/api/listings', listings);
@@ -52,6 +59,7 @@ app.use('/api/user/profile', profile);
 app.use('/api/research', research);
 app.use('/api/meta', meta);
 app.use('/api/survey', survey);
+app.use('/api/chat', chat);
 
 app.get('/', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')));
 
@@ -60,5 +68,69 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'Server xatosi' });
 });
 
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin(origin, callback) {
+      if (originAllowed(origin)) return callback(null, true);
+      return callback(new Error('Socket CORS origin ruxsat etilmagan'));
+    },
+    credentials: true,
+  },
+});
+app.set('io', io);
+
+io.use((socket, next) => {
+  const token = socket.handshake.auth?.token;
+  if (!token) return next(new Error('Authentication required'));
+  try {
+    socket.user = jwt.verify(token, process.env.JWT_SECRET);
+    next();
+  } catch {
+    next(new Error('Invalid or expired token'));
+  }
+});
+
+io.on('connection', (socket) => {
+  socket.on('chat:join', async (rawSpaceId, ack = () => {}) => {
+    try {
+      const spaceId = Number(rawSpaceId);
+      if (!Number.isInteger(spaceId) || spaceId <= 0) return ack({ ok: false, error: 'Noto‘g‘ri chat id' });
+      const result = await pool.query(
+        `SELECT s.visibility, (m.user_id IS NOT NULL) AS is_member
+           FROM chat_spaces s
+           LEFT JOIN chat_members m ON m.space_id=s.space_id AND m.user_id=$2
+          WHERE s.space_id=$1`,
+        [spaceId, socket.user.user_id]
+      );
+      const access = result.rows[0];
+      if (!access || (access.visibility === 'private' && !access.is_member)) {
+        return ack({ ok: false, error: 'Chatga kirish ruxsati yo‘q' });
+      }
+      socket.join(`space:${spaceId}`);
+      ack({ ok: true });
+    } catch (error) {
+      console.error(error);
+      ack({ ok: false, error: 'Socket xatosi' });
+    }
+  });
+
+  socket.on('chat:leave', (rawSpaceId) => {
+    const spaceId = Number(rawSpaceId);
+    if (Number.isInteger(spaceId) && spaceId > 0) socket.leave(`space:${spaceId}`);
+  });
+
+  socket.on('chat:typing', (payload = {}) => {
+    const spaceId = Number(payload.space_id);
+    const room = `space:${spaceId}`;
+    if (!Number.isInteger(spaceId) || !socket.rooms.has(room)) return;
+    socket.to(room).emit('chat:typing', {
+      space_id: spaceId,
+      user_id: socket.user.user_id,
+      active: Boolean(payload.active),
+    });
+  });
+});
+
 const port = Number(process.env.PORT || 4000);
-app.listen(port, () => console.log(`API listening on http://localhost:${port}`));
+server.listen(port, () => console.log(`API + realtime chat listening on http://localhost:${port}`));
