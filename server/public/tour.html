@@ -3,19 +3,22 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="description" content="Samarqand uchun sana, ob-havo, GPS va hybrid xaritaga moslashuvchi AI sayohat rejalashtiruvchi" />
+  <meta name="description" content="Samarqand uchun sana, ob-havo, GPS, hybrid va 3D xaritaga moslashuvchi AI sayohat rejalashtiruvchi" />
   <title>AI Samarqand Tour Planner</title>
   <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="/vendor/maplibre/maplibre-gl.css" />
   <link rel="stylesheet" href="/tour.css" />
   <link rel="stylesheet" href="/map-style-switcher.css" />
   <script src="/vendor/leaflet/leaflet.js" defer></script>
+  <script src="/vendor/maplibre/maplibre-gl.js" defer></script>
   <script src="/tour-app.js" defer></script>
+  <script src="/map-3d.js" defer></script>
   <script src="/map-style-switcher.js" defer></script>
 </head>
 <body>
   <header class="topbar">
     <a class="back" href="/">← Bosh sahifa</a>
-    <div class="brand"><span class="mark">AI</span><div><span class="eyebrow">SAMARKAND TOUR PLANNER · v1.3.1</span><h1>AI marshrut + Live GPS + Hybrid xarita</h1></div></div>
+    <div class="brand"><span class="mark">AI</span><div><span class="eyebrow">SAMARKAND TOUR PLANNER · v1.4</span><h1>AI marshrut + Live GPS + Hybrid + 3D Buildings</h1></div></div>
     <a class="ghost" href="/map.html">📍 Xizmatlar xaritasi</a>
   </header>
 
@@ -24,7 +27,7 @@
       <div class="planner-copy">
         <span class="eyebrow">TABIIY TILDA SO‘ROV</span>
         <h2>Samarqand bo‘yicha sayohatingizni ayting</h2>
-        <p>Masalan: “Samarqandning tarixiy qadamjolari bo‘yicha 2 kunlik tur kerak. Ko‘p yurishni xohlamayman, milliy taomlar ham bo‘lsin.” Marshrut tayyor bo‘lgach, Live GPS rejimida xaritada o‘z harakatingizni ko‘rishingiz va Hybrid/Satellite qatlamida binolarni aniqroq ajratishingiz mumkin.</p>
+        <p>Masalan: “Samarqandning tarixiy qadamjolari bo‘yicha 2 kunlik tur kerak. Ko‘p yurishni xohlamayman, milliy taomlar ham bo‘lsin.” Marshrut tayyor bo‘lgach, Live GPS rejimida xaritada o‘z harakatingizni ko‘rishingiz, Hybrid/Satellite qatlamiga o‘tishingiz yoki 3D Buildings rejimida bino massingini ko‘rishingiz mumkin.</p>
       </div>
       <form id="plannerForm">
         <textarea id="prompt" rows="4" maxlength="1500" required>Samarqandning tarixiy qadamjolari bo‘yicha 2 kunlik tur kerak. Ko‘p yurishni xohlamayman, milliy taomlar ham bo‘lsin.</textarea>
@@ -84,7 +87,7 @@
 
     <section class="feature-grid">
       <article><span>01</span><strong>Live GPS marker</strong><p>Telefon GPS koordinatasi yangilangani sari “Siz shu yerdasiz” marker xaritada real vaqtda siljiydi.</p></article>
-      <article><span>02</span><strong>Hybrid / Satellite</strong><p>Yuqori o‘ngdagi boshqaruv orqali Hybrid, Satellite, ko‘cha yoki OSM xaritasiga o‘ting; bino va hududlarni tanish osonlashadi.</p></article>
+      <article><span>02</span><strong>3D Buildings</strong><p>Yuqori o‘ngdagi 🏙 3D tugmasi MapLibre va OpenFreeMap vector binolari orqali hajmli bino ko‘rinishini ochadi; route va GPS ham 3D oynada ko‘rinadi.</p></article>
       <article><span>03</span><strong>Arrival + rerouting</strong><p>Taxminan 80 metrda yetib kelish aniqlanadi; 120 metrga yaqin chetlanishda qolgan yo‘l qayta hisoblanadi.</p></article>
       <article><span>04</span><strong>Privacy-first GPS</strong><p>Joriy Live Tour GPS trayektoriyasi serverdagi tadqiqot bazasiga avtomatik yozilmaydi; alohida ilmiy roziliksiz lokatsiya tarixini saqlamaymiz.</p></article>
     </section>
