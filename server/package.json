@@ -1,12 +1,12 @@
 {
   "name": "phd-rural-platform-server",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "private": true,
   "type": "commonjs",
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
-    "check": "node --check src/index.js && node --check src/middleware/auth.js && node --check src/routes/auth.js && node --check src/routes/adminUsers.js && node --check src/routes/chat.js && node --check src/routes/places.js && node --check src/routes/weather.js && node --check src/routes/agro.js && node --check src/routes/agroPipeline.js && node --check src/routes/tourism.js && node --check src/routes/tourSupport.js && node --check src/routes/liveTour.js && node --check public/agro-samples.js && node --check public/agro-admin.js && node --check public/tour-app.js",
+    "check": "node --check src/index.js && node --check src/middleware/auth.js && node --check src/routes/auth.js && node --check src/routes/adminUsers.js && node --check src/routes/chat.js && node --check src/routes/places.js && node --check src/routes/weather.js && node --check src/routes/agro.js && node --check src/routes/agroPipeline.js && node --check src/routes/tourism.js && node --check src/routes/tourSupport.js && node --check src/routes/liveTour.js && node --check public/agro-samples.js && node --check public/agro-admin.js && node --check public/tour-app.js && node --check public/map-style-switcher.js",
     "db:migrate": "node scripts/migrate.js",
     "db:seed": "node scripts/seed.js"
   },
