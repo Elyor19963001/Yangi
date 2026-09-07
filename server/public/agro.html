@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="Samarqand viloyati uchun sun’iy yo‘ldoshga asoslangan Agro Intelligence xaritasi" />
+  <title>Agro Intelligence · Qishloq Raqamli Platformasi</title>
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="/agro.css" />
+  <script src="/vendor/leaflet/leaflet.js" defer></script>
+  <script src="/agro-app.js" defer></script>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <div class="brand-block">
+        <a class="back-link" href="/" aria-label="Bosh sahifa">←</a>
+        <div class="brand-mark">AI</div>
+        <div><span class="eyebrow">AGRO INTELLIGENCE · v0.7</span><h1>Sun’iy yo‘ldosh va bozor signallari</h1></div>
+      </div>
+      <nav class="top-actions"><a class="ghost-btn" href="/map.html">📍 Xizmatlar xaritasi</a><a class="ghost-btn" href="/community.html">💬 Chat</a></nav>
+    </header>
+
+    <section class="control-strip">
+      <label>Tuman<select id="districtSelect"><option value="">Tuman tanlang</option></select></label>
+      <label>Mavsum<select id="seasonSelect"><option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option><option value="2021">2021 reference</option></select></label>
+      <label>Bulutlilik<select id="cloudSelect"><option value="15">≤15%</option><option value="30" selected>≤30%</option><option value="50">≤50%</option></select></label>
+      <div class="audience-tabs" role="tablist"><button class="audience active" data-mode="trader">Savdogar</button><button class="audience" data-mode="consumer">Iste’molchi</button><button class="audience" data-mode="research">Tadqiqotchi</button></div>
+      <button class="primary-btn" id="refreshBtn">Yangilash</button>
+    </section>
+
+    <section class="status-banner" id="statusBanner">
+      <div><span class="live-dot"></span><strong id="statusTitle">Agro ma’lumotlar tekshirilmoqda…</strong><p id="statusText">Sun’iy yo‘ldosh katalogi va chop etilgan crop-model qatlamlari alohida tekshiriladi.</p></div>
+      <span class="source-badge" id="publishedBadge">0 FIELD</span>
+    </section>
+
+    <main class="workspace">
+      <aside class="left-panel">
+        <section class="panel-block">
+          <div class="section-head"><div><span class="eyebrow">EKINLAR</span><h2 id="summaryTitle">Savdogar uchun taklif signallari</h2></div><span class="model-pill">MODEL + BOZOR</span></div>
+          <div id="summaryList" class="summary-list"><div class="empty-state">Tuman tanlang.</div></div>
+        </section>
+
+        <section class="panel-block scene-block">
+          <div class="section-head"><div><span class="eyebrow">COPERNICUS</span><h2>Oxirgi Sentinel-2 sahnalari</h2></div><span class="live-pill">LIVE STAC</span></div>
+          <div class="scene-note">Bu ro‘yxat sun’iy yo‘ldosh kuzatuvlari mavjudligini ko‘rsatadi. Sahnaning o‘zi ekin turini tasdiqlamaydi.</div>
+          <div id="sceneList" class="scene-list"><div class="empty-state">Tuman tanlang.</div></div>
+        </section>
+      </aside>
+
+      <section class="map-stage">
+        <div id="map" aria-label="Samarqand agro intelligence xaritasi"></div>
+        <div class="map-overlay top-left">
+          <span>Qatlam</span><strong id="layerLabel">Chop etilgan crop-model</strong><small id="mapNote">Faqat tasdiqlangan/published poligonlar ko‘rsatiladi.</small>
+        </div>
+        <div class="legend" id="legend"><strong>Ekin legendasi</strong><div id="legendItems"><span class="muted">Qatlam yuklangach paydo bo‘ladi.</span></div></div>
+      </section>
+
+      <aside class="right-panel">
+        <section class="insight-card accent">
+          <span class="eyebrow">MARKET INTELLIGENCE</span>
+          <h2 id="insightTitle">Savdogar oynasi</h2>
+          <p id="insightText">Ekin maydoni, model ishonchliligi, hosil yig‘im oynasi va bozor narxi bir joyda ko‘rsatiladi.</p>
+        </section>
+
+        <section class="source-card">
+          <div class="source-icon">S2</div><div><strong>Sentinel-2 L2A</strong><p>Copernicus Data Space STAC katalogidan joriy metadata. Crop-classification uchun vaqt qatori va reference data talab qilinadi.</p></div>
+        </section>
+        <section class="source-card">
+          <div class="source-icon wc">WC</div><div><strong>ESA WorldCereal</strong><p>2021 global 10 m crop/cropland reference mahsulotlari va custom crop mapping processing tizimi.</p></div>
+        </section>
+
+        <section class="method-card">
+          <span class="eyebrow">METODOLOGIYA</span>
+          <ol><li>Sentinel-2 L2A sahnalarini tanlash</li><li>Bulutni filtrlash va vegetatsiya vaqt qatori</li><li>Ground-truth / WorldCereal reference</li><li>Crop classification va confidence</li><li>Operator verifikatsiyasi</li><li>Published qatlam → savdogar/iste’molchi</li></ol>
+        </section>
+
+        <section class="warning-card"><strong>⚠️ Muhim</strong><p>Platforma sun’iy yo‘ldoshdan taxmin qilingan ekinni “rasmiy fakt” deb chiqarmaydi. `published` status faqat model natijasi tekshirilgandan keyin beriladi.</p></section>
+      </aside>
+    </main>
+  </div>
+
+  <div class="modal-backdrop hidden" id="loginModal"><div class="modal"><div class="login-icon">🔐</div><h2>Avval tizimga kiring</h2><p>Agro Intelligence foydalanuvchi sessiyasi bilan ishlaydi.</p><a class="primary-btn full" href="/">Kirish / ro‘yxatdan o‘tish</a></div></div>
+  <div class="toast hidden" id="toast"></div>
+</body>
+</html>
