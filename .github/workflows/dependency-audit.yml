@@ -1,0 +1,61 @@
+name: Dependency Audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/package.json'
+      - 'server/package-lock.json'
+      - '.github/workflows/dependency-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+      - name: Generate deterministic lockfile
+        run: npm install --package-lock-only --ignore-scripts --no-fund
+      - name: Apply safe audit fixes to lockfile
+        run: npm audit fix --package-lock-only --ignore-scripts --no-fund || true
+      - name: Dependency audit summary
+        shell: bash
+        run: |
+          npm audit --json > audit.json || true
+          node - <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('audit.json','utf8'));
+          const meta = report.metadata?.vulnerabilities || {};
+          console.log('AUDIT_COUNTS', JSON.stringify(meta));
+          for (const [name, item] of Object.entries(report.vulnerabilities || {})) {
+            console.log('AUDIT_VULN', JSON.stringify({
+              name,
+              severity: item.severity,
+              isDirect: item.isDirect,
+              via: (item.via || []).map(v => typeof v === 'string' ? v : ({name:v.name,title:v.title,url:v.url,severity:v.severity,range:v.range})),
+              effects: item.effects || [],
+              range: item.range,
+              nodes: item.nodes || [],
+              fixAvailable: item.fixAvailable
+            }));
+          }
+          NODE
+      - name: Upload generated lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-package-lock
+          path: server/package-lock.json
+          if-no-files-found: error
