@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="Qishloq Raqamli Platformasi hamjamiyatlari, guruhlari va kanallari" />
+  <title>Hamjamiyat · Qishloq Raqamli Platformasi</title>
+  <link rel="stylesheet" href="/community.css" />
+  <script src="/socket.io/socket.io.js" defer></script>
+  <script src="/community.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="rail" aria-label="Asosiy navigatsiya">
+      <a class="rail-logo" href="/" title="Bosh sahifa">QR</a>
+      <button class="rail-btn active" data-filter="all" title="Barchasi">💬</button>
+      <button class="rail-btn" data-filter="group" title="Guruhlar">👥</button>
+      <button class="rail-btn" data-filter="channel" title="Kanallar">📢</button>
+      <button class="rail-btn" data-filter="mine" title="Mening chatlarim">⭐</button>
+      <button class="rail-btn" id="signalsBtn" title="Narx signallari">₿</button>
+      <div class="rail-spacer"></div>
+      <button class="rail-btn" id="newSpaceRail" title="Yangi guruh yoki kanal">＋</button>
+      <a class="rail-btn rail-link" href="/research.html" title="Ilmiy so‘rovnoma">🧪</a>
+    </aside>
+
+    <section class="sidebar" id="sidebar">
+      <header class="sidebar-head">
+        <div>
+          <span class="kicker">HAMJAMIYAT</span>
+          <h1>Qishloq Chat</h1>
+        </div>
+        <button class="icon-btn primary" id="newSpaceBtn" title="Yangi chat">＋</button>
+      </header>
+
+      <div class="search-wrap">
+        <span>⌕</span>
+        <input id="spaceSearch" type="search" placeholder="Guruh yoki kanal qidiring" autocomplete="off" />
+      </div>
+
+      <div class="filter-chips" aria-label="Chat filtrlari">
+        <button class="chip active" data-chip="all">Barchasi</button>
+        <button class="chip" data-chip="group">Guruhlar</button>
+        <button class="chip" data-chip="channel">Kanallar</button>
+        <button class="chip" data-chip="mine">Meniki</button>
+      </div>
+
+      <div class="sidebar-summary">
+        <span id="spaceCount">0 ta chat</span>
+        <button class="text-btn" id="refreshSpaces">Yangilash</button>
+      </div>
+
+      <div class="space-list" id="spaceList">
+        <div class="skeleton-list"><div></div><div></div><div></div></div>
+      </div>
+
+      <footer class="sidebar-user" id="sidebarUser">
+        <span class="user-avatar" id="userAvatar">U</span>
+        <div><strong id="userName">Foydalanuvchi</strong><small id="userDistrict">Pilot foydalanuvchi</small></div>
+        <a href="/" title="Profil">⚙</a>
+      </footer>
+    </section>
+
+    <main class="conversation" id="conversation">
+      <div class="empty-conversation" id="emptyConversation">
+        <div class="hero-orb">💬</div>
+        <h2>Qishloq hamjamiyatlariga xush kelibsiz</h2>
+        <p>Guruhlarda suhbatlashing, kanallarga obuna bo‘ling va bozordagi narxlarni birgalikda kuzating.</p>
+        <button class="btn primary" id="emptyCreateBtn">Yangi guruh yoki kanal</button>
+        <div class="pattern-note"><strong>Qulay model:</strong> guruh — ikki tomonlama suhbat; kanal — administrator e’lonlari; ommaviy chatlar esa qidiruv orqali topiladi.</div>
+      </div>
+
+      <section class="chat-view hidden" id="chatView">
+        <header class="chat-head">
+          <button class="icon-btn mobile-back" id="mobileBack">←</button>
+          <div class="chat-avatar" id="chatAvatar">💬</div>
+          <div class="chat-title">
+            <div class="title-line"><h2 id="chatName">Chat</h2><span class="verified-dot hidden" id="channelBadge">KANAL</span></div>
+            <p id="chatMeta">0 a’zo</p>
+          </div>
+          <div class="chat-actions">
+            <button class="icon-btn" id="inviteBtn" title="Taklif havolasi">🔗</button>
+            <button class="icon-btn" id="joinBtn" title="Qo‘shilish">＋</button>
+            <button class="icon-btn" id="chatInfoBtn" title="Chat haqida">ⓘ</button>
+          </div>
+        </header>
+
+        <div class="announcement-banner hidden" id="channelBanner">
+          <span>📢</span><div><strong>Bu kanal</strong><small>Administratorlar e’lon qiladi, a’zolar esa kuzatadi.</small></div>
+        </div>
+
+        <div class="message-scroll" id="messageScroll">
+          <button class="load-more hidden" id="loadMoreBtn">Oldingi xabarlarni yuklash</button>
+          <div class="messages" id="messages"></div>
+          <div class="typing hidden" id="typingIndicator"><span></span><span></span><span></span> kimdir yozmoqda</div>
+        </div>
+
+        <div class="join-gate hidden" id="joinGate">
+          <div><strong>Suhbatga qo‘shiling</strong><span>Xabar yuborish uchun avval guruhga qo‘shiling yoki kanalga obuna bo‘ling.</span></div>
+          <button class="btn primary" id="joinGateBtn">Qo‘shilish</button>
+        </div>
+
+        <form class="composer" id="composer">
+          <button type="button" class="composer-icon" title="Fayl yuborish keyingi bosqichda">＋</button>
+          <textarea id="messageInput" rows="1" maxlength="4000" placeholder="Xabar yozing…"></textarea>
+          <button type="button" class="composer-icon" id="priceHintBtn" title="Narx yozish namunasi">₿</button>
+          <button type="submit" class="send-btn" title="Yuborish">➤</button>
+        </form>
+      </section>
+    </main>
+
+    <aside class="info-panel hidden" id="infoPanel">
+      <header><h3>Chat haqida</h3><button class="icon-btn" id="closeInfo">×</button></header>
+      <div class="info-avatar" id="infoAvatar">💬</div>
+      <h2 id="infoName">Chat</h2>
+      <p id="infoDescription">Tavsif mavjud emas.</p>
+      <div class="info-stats"><div><strong id="infoMembers">0</strong><span>a’zo</span></div><div><strong id="infoType">Guruh</strong><span>turi</span></div></div>
+      <div class="info-row"><span>Ko‘rinish</span><strong id="infoVisibility">Ommaviy</strong></div>
+      <div class="info-row"><span>Mening rolim</span><strong id="infoRole">—</strong></div>
+      <button class="btn subtle hidden" id="leaveBtn">Chatni tark etish</button>
+    </aside>
+  </div>
+
+  <div class="modal-backdrop hidden" id="createModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="createTitle">
+      <header><div><span class="kicker">YANGI CHAT</span><h2 id="createTitle">Guruh yoki kanal yarating</h2></div><button class="icon-btn" data-close-modal>×</button></header>
+      <form id="createSpaceForm">
+        <div class="type-cards">
+          <label><input type="radio" name="space_type" value="group" checked /><span><b>👥 Guruh</b><small>Hamma a’zo yozishi mumkin</small></span></label>
+          <label><input type="radio" name="space_type" value="channel" /><span><b>📢 Kanal</b><small>Asosan e’lon va axborot uchun</small></span></label>
+        </div>
+        <label>Nom<input id="createName" maxlength="100" required placeholder="Masalan: Urgut fermerlari" /></label>
+        <label>Tavsif<textarea id="createDescription" maxlength="500" rows="3" placeholder="Guruh yoki kanal nima haqida?"></textarea></label>
+        <div class="form-grid"><label>Tuman<select id="createDistrict"><option value="">Barcha hududlar</option></select></label><label>Ko‘rinish<select id="createVisibility"><option value="public">Ommaviy — qidiruvda ko‘rinadi</option><option value="private">Xususiy — faqat taklif bilan</option></select></label></div>
+        <label>Belgi<select id="createEmoji"><option>💬</option><option>🌾</option><option>🍅</option><option>🚜</option><option>📢</option><option>🛒</option><option>📊</option><option>🤝</option></select></label>
+        <div class="modal-actions"><button type="button" class="btn subtle" data-close-modal>Bekor qilish</button><button type="submit" class="btn primary">Yaratish</button></div>
+        <div class="form-message" id="createMessage"></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="signalsModal">
+    <div class="modal wide" role="dialog" aria-modal="true">
+      <header><div><span class="kicker">CROWDSOURCED MARKET INTELLIGENCE</span><h2>Chatdan aniqlangan narx signallari</h2></div><button class="icon-btn" data-close-signals>×</button></header>
+      <div class="signal-explain">Xabarlardan mahsulot + narx avtomatik ajratiladi. Bu qiymatlar <strong>tasdiqlanmagan signal</strong> sifatida saqlanadi; rasmiy narx deb ko‘rsatilmaydi.</div>
+      <div class="signal-list" id="signalList"><div class="empty-card">Yuklanmoqda…</div></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="loginModal">
+    <div class="modal compact">
+      <div class="login-icon">🔐</div><h2>Avval tizimga kiring</h2><p>Hamjamiyatlarda qatnashish uchun telefon raqamingizni OTP orqali tasdiqlang.</p><a class="btn primary full" href="/">Kirish / ro‘yxatdan o‘tish</a>
+    </div>
+  </div>
+
+  <div class="toast hidden" id="toast"></div>
+</body>
+</html>
