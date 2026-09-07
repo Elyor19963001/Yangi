@@ -19,10 +19,10 @@
   <main id="top" class="shell">
     <section class="hero">
       <div class="hero-copy">
-        <span class="eyebrow">ILMIY-AMALIY PLATFORMA · v0.3</span>
+        <span class="eyebrow">ILMIY-AMALIY PLATFORMA · v0.4</span>
         <h1>Qishloq aholisi uchun raqamli iqtisodiy xizmatlar — bitta platformada</h1>
-        <p>Bozor narxlari, mahsulot e’lonlari, ob-havo, davlat dasturlari, ilmiy so‘rovnoma va tadqiqot analitikasi. Platforma pilot sinov va RCT uchun ma’lumotlarni rozilik asosida yig‘ishga tayyorlangan.</p>
-        <div class="hero-stats"><div><strong>14</strong><span>pilot tuman</span></div><div><strong>5</strong><span>MVP modul</span></div><div><strong>T0/T3/T6</strong><span>survey waves</span></div></div>
+        <p>Bozor narxlari, mahsulot e’lonlari, ob-havo, davlat dasturlari, guruh va kanallar, ilmiy so‘rovnoma hamda tadqiqot analitikasi. Platforma pilot sinov va RCT uchun ma’lumotlarni rozilik asosida yig‘ishga tayyorlangan.</p>
+        <div class="hero-stats"><div><strong>14</strong><span>pilot tuman</span></div><div><strong>6</strong><span>asosiy modul</span></div><div><strong>T0/T3/T6</strong><span>survey waves</span></div></div>
       </div>
       <aside class="auth-card" id="authCard">
         <div class="auth-head"><span class="step-badge">M1</span><div><h2>Kirish / ro‘yxatdan o‘tish</h2><p>Telefon raqami orqali OTP tasdiqlash</p></div></div>
@@ -43,7 +43,7 @@
     </section>
 
     <section class="workspace">
-      <div class="workspace-head"><div><span class="eyebrow">FOYDALANUVCHI PANELI</span><h2>Raqamli xizmatlar</h2></div><label class="compact-select">Faol tuman<select id="activeDistrict"><option value="">Tuman tanlang</option></select></label></div>
+      <div class="workspace-head"><div><span class="eyebrow">FOYDALANUVCHI PANELI</span><h2>Raqamli xizmatlar</h2></div><div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap"><a class="btn btn-primary" href="/community.html">💬 Hamjamiyat</a><label class="compact-select">Faol tuman<select id="activeDistrict"><option value="">Tuman tanlang</option></select></label></div></div>
       <nav class="tabs" aria-label="Platforma modullari"><button class="tab active" data-tab="prices"><span>📊</span>Narxlar</button><button class="tab" data-tab="market"><span>🛒</span>E’lonlar</button><button class="tab" data-tab="weather"><span>🌦️</span>Ob-havo</button><button class="tab" data-tab="programs"><span>🏛️</span>Dasturlar</button><button class="tab" data-tab="research"><span>🧪</span>Research</button></nav>
       <div id="loginGate" class="login-gate"><div class="gate-icon">🔐</div><h3>Modullardan foydalanish uchun OTP orqali kiring</h3><p>Pilot bosqichida har bir foydalanuvchi sessiyasi autentifikatsiya qilinadi.</p><a href="#top" class="btn btn-primary">Kirish oynasiga qaytish</a></div>
 
@@ -59,13 +59,13 @@
         <section class="panel" id="panel-research" data-panel="research">
           <div class="panel-head"><div><span class="module-code">ILMIY YANGILIK №4</span><h3>RCT, ilmiy so‘rovnoma va foydalanish analitikasi</h3><p>Anonim study_id orqali baseline, midline, endline hamda platforma faolligini bog‘lash.</p></div><a class="btn btn-primary" href="/research.html">Ilmiy so‘rovnomani ochish →</a></div>
           <div class="research-grid"><article class="metric-card"><span>Study ID</span><strong id="researchStudyId">—</strong><small>shaxsiy ma’lumotdan ajratilgan identifikator</small></article><article class="metric-card"><span>Sessiya</span><strong id="researchSession">Faol</strong><small>JWT orqali himoyalangan</small></article><article class="metric-card"><span>Analytics roziligi</span><strong id="researchConsent">—</strong><small>faqat rozilik berilgan holatda loglanadi</small></article></div>
-          <div class="research-note"><strong>v0.3:</strong> ilmiy so‘rovnoma alohida rozilik bilan ishlaydi. Ilmiy eksportda ism va telefon chiqmaydi; respondentlar <code>study_id</code> bilan bog‘lanadi. Real pilotdan oldin hosting va etik-huquqiy tartib yakuniy tasdiqlanishi kerak.</div>
+          <div class="research-note"><strong>v0.4:</strong> ilmiy so‘rovnoma alohida rozilik bilan ishlaydi. Hamjamiyat chatlari guruh va kanal formatida real vaqtga yaqin ishlaydi; chatdan topilgan narxlar rasmiy narx emas, tasdiqlanmagan signal sifatida ajratiladi. Ilmiy eksportda ism va telefon chiqmaydi.</div>
         </section>
       </div>
     </section>
 
-    <section class="method-strip"><div><span>01</span><strong>User-Centered Design</strong><small>ehtiyoj → prototip → test</small></div><div><span>02</span><strong>Technology Acceptance</strong><small>foydalilik va qulaylik</small></div><div><span>03</span><strong>RCT Impact Evaluation</strong><small>treatment vs control</small></div><div><span>04</span><strong>Research Analytics</strong><small>survey + usage + outcome</small></div></section>
-    <footer class="footer"><span>Qishloq Raqamli Platformasi · PhD Research MVP</span><span>GitHub + Railway + PostgreSQL · v0.3.0</span></footer>
+    <section class="method-strip"><div><span>01</span><strong>User-Centered Design</strong><small>ehtiyoj → prototip → test</small></div><div><span>02</span><strong>Community Intelligence</strong><small>guruh + kanal + narx signali</small></div><div><span>03</span><strong>RCT Impact Evaluation</strong><small>treatment vs control</small></div><div><span>04</span><strong>Research Analytics</strong><small>survey + usage + outcome</small></div></section>
+    <footer class="footer"><span>Qishloq Raqamli Platformasi · PhD Research MVP</span><span>GitHub + Railway + PostgreSQL + Socket.IO · v0.4.0</span></footer>
   </main>
 </body>
 </html>
