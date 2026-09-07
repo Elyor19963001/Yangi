@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="description" content="Samarqand uchun AI sayohat rejalashtiruvchi va interaktiv marshrut" />
+  <meta name="description" content="Samarqand uchun AI sayohat rejalashtiruvchi, interaktiv marshrut, ob-havo va yaqin xizmatlar" />
   <title>AI Samarqand Tour Planner</title>
   <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
   <link rel="stylesheet" href="/tour.css" />
@@ -13,7 +13,7 @@
 <body>
   <header class="topbar">
     <a class="back" href="/">← Bosh sahifa</a>
-    <div class="brand"><span class="mark">AI</span><div><span class="eyebrow">SAMARKAND TOUR PLANNER · v1.0</span><h1>Istagingizni yozing — marshrut xaritada chizilsin</h1></div></div>
+    <div class="brand"><span class="mark">AI</span><div><span class="eyebrow">SAMARKAND TOUR PLANNER · v1.1</span><h1>Istagingizni yozing — marshrut va sayohat konteksti tayyorlansin</h1></div></div>
     <a class="ghost" href="/map.html">📍 Xizmatlar xaritasi</a>
   </header>
 
@@ -22,12 +22,14 @@
       <div class="planner-copy">
         <span class="eyebrow">TABIIY TILDA SO‘ROV</span>
         <h2>Samarqand bo‘yicha sayohatingizni ayting</h2>
-        <p>Masalan: “Samarqandning tarixiy qadamjolari bo‘yicha 2 kunlik tur kerak. Ko‘p yurishni xohlamayman, milliy taomlar ham bo‘lsin.”</p>
+        <p>Masalan: “Samarqandning tarixiy qadamjolari bo‘yicha 2 kunlik tur kerak. Ko‘p yurishni xohlamayman, milliy taomlar ham bo‘lsin.” Tizim yo‘nalish bilan birga ob-havo, yaqin restoran, mehmonxona, taksi va budjet rejasini ham ko‘rsatadi.</p>
       </div>
       <form id="plannerForm">
         <textarea id="prompt" rows="4" maxlength="1500" required>Samarqandning tarixiy qadamjolari bo‘yicha 2 kunlik tur kerak. Ko‘p yurishni xohlamayman, milliy taomlar ham bo‘lsin.</textarea>
         <div class="planner-actions">
           <label>Kun<select id="days"><option value="1">1 kun</option><option value="2" selected>2 kun</option><option value="3">3 kun</option><option value="4">4 kun</option><option value="5">5 kun</option></select></label>
+          <label>Sayohatchi<input id="partySize" type="number" min="1" max="20" value="1" inputmode="numeric" /></label>
+          <label>Umumiy budjet, so‘m<input id="budget" type="number" min="0" step="50000" placeholder="Masalan: 2000000" inputmode="numeric" /></label>
           <button class="btn secondary" id="locateBtn" type="button">⌖ Joylashuvimdan boshlash</button>
           <button class="btn primary" id="planBtn" type="submit">✨ Marshrut yaratish</button>
         </div>
@@ -39,7 +41,7 @@
     <section class="result-shell hidden" id="resultShell">
       <aside class="itinerary-panel">
         <div class="summary-head">
-          <span class="eyebrow">AI ITINERARY</span>
+          <span class="eyebrow">AI ITINERARY + LIVE CONTEXT</span>
           <h2 id="summaryTitle">Marshrut tayyor</h2>
           <p id="summaryText"></p>
           <div class="badges" id="intentBadges"></div>
@@ -59,10 +61,10 @@
     </section>
 
     <section class="feature-grid">
-      <article><span>01</span><strong>AI preference parser</strong><p>Kun, tarix, ziyorat, gastronomiya, oilaviy sayohat, kam yurish va transport istagini matndan ajratadi.</p></article>
-      <article><span>02</span><strong>Real xarita obyektlari</strong><p>Tarixiy va turistik nuqtalar OpenStreetMap orqali olinadi; tizim o‘zi yangi obida uydirmaydi.</p></article>
-      <article><span>03</span><strong>Route optimization</strong><p>Nuqtalar masofa bo‘yicha tartiblanadi, kunlarga bo‘linadi va xaritada yo‘nalish sifatida chiziladi.</p></article>
-      <article><span>04</span><strong>Dynamic re-planning</strong><p>Keyingi versiyada ob-havo, ish vaqti, tirbandlik va “bolam charchadi” kabi holatlar bo‘yicha qayta rejalashtiriladi.</p></article>
+      <article><span>01</span><strong>Preference parser</strong><p>Kun, tarix, ziyorat, gastronomiya, oilaviy sayohat, kam yurish va transport istagini matndan ajratadi.</p></article>
+      <article><span>02</span><strong>Real yo‘nalish</strong><p>Tekshirilgan Samarqand tayanch obyektlari va xarita ma’lumotlari asosida OSRM orqali yo‘nalish chizadi.</p></article>
+      <article><span>03</span><strong>Ob-havo va xizmatlar</strong><p>Kunlar bo‘yicha Open-Meteo prognozi hamda yaqin restoran, mehmonxona va taksi punktlarini ko‘rsatadi.</p></article>
+      <article><span>04</span><strong>Budjet yordamchisi</strong><p>Kiritilgan umumiy budjetni ovqat, transport, kirish, turar joy va zaxira bo‘yicha rejalashtirish ulushlariga ajratadi; bu real narx prognozi emas.</p></article>
     </section>
   </main>
   <div class="toast hidden" id="toast"></div>
