@@ -6,6 +6,7 @@
       "src/**",
       "scripts/**",
       "sql/**",
+      "public/**",
       "package.json",
       "railway.json"
     ]
