@@ -47,9 +47,11 @@ app.use(helmet({
         'https://server.arcgisonline.com',
         'https://services.arcgisonline.com',
         'https://*.arcgisonline.com',
+        'https://tiles.openfreemap.org',
       ],
-      connectSrc: ["'self'", 'ws:', 'wss:'],
-      fontSrc: ["'self'", 'data:'],
+      connectSrc: ["'self'", 'ws:', 'wss:', 'https://tiles.openfreemap.org'],
+      workerSrc: ["'self'", 'blob:'],
+      fontSrc: ["'self'", 'data:', 'https://tiles.openfreemap.org'],
       objectSrc: ["'none'"],
       baseUri: ["'self'"],
       frameAncestors: ["'self'"],
@@ -83,8 +85,12 @@ app.use('/vendor/leaflet', express.static(path.join(__dirname, '..', 'node_modul
   maxAge: '30d',
   immutable: true,
 }));
+app.use('/vendor/maplibre', express.static(path.join(__dirname, '..', 'node_modules', 'maplibre-gl', 'dist'), {
+  maxAge: '30d',
+  immutable: true,
+}));
 
-app.get('/health', (_req, res) => res.json({ ok: true, version: '1.3.1' }));
+app.get('/health', (_req, res) => res.json({ ok: true, version: '1.4.0' }));
 app.use('/api/auth', auth);
 app.use('/api/prices', prices);
 app.use('/api/listings', listings);
@@ -175,4 +181,4 @@ io.on('connection', (socket) => {
 });
 
 const port = Number(process.env.PORT || 4000);
-server.listen(port, () => console.log(`API + chat + maps + agro ML + Live GPS AI tourism + hybrid maps v1.3.1 listening on http://localhost:${port}`));
+server.listen(port, () => console.log(`API + chat + maps + agro ML + Live GPS AI tourism + MapLibre 3D buildings v1.4.0 listening on http://localhost:${port}`));
