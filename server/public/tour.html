@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="description" content="Samarqand uchun sana va ob-havoga moslashuvchi AI sayohat rejalashtiruvchi" />
+  <meta name="description" content="Samarqand uchun sana, ob-havo va GPSga moslashuvchi AI sayohat rejalashtiruvchi" />
   <title>AI Samarqand Tour Planner</title>
   <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
   <link rel="stylesheet" href="/tour.css" />
@@ -13,7 +13,7 @@
 <body>
   <header class="topbar">
     <a class="back" href="/">← Bosh sahifa</a>
-    <div class="brand"><span class="mark">AI</span><div><span class="eyebrow">SAMARKAND TOUR PLANNER · v1.2</span><h1>Sana, ob-havo, xizmatlar va budjetga mos marshrut</h1></div></div>
+    <div class="brand"><span class="mark">AI</span><div><span class="eyebrow">SAMARKAND TOUR PLANNER · v1.3</span><h1>AI marshrut + Live GPS navigatsiya</h1></div></div>
     <a class="ghost" href="/map.html">📍 Xizmatlar xaritasi</a>
   </header>
 
@@ -22,7 +22,7 @@
       <div class="planner-copy">
         <span class="eyebrow">TABIIY TILDA SO‘ROV</span>
         <h2>Samarqand bo‘yicha sayohatingizni ayting</h2>
-        <p>Masalan: “Samarqandning tarixiy qadamjolari bo‘yicha 2 kunlik tur kerak. Ko‘p yurishni xohlamayman, milliy taomlar ham bo‘lsin.” Tizim tanlangan sana uchun ob-havoni tekshiradi va zarur bo‘lsa kunlar hamda tashrif tartibini qayta optimallashtiradi.</p>
+        <p>Masalan: “Samarqandning tarixiy qadamjolari bo‘yicha 2 kunlik tur kerak. Ko‘p yurishni xohlamayman, milliy taomlar ham bo‘lsin.” Marshrut tayyor bo‘lgach, Live GPS rejimida xaritada o‘z harakatingizni ko‘rishingiz mumkin.</p>
       </div>
       <form id="plannerForm">
         <textarea id="prompt" rows="4" maxlength="1500" required>Samarqandning tarixiy qadamjolari bo‘yicha 2 kunlik tur kerak. Ko‘p yurishni xohlamayman, milliy taomlar ham bo‘lsin.</textarea>
@@ -52,11 +52,20 @@
     <section class="result-shell hidden" id="resultShell">
       <aside class="itinerary-panel">
         <div class="summary-head">
-          <span class="eyebrow">AI ITINERARY + WEATHER ADAPTATION</span>
+          <span class="eyebrow">AI ITINERARY + LIVE GPS</span>
           <h2 id="summaryTitle">Marshrut tayyor</h2>
           <p id="summaryText"></p>
           <div class="badges" id="intentBadges"></div>
         </div>
+
+        <section class="live-card hidden" id="livePanel">
+          <div class="live-head"><div><span class="live-dot" id="liveDot"></span><strong id="liveStatus">GPS tayyor</strong></div><button type="button" class="live-center" id="centerLiveBtn" disabled>◎ Menga qaytish</button></div>
+          <div class="live-next"><span>Keyingi manzil</span><strong id="liveNextName">—</strong><small id="liveNextMeta">Live Tour boshlanganda masofa va ETA chiqadi.</small></div>
+          <div class="live-metrics"><div><span>GPS aniqligi</span><strong id="liveAccuracy">—</strong></div><div><span>Marshrutdan og‘ish</span><strong id="liveDeviation">—</strong></div><div><span>Yurilgan</span><strong id="liveTravelled">0 m</strong></div></div>
+          <div class="live-actions"><button type="button" class="btn primary" id="startLiveBtn">▶ Sayohatni boshlash</button><button type="button" class="btn secondary" id="pauseLiveBtn" disabled>⏸ Pauza</button><button type="button" class="btn danger" id="stopLiveBtn" disabled>■ Tugatish</button></div>
+          <small class="live-privacy">🔒 GPS koordinatalari ushbu web-sessiyada navigatsiya uchun ishlatiladi; Live Tour endpointi ularni bazaga saqlamaydi. Brauzer fon rejimida GPS kuzatuvini cheklashi mumkin.</small>
+        </section>
+
         <div class="day-tabs" id="dayTabs"></div>
         <div id="dayDetails"></div>
         <div class="source-note" id="sourceNote"></div>
@@ -72,10 +81,10 @@
     </section>
 
     <section class="feature-grid">
-      <article><span>01</span><strong>Sana + ob-havo</strong><p>14 kunlik prognoz oralig‘ida tanlangan sanaga mos Open-Meteo ma’lumotlari olinadi.</p></article>
-      <article><span>02</span><strong>Adaptive routing</strong><p>Yomg‘ir va shamolda yopiqroq obyektlar ustuvor, issiqda esa ochiq nuqtalar ertaroq vaqtga suriladi.</p></article>
-      <article><span>03</span><strong>Real xizmat tanlovi</strong><p>OSMdan topilgan restoran, mehmonxona va taksi punktini tanlab marshrut kontekstiga biriktirish mumkin.</p></article>
-      <article><span>04</span><strong>Budjet qayta hisoblash</strong><p>Foydalanuvchi kiritgan ovqat, mehmonxona va transport reja qiymatlari umumiy budjet bilan solishtiriladi; real xizmat narxi sifatida ko‘rsatilmaydi.</p></article>
+      <article><span>01</span><strong>Live GPS marker</strong><p>Telefon GPS koordinatasi yangilangani sari “Siz shu yerdasiz” marker xaritada real vaqtda siljiydi.</p></article>
+      <article><span>02</span><strong>Arrival detection</strong><p>Keyingi obyektga taxminan 80 metr qolganda tizim yetib kelganingizni aniqlab keyingi nuqtaga o‘tadi.</p></article>
+      <article><span>03</span><strong>Automatic rerouting</strong><p>Marshrutdan taxminan 120 metr chetlashilsa qolgan obyektlargacha yo‘l server orqali qayta hisoblanadi.</p></article>
+      <article><span>04</span><strong>Privacy-first GPS</strong><p>Joriy Live Tour GPS trayektoriyasi serverdagi tadqiqot bazasiga avtomatik yozilmaydi; alohida ilmiy roziliksiz lokatsiya tarixini saqlamaymiz.</p></article>
     </section>
   </main>
   <div class="toast hidden" id="toast"></div>
