@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Research Pilot Dashboard · QRP</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .pilot-shell{max-width:1280px;margin:0 auto;padding:24px 18px 48px}.pilot-top{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:20px}.pilot-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}.pilot-card,.pilot-panel{background:#fff;border:1px solid #dfe6e2;border-radius:18px;padding:16px}.pilot-card strong{display:block;font-size:28px;margin-top:6px}.pilot-card small{color:#66756e}.pilot-panel{margin-top:14px}.pilot-table{width:100%;border-collapse:collapse;min-width:1050px}.pilot-table th,.pilot-table td{padding:10px;border-bottom:1px solid #e8eeeb;text-align:left;vertical-align:middle}.pilot-table th{font-size:12px;text-transform:uppercase;color:#68766f}.pilot-scroll{overflow:auto}.status-pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#eef5f1;font-size:12px}.wave-ok{font-weight:700;color:#157347}.wave-no{color:#87938e}.pilot-actions{display:flex;gap:8px;flex-wrap:wrap}.pilot-actions select,.pilot-actions input{min-width:110px;padding:7px;border:1px solid #ccd8d2;border-radius:9px}.privacy-note{background:#f4f8f6;border-left:4px solid #1f7a57;padding:12px 14px;border-radius:10px;margin:12px 0}.error-box{padding:12px;border-radius:10px;background:#fff1f1;color:#9b1c1c}.muted{color:#6f7d76}.download-row{display:flex;gap:8px;flex-wrap:wrap}@media(max-width:900px){.pilot-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.pilot-grid{grid-template-columns:1fr}}
+  </style>
+  <script src="/research-pilot.js" defer></script>
+</head>
+<body>
+  <header class="topbar"><div class="topbar-inner"><a class="brand" href="/"><span class="brand-mark">QR</span><span><strong>Research Pilot Dashboard</strong><small>PhD · v1.7.0</small></span></a><a class="btn btn-secondary" href="/">← Platforma</a></div></header>
+  <main class="pilot-shell">
+    <div class="pilot-top"><div><span class="eyebrow">RESEARCH PILOT ARCHITECTURE</span><h1>T0/T3/T6 pilot boshqaruvi</h1><p class="muted">Faqat pseudonymous <code>study_id</code>. Bu sahifa telefon, F.I.Sh. yoki boshqa to‘g‘ridan-to‘g‘ri identifikatorlarni ko‘rsatmaydi.</p></div><button class="btn btn-primary" id="refreshBtn">Yangilash</button></div>
+
+    <div class="privacy-note"><strong>PII boundary:</strong> research dashboard va eksportlar <code>study_id</code> bilan ishlaydi. Real pilot eksportiga faqat <code>record_origin=pilot</code>, faol research consent va analysis-eligible yozuvlar kiradi. Demo/legacy surveylar alohida saqlanadi.</div>
+    <div id="message"></div>
+
+    <section class="pilot-grid">
+      <article class="pilot-card"><small>Jami participant</small><strong id="mTotal">—</strong><span>registry</span></article>
+      <article class="pilot-card"><small>Enrolled+</small><strong id="mEnrolled">—</strong><span>pilot oqimi</span></article>
+      <article class="pilot-card"><small>Treatment / Control</small><strong id="mGroups">—</strong><span>external randomization</span></article>
+      <article class="pilot-card"><small>Analysis eligible</small><strong id="mEligible">—</strong><span>quality gate</span></article>
+    </section>
+
+    <section class="pilot-panel">
+      <div class="panel-head"><div><h2>Wave progress</h2><p>T0 = baseline · T3 = midline · T6 = endline</p></div></div>
+      <div id="waveProgress" class="pilot-grid"></div>
+    </section>
+
+    <section class="pilot-panel">
+      <div class="panel-head"><div><h2>Pseudonymous participant registry</h2><p>Assignment ilova ichida random qilinmaydi; faqat tashqi randomizatsiya natijasi import qilinadi.</p></div><div class="download-row"><button class="btn btn-secondary" data-export="/api/research/export-panel.csv">Panel CSV</button><button class="btn btn-secondary" data-export="/api/research/export-events.csv">Events CSV</button></div></div>
+      <div class="pilot-scroll"><table class="pilot-table"><thead><tr><th>study_id</th><th>Status</th><th>Cohort</th><th>Group</th><th>Quality</th><th>Analysis</th><th>T0</th><th>T3</th><th>T6</th><th>Update</th></tr></thead><tbody id="participantsBody"><tr><td colspan="10">Yuklanmoqda…</td></tr></tbody></table></div>
+    </section>
+
+    <section class="pilot-panel"><div class="panel-head"><div><h2>Audit trail</h2><p>Participant statusi, consent va survey o‘zgarishlari pseudonymous jurnalga yoziladi.</p></div></div><div id="auditList" class="muted">Yuklanmoqda…</div></section>
+  </main>
+</body>
+</html>
