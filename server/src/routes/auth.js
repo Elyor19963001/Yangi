@@ -7,6 +7,10 @@ const { pool } = require('../config/db');
 const asyncHandler = require('../utils/asyncHandler');
 const { requireAuth } = require('../middleware/auth');
 const {
+  findIdentityByPhone,
+  registerIdentity,
+} = require('../services/identityVault');
+const {
   buildMessageId,
   devMode,
   sendOtpSms,
@@ -181,31 +185,21 @@ router.post('/register', otpRequestLimiter, asyncHandler(async (req, res) => {
   const phone = normalizePhone(req.body.phone);
   if (!phone) return res.status(400).json({ error: 'Telefon +998XXXXXXXXX formatida bo‘lishi kerak' });
 
-  const userResult = await pool.query(
-    `INSERT INTO users (phone_number, full_name, district_id)
-     VALUES ($1, $2, $3)
-     ON CONFLICT (phone_number) DO UPDATE SET
-       full_name = CASE
-         WHEN users.is_verified THEN users.full_name
-         ELSE COALESCE(EXCLUDED.full_name, users.full_name)
-       END,
-       district_id = CASE
-         WHEN users.is_verified THEN users.district_id
-         ELSE COALESCE(EXCLUDED.district_id, users.district_id)
-       END,
-       updated_at = NOW()
-     RETURNING user_id`,
-    [phone, req.body.full_name || null, req.body.district_id || null]
-  );
+  const identity = await registerIdentity({
+    phone,
+    fullName: req.body.full_name || null,
+    districtId: req.body.district_id || null,
+  });
 
   try {
-    const issued = await issueOtp(userResult.rows[0].user_id, phone);
+    const issued = await issueOtp(identity.userId, phone);
     const response = {
       ok: true,
       message: issued.mode === 'sms' ? 'OTP SMS orqali yuborildi' : 'OTP test rejimida yaratildi',
       expires_in_seconds: 600,
       resend_after_seconds: 60,
       delivery: { mode: issued.mode, provider: issued.provider, status: 'accepted' },
+      identity_storage: identity.mode,
     };
     if (issued.mode === 'dev') response.dev_otp = issued.otp;
     res.json(response);
@@ -228,11 +222,11 @@ router.post('/resend-otp', otpRequestLimiter, asyncHandler(async (req, res) => {
   const phone = normalizePhone(req.body.phone);
   if (!phone) return res.status(400).json({ error: 'Telefon +998XXXXXXXXX formatida bo‘lishi kerak' });
 
-  const user = await pool.query('SELECT user_id FROM users WHERE phone_number=$1', [phone]);
-  if (!user.rowCount) return res.status(404).json({ error: 'Foydalanuvchi topilmadi' });
+  const identity = await findIdentityByPhone(phone);
+  if (!identity) return res.status(404).json({ error: 'Foydalanuvchi topilmadi' });
 
   try {
-    const issued = await issueOtp(user.rows[0].user_id, phone);
+    const issued = await issueOtp(identity.user_id, phone);
     const response = {
       ok: true,
       message: issued.mode === 'sms' ? 'Yangi OTP SMS orqali yuborildi' : 'Yangi test OTP yaratildi',
@@ -262,15 +256,18 @@ router.post('/verify-otp', otpVerifyLimiter, asyncHandler(async (req, res) => {
   const otp = String(req.body.otp || '');
   if (!phone || !/^\d{6}$/.test(otp)) return res.status(400).json({ error: 'Phone yoki OTP noto‘g‘ri' });
 
+  const identity = await findIdentityByPhone(phone);
+  if (!identity) return res.status(400).json({ error: 'OTP topilmadi yoki foydalanuvchi mavjud emas' });
+
   const result = await pool.query(
     `SELECT u.user_id, u.role, sp.study_id, sp.consent_analytics,
             o.otp_id, o.otp_hash, o.expires_at, o.attempt_count
        FROM users u
        JOIN otp_codes o ON o.user_id = u.user_id AND o.sent_at IS NOT NULL
        LEFT JOIN study_participants sp ON sp.user_id = u.user_id
-      WHERE u.phone_number = $1
+      WHERE u.user_id = $1
       ORDER BY o.created_at DESC LIMIT 1`,
-    [phone]
+    [identity.user_id]
   );
 
   if (!result.rowCount) return res.status(400).json({ error: 'OTP topilmadi yoki yuborish tasdiqlanmagan' });
