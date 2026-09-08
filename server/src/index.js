@@ -26,6 +26,7 @@ const adminUsers = require('./routes/adminUsers');
 const tourism = require('./routes/tourism');
 const tourSupport = require('./routes/tourSupport');
 const liveTour = require('./routes/liveTour');
+const pilotReadiness = require('./routes/pilotReadiness');
 
 if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is required');
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required');
@@ -90,8 +91,9 @@ app.use('/vendor/maplibre', express.static(path.join(__dirname, '..', 'node_modu
   immutable: true,
 }));
 
-app.get('/health', (_req, res) => res.json({ ok: true, version: '1.6.0' }));
+app.get('/health', (_req, res) => res.json({ ok: true, version: '1.6.1' }));
 app.use('/api/auth', auth);
+app.use('/api/pilot', pilotReadiness);
 app.use('/api/prices', prices);
 app.use('/api/listings', listings);
 app.use('/api/weather', weather);
@@ -181,4 +183,4 @@ io.on('connection', (socket) => {
 });
 
 const port = Number(process.env.PORT || 4000);
-server.listen(port, () => console.log(`API + chat + maps + agro ML + Live GPS AI tourism + MapLibre 3D buildings + Playmobile-ready OTP v1.6.0 on Node 22 listening on http://localhost:${port}`));
+server.listen(port, () => console.log(`API + chat + maps + agro ML + Live GPS AI tourism + MapLibre 3D buildings + Playmobile-ready OTP + pilot readiness v1.6.1 on Node 22 listening on http://localhost:${port}`));
