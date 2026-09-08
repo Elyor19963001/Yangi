@@ -5,6 +5,36 @@
     return document.getElementById(id);
   }
 
+  function ensureControls(otpForm) {
+    let button = getEl('resendOtp');
+    let label = getEl('otpCountdown');
+    if (button && label) return { button, label };
+
+    const wrap = document.createElement('div');
+    wrap.className = 'otp-resend-row';
+    wrap.style.display = 'flex';
+    wrap.style.gap = '10px';
+    wrap.style.alignItems = 'center';
+    wrap.style.justifyContent = 'space-between';
+    wrap.style.flexWrap = 'wrap';
+
+    label = document.createElement('small');
+    label.id = 'otpCountdown';
+    label.textContent = 'Kod kelmadimi?';
+
+    button = document.createElement('button');
+    button.id = 'resendOtp';
+    button.type = 'button';
+    button.className = 'btn btn-secondary';
+    button.textContent = 'OTPni qayta yuborish';
+
+    wrap.append(label, button);
+    const backButton = getEl('backToRegister');
+    if (backButton) otpForm.insertBefore(wrap, backButton);
+    else otpForm.appendChild(wrap);
+    return { button, label };
+  }
+
   function setCountdown(seconds) {
     const button = getEl('resendOtp');
     const label = getEl('otpCountdown');
@@ -88,10 +118,9 @@
   }
 
   function initResendUi() {
-    const button = getEl('resendOtp');
     const otpForm = getEl('otpForm');
-    if (!button || !otpForm) return;
-
+    if (!otpForm) return;
+    const { button } = ensureControls(otpForm);
     button.addEventListener('click', resendOtp);
 
     const observer = new MutationObserver(() => {
