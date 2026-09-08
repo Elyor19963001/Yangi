@@ -9,6 +9,7 @@
     sms_status_callback_configured: 'SMS delivery callback himoyalangan',
     pii_vault_external: 'PII alohida tashqi bazada',
     pii_vault_connection_ok: 'PII vault ulanishi ishlayapti',
+    pii_transport_tls: 'PII vault transporti TLS bilan himoyalangan',
     pii_residency_declared_uz: 'PII data residency = UZ deb deklaratsiya qilingan',
     legacy_research_db_pii_scrubbed: 'Research DB dan telefon/F.I.Sh. tozalangan',
   };
@@ -29,7 +30,7 @@
       const entries = Object.entries(data.checks || {});
       grid.innerHTML = entries.map(([key, ok]) => card(key, Boolean(ok))).join('');
       const piiInfo = data.pii
-        ? `<br><small>PII mode: ${data.pii.mode || '—'} · residency: ${data.pii.residency_declared || 'aniqlanmagan'} · legacy PII: ${Number(data.pii.legacy_pii_records_in_research_db || 0)}</small>`
+        ? `<br><small>PII mode: ${data.pii.mode || '—'} · TLS: ${data.pii.transport_tls ? 'ON' : 'OFF'} · residency: ${data.pii.residency_declared || 'aniqlanmagan'} · legacy PII: ${Number(data.pii.legacy_pii_records_in_research_db || 0)}</small>`
         : '';
       if (data.pilot_ready) {
         overall.innerHTML = `<strong class="positive">✅ TEXNIK PILOT READY</strong><br>${data.note || ''}${piiInfo}`;
