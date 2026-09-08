@@ -1,6 +1,11 @@
 const crypto = require('crypto');
 const { pool } = require('../config/db');
-const { piiPool, externalPiiConfigured, piiMode } = require('../config/piiDb');
+const {
+  piiPool,
+  externalPiiConfigured,
+  piiMode,
+  piiTlsRequired,
+} = require('../config/piiDb');
 
 async function findIdentityByPhone(phone) {
   if (externalPiiConfigured()) {
@@ -147,14 +152,27 @@ async function legacyPiiCount() {
   return Number(result.rows[0]?.n || 0);
 }
 
-async function piiConnectionOk() {
-  if (!externalPiiConfigured()) return false;
+async function piiConnectionStatus() {
+  if (!externalPiiConfigured()) return { connected: false, tls: false };
   try {
-    await piiPool.query('SELECT 1');
-    return true;
+    const result = await piiPool.query(
+      `SELECT COALESCE(
+          (SELECT ssl FROM pg_stat_ssl WHERE pid = pg_backend_pid()),
+          FALSE
+        ) AS tls`
+    );
+    return {
+      connected: true,
+      tls: Boolean(result.rows[0]?.tls),
+    };
   } catch {
-    return false;
+    return { connected: false, tls: false };
   }
+}
+
+async function piiConnectionOk() {
+  const status = await piiConnectionStatus();
+  return status.connected;
 }
 
 function piiReadiness() {
@@ -162,6 +180,7 @@ function piiReadiness() {
   return {
     mode: piiMode(),
     external: externalPiiConfigured(),
+    tls_required: piiTlsRequired(),
     residency_declared: residency || null,
     residency_declared_uz: residency === 'UZ',
     region_label: String(process.env.PII_VAULT_REGION || '').trim() || null,
@@ -174,6 +193,7 @@ module.exports = {
   registerIdentity,
   updateIdentityProfile,
   legacyPiiCount,
+  piiConnectionStatus,
   piiConnectionOk,
   piiReadiness,
 };
