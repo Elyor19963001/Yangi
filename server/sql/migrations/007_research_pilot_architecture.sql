@@ -14,41 +14,29 @@ ALTER TABLE study_participants
   ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
 
 DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'study_participants_pilot_status_check'
-  ) THEN
-    ALTER TABLE study_participants
-      ADD CONSTRAINT study_participants_pilot_status_check
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'study_participants_pilot_status_check') THEN
+    ALTER TABLE study_participants ADD CONSTRAINT study_participants_pilot_status_check
       CHECK (pilot_status IN ('screened','eligible','enrolled','randomized','active','completed','withdrawn','excluded'));
   END IF;
 END $$;
 
 DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'study_participants_assignment_group_check'
-  ) THEN
-    ALTER TABLE study_participants
-      ADD CONSTRAINT study_participants_assignment_group_check
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'study_participants_assignment_group_check') THEN
+    ALTER TABLE study_participants ADD CONSTRAINT study_participants_assignment_group_check
       CHECK (assignment_group IS NULL OR assignment_group IN ('control','treatment'));
   END IF;
 END $$;
 
 DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'study_participants_assignment_source_check'
-  ) THEN
-    ALTER TABLE study_participants
-      ADD CONSTRAINT study_participants_assignment_source_check
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'study_participants_assignment_source_check') THEN
+    ALTER TABLE study_participants ADD CONSTRAINT study_participants_assignment_source_check
       CHECK (assignment_source IS NULL OR assignment_source IN ('external_randomization','legacy_import'));
   END IF;
 END $$;
 
 DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'study_participants_data_quality_status_check'
-  ) THEN
-    ALTER TABLE study_participants
-      ADD CONSTRAINT study_participants_data_quality_status_check
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'study_participants_data_quality_status_check') THEN
+    ALTER TABLE study_participants ADD CONSTRAINT study_participants_data_quality_status_check
       CHECK (data_quality_status IN ('pending','reviewed','clean','flagged','excluded'));
   END IF;
 END $$;
@@ -58,34 +46,30 @@ ALTER TABLE survey_responses
   ADD COLUMN IF NOT EXISTS dataset_status VARCHAR(20) NOT NULL DEFAULT 'eligible';
 
 DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'survey_responses_record_origin_check'
-  ) THEN
-    ALTER TABLE survey_responses
-      ADD CONSTRAINT survey_responses_record_origin_check
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'survey_responses_record_origin_check') THEN
+    ALTER TABLE survey_responses ADD CONSTRAINT survey_responses_record_origin_check
       CHECK (record_origin IN ('legacy','demo','pilot'));
   END IF;
 END $$;
 
 DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'survey_responses_dataset_status_check'
-  ) THEN
-    ALTER TABLE survey_responses
-      ADD CONSTRAINT survey_responses_dataset_status_check
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'survey_responses_dataset_status_check') THEN
+    ALTER TABLE survey_responses ADD CONSTRAINT survey_responses_dataset_status_check
       CHECK (dataset_status IN ('eligible','review','excluded'));
   END IF;
 END $$;
+
+-- Demo/legacy va real pilot bir xil study_id + wave bo‘yicha bir-birini bosib ketmasin.
+ALTER TABLE survey_responses DROP CONSTRAINT IF EXISTS survey_responses_study_id_wave_key;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_survey_study_wave_origin
+  ON survey_responses(study_id, wave, record_origin);
 
 ALTER TABLE user_activity
   ADD COLUMN IF NOT EXISTS record_origin VARCHAR(16) NOT NULL DEFAULT 'legacy';
 
 DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'user_activity_record_origin_check'
-  ) THEN
-    ALTER TABLE user_activity
-      ADD CONSTRAINT user_activity_record_origin_check
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'user_activity_record_origin_check') THEN
+    ALTER TABLE user_activity ADD CONSTRAINT user_activity_record_origin_check
       CHECK (record_origin IN ('legacy','demo','pilot'));
   END IF;
 END $$;
