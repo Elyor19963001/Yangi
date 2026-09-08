@@ -2,7 +2,7 @@ const express = require('express');
 const { smsReadiness, devMode } = require('../services/sms');
 const {
   legacyPiiCount,
-  piiConnectionOk,
+  piiConnectionStatus,
   piiReadiness,
 } = require('../services/identityVault');
 
@@ -17,8 +17,8 @@ router.get('/readiness', async (req, res, next) => {
   try {
     const sms = smsReadiness();
     const pii = piiReadiness();
-    const [piiConnection, legacyCount] = await Promise.all([
-      piiConnectionOk(),
+    const [piiStatus, legacyCount] = await Promise.all([
+      piiConnectionStatus(),
       legacyPiiCount(),
     ]);
 
@@ -31,7 +31,8 @@ router.get('/readiness', async (req, res, next) => {
       sms_provider_configured: Boolean(sms.configured) && sms.mode === 'sms',
       sms_status_callback_configured: Boolean(sms.status_callback_configured),
       pii_vault_external: Boolean(pii.external),
-      pii_vault_connection_ok: Boolean(piiConnection),
+      pii_vault_connection_ok: Boolean(piiStatus.connected),
+      pii_transport_tls: !pii.tls_required || Boolean(piiStatus.tls),
       pii_residency_declared_uz: Boolean(pii.residency_declared_uz),
       legacy_research_db_pii_scrubbed: legacyCount === 0,
     };
@@ -46,6 +47,7 @@ router.get('/readiness', async (req, res, next) => {
       'sms_status_callback_configured',
       'pii_vault_external',
       'pii_vault_connection_ok',
+      'pii_transport_tls',
       'pii_residency_declared_uz',
       'legacy_research_db_pii_scrubbed',
     ];
@@ -53,12 +55,14 @@ router.get('/readiness', async (req, res, next) => {
     const failed = requiredForCitizenPilot.filter((key) => !checks[key]);
     res.json({
       ok: true,
-      version: '1.8.0',
+      version: '1.8.1',
       pilot_ready: failed.length === 0,
       otp_mode: sms.mode,
       sms_provider: sms.provider,
       pii: {
         mode: pii.mode,
+        tls_required: pii.tls_required,
+        transport_tls: Boolean(piiStatus.tls),
         residency_declared: pii.residency_declared,
         region_label: pii.region_label,
         legacy_pii_records_in_research_db: legacyCount,
