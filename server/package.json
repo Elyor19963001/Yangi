@@ -1,13 +1,13 @@
 {
   "name": "phd-rural-platform-server",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "private": true,
   "type": "commonjs",
   "packageManager": "npm@10.9.3",
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
-    "check": "node --check src/index.js && node --check src/middleware/auth.js && node --check src/services/sms.js && node --check src/routes/auth.js && node --check src/routes/pilotReadiness.js && node --check src/routes/research.js && node --check src/routes/survey.js && node --check src/routes/adminUsers.js && node --check src/routes/chat.js && node --check src/routes/places.js && node --check src/routes/weather.js && node --check src/routes/agro.js && node --check src/routes/agroPipeline.js && node --check src/routes/tourism.js && node --check src/routes/tourSupport.js && node --check src/routes/liveTour.js && node --check public/app.js && node --check public/otp-resend.js && node --check public/pilot-readiness.js && node --check public/research-pilot.js && node --check public/agro-samples.js && node --check public/agro-admin.js && node --check public/tour-app.js && node --check public/map-style-switcher.js && node --check public/map-3d.js",
+    "check": "node --check src/index.js && node --check src/middleware/auth.js && node --check src/middleware/activity.js && node --check src/services/sms.js && node --check src/routes/auth.js && node --check src/routes/pilotReadiness.js && node --check src/routes/research.js && node --check src/routes/survey.js && node --check src/routes/adminUsers.js && node --check src/routes/chat.js && node --check src/routes/places.js && node --check src/routes/weather.js && node --check src/routes/agro.js && node --check src/routes/agroPipeline.js && node --check src/routes/tourism.js && node --check src/routes/tourSupport.js && node --check src/routes/liveTour.js && node --check public/app.js && node --check public/otp-resend.js && node --check public/pilot-readiness.js && node --check public/research-pilot.js && node --check public/agro-samples.js && node --check public/agro-admin.js && node --check public/tour-app.js && node --check public/map-style-switcher.js && node --check public/map-3d.js",
     "audit:ci": "npm audit --audit-level=moderate",
     "db:migrate": "node scripts/migrate.js",
     "db:seed": "node scripts/seed.js"
