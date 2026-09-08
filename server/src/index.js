@@ -91,7 +91,7 @@ app.use('/vendor/maplibre', express.static(path.join(__dirname, '..', 'node_modu
   immutable: true,
 }));
 
-app.get('/health', (_req, res) => res.json({ ok: true, version: '1.7.1' }));
+app.get('/health', (_req, res) => res.json({ ok: true, version: '1.8.0' }));
 app.use('/api/auth', auth);
 app.use('/api/pilot', pilotReadiness);
 app.use('/api/prices', prices);
@@ -183,4 +183,4 @@ io.on('connection', (socket) => {
 });
 
 const port = Number(process.env.PORT || 4000);
-server.listen(port, () => console.log(`API + chat + maps + agro ML + Live GPS AI tourism + MapLibre 3D buildings + Playmobile-ready OTP + Research Pilot Architecture v1.7.1 on Node 22 listening on http://localhost:${port}`));
+server.listen(port, () => console.log(`API + chat + maps + agro ML + Live GPS AI tourism + MapLibre 3D buildings + Playmobile-ready OTP + Research Pilot Architecture + split PII Vault v1.8.0 on Node 22 listening on http://localhost:${port}`));
