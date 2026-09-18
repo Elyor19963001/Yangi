@@ -274,7 +274,9 @@ router.get('/status', (_req, res) => {
     professional_voice_configured: Boolean(process.env.OPENAI_API_KEY),
     guidance_modes: ['full','essential','mute'],
     auto_audio_guide_trigger: true,
-    arrival_radius_m: 80,
+    arrival_radius_m: 70,
+    arrival_radius_min_m: 35,
+    gps_trigger_strategy: 'adaptive radius based on reported GPS accuracy',
     deviation_threshold_m: 120,
     note: 'GPS coordinates are used for the current browser navigation session and are not stored by this endpoint. Turn-by-turn depends on routing-provider step data; fallback routes may provide destination guidance without street-level turns.',
   });
