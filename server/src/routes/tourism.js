@@ -312,7 +312,10 @@ function parseOverpassElements(elements = []) {
       tourism: tags.tourism || null,
       religion: tags.religion || null,
       opening_hours: tags.opening_hours || null,
+      fee: tags.fee || null,
+      charge: tags.charge || tags.admission || tags['entrance:fee'] || null,
       website: tags.website || tags['contact:website'] || null,
+      phone: tags.phone || tags['contact:phone'] || null,
       wikipedia: tags.wikipedia || null,
       wikidata: tags.wikidata || null,
       source_url: `https://www.openstreetmap.org/${el.type}/${el.id}`,
@@ -327,7 +330,23 @@ function mergeWithCurated(external = []) {
   for (const poi of external) {
     const key = normalizePoiKey(poi.name);
     if (!key) continue;
-    if (!merged.has(key)) merged.set(key, poi);
+    if (!merged.has(key)) {
+      merged.set(key, poi);
+      continue;
+    }
+    const base = merged.get(key);
+    merged.set(key, {
+      ...poi,
+      ...base,
+      opening_hours: poi.opening_hours || base.opening_hours || null,
+      fee: poi.fee || base.fee || null,
+      charge: poi.charge || base.charge || null,
+      website: poi.website || base.website || null,
+      phone: poi.phone || base.phone || null,
+      osm_source_url: poi.source_url || null,
+      osm_id: poi.osm_id || null,
+      osm_type: poi.osm_type || null,
+    });
   }
   return [...merged.values()];
 }
@@ -662,6 +681,115 @@ function routeFallback(start, stops, walking) {
   };
 }
 
+const OSM_DAY_CODES = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+function minutesOfClock(value) {
+  const match = String(value || '').match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return null;
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (hour < 0 || hour > 24 || minute < 0 || minute > 59 || (hour === 24 && minute !== 0)) return null;
+  return hour * 60 + minute;
+}
+
+function daySelectorMatches(selector, dayCode) {
+  const clean = String(selector || '').trim();
+  if (!clean) return true;
+  const tokens = clean.split(',').map((x) => x.trim()).filter(Boolean);
+  for (const token of tokens) {
+    if (/^(Mo|Tu|We|Th|Fr|Sa|Su)$/.test(token) && token === dayCode) return true;
+    const range = token.match(/^(Mo|Tu|We|Th|Fr|Sa|Su)-(Mo|Tu|We|Th|Fr|Sa|Su)$/);
+    if (range) {
+      const start = OSM_DAY_CODES.indexOf(range[1]);
+      const end = OSM_DAY_CODES.indexOf(range[2]);
+      const current = OSM_DAY_CODES.indexOf(dayCode);
+      if (start <= end ? current >= start && current <= end : current >= start || current <= end) return true;
+    }
+  }
+  return false;
+}
+
+function evaluateSimpleOpeningHours(openingHours, dateText, timeText) {
+  const raw = text(openingHours, 300);
+  if (!raw) return { status: 'unknown', label: 'Ish vaqti noma’lum', source: null };
+  if (raw === '24/7') return { status: 'open', label: 'Ochiq · 24/7', source: 'OpenStreetMap opening_hours' };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateText || '')) || !/^\d{2}:\d{2}$/.test(String(timeText || ''))) {
+    return { status: 'unknown', label: raw, source: 'OpenStreetMap opening_hours' };
+  }
+  if (/[+"']|PH|SH|sunrise|sunset|week|easter|month|year/i.test(raw)) {
+    return { status: 'unknown', label: raw, source: 'OpenStreetMap opening_hours' };
+  }
+  const date = new Date(`${dateText}T12:00:00Z`);
+  const dayCode = OSM_DAY_CODES[date.getUTCDay()];
+  const visit = minutesOfClock(timeText);
+  if (visit === null) return { status: 'unknown', label: raw, source: 'OpenStreetMap opening_hours' };
+
+  let matchedDayRule = false;
+  let explicitClosed = false;
+  for (const segmentRaw of raw.split(';')) {
+    const segment = segmentRaw.trim();
+    if (!segment) continue;
+    const match = segment.match(/^((?:(?:Mo|Tu|We|Th|Fr|Sa|Su)(?:-(?:Mo|Tu|We|Th|Fr|Sa|Su))?(?:,(?:Mo|Tu|We|Th|Fr|Sa|Su)(?:-(?:Mo|Tu|We|Th|Fr|Sa|Su))?)*)\s+)?(.+)$/);
+    if (!match) continue;
+    const selector = (match[1] || '').trim();
+    const body = (match[2] || '').trim();
+    if (!daySelectorMatches(selector, dayCode)) continue;
+    matchedDayRule = true;
+    if (/\boff\b|\bclosed\b/i.test(body)) {
+      explicitClosed = true;
+      continue;
+    }
+    const ranges = [...body.matchAll(/(\d{1,2}:\d{2})-(\d{1,2}:\d{2})/g)];
+    for (const range of ranges) {
+      const start = minutesOfClock(range[1]);
+      const end = minutesOfClock(range[2]);
+      if (start === null || end === null) continue;
+      const open = end >= start ? visit >= start && visit < end : visit >= start || visit < end;
+      if (open) return { status: 'open', label: `Ochiq · ${range[1]}–${range[2]}`, source: 'OpenStreetMap opening_hours' };
+    }
+  }
+  if (matchedDayRule || explicitClosed) return { status: 'closed', label: 'Yopiq bo‘lishi mumkin', source: 'OpenStreetMap opening_hours' };
+  return { status: 'unknown', label: raw, source: 'OpenStreetMap opening_hours' };
+}
+
+function tashkentNowParts() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Tashkent', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(new Date());
+  const getPart = (type) => parts.find((p) => p.type === type)?.value;
+  return {
+    date: `${getPart('year')}-${getPart('month')}-${getPart('day')}`,
+    time: `${getPart('hour')}:${getPart('minute')}`,
+  };
+}
+
+function ticketInfo(poi = {}) {
+  const fee = String(poi.fee || '').toLowerCase();
+  const charge = text(poi.charge, 120);
+  if (charge) return { status: 'known', label: charge, source: 'OpenStreetMap fee/charge tag' };
+  if (fee === 'no') return { status: 'free', label: 'Bepul deb ko‘rsatilgan', source: 'OpenStreetMap fee tag' };
+  if (fee === 'yes') return { status: 'paid-unknown', label: 'Pullik · narx ko‘rsatilmagan', source: 'OpenStreetMap fee tag' };
+  return { status: 'unknown', label: 'Chipta narxi ma’lum emas', source: null };
+}
+
+function enrichOperationalStatus(poi, visitDate, visitTime) {
+  const planned = evaluateSimpleOpeningHours(poi.opening_hours, visitDate, visitTime);
+  const nowParts = tashkentNowParts();
+  const now = evaluateSimpleOpeningHours(poi.opening_hours, nowParts.date, nowParts.time);
+  return {
+    ...poi,
+    operational: {
+      planned,
+      now,
+      ticket: ticketInfo(poi),
+      website: poi.website || null,
+      phone: poi.phone || null,
+      data_note: 'Ish vaqti va to‘lov OpenStreetMap metadata asosida. Rasmiy manbada tekshirish tavsiya etiladi.',
+    },
+  };
+}
+
 function visitMinutes(poi, intent, weather, adaptive) {
   let minutes = poi.category === 'museum' ? (intent.pace === 'relaxed' ? 90 : 75)
     : PRIORITY_PATTERNS.some((rx) => rx.test(poi.name)) ? (intent.pace === 'active' ? 60 : 80)
@@ -675,7 +803,7 @@ function visitMinutes(poi, intent, weather, adaptive) {
   return minutes;
 }
 
-function daySchedule(dayStops, route, intent, dayIndex, weather, adaptive) {
+function daySchedule(dayStops, route, intent, dayIndex, weather, adaptive, visitDate = null) {
   const risk = weather?.risk || { type: 'normal', advice: null };
   const requestedStart = clockMinutes(intent.preferred_start_time);
   const requestedEnd = clockMinutes(intent.preferred_end_time);
@@ -688,11 +816,15 @@ function daySchedule(dayStops, route, intent, dayIndex, weather, adaptive) {
     const startMinutes = cursor;
     cursor += visit;
     const fmt = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
-    return { ...poi, order: index + 1, visit_minutes: visit, time_start: fmt(startMinutes), time_end: fmt(cursor) };
+    const startText = fmt(startMinutes);
+    const endText = fmt(cursor);
+    const dated = visitDate || weather?.date || null;
+    const enriched = enrichOperationalStatus(poi, dated, startText);
+    return { ...enriched, order: index + 1, visit_minutes: visit, time_start: startText, time_end: endText };
   });
   return {
     day: dayIndex + 1,
-    date: weather?.date || null,
+    date: visitDate || weather?.date || null,
     title: `${dayIndex + 1}-kun`,
     stops: rows,
     route,
@@ -718,17 +850,18 @@ function localizedSummary(intent, count, adaptedDays) {
 
 router.get('/status', (_req, res) => {
   res.json({
-    version: '1.4.0',
+    version: '1.5.0',
     openai_configured: Boolean(process.env.OPENAI_API_KEY),
     openai_model: process.env.OPENAI_API_KEY ? (process.env.OPENAI_MODEL || 'gpt-5.6-luna') : null,
     poi_source: 'Verified curated Samarkand anchors + OpenStreetMap/Overpass enrichment',
     routing_source: 'Fixed-origin route ordering + OSRM driving + geodesic fallback',
     route_optimization: 'Nearest-neighbor + 2-opt when weather is normal; weather-priority ordering in severe weather',
     weather_source: 'Open-Meteo',
+    operational_metadata: 'OpenStreetMap opening_hours + fee/charge tags; simple schedule evaluator with safe unknown fallback',
     weather_adaptive_routing: true,
     forecast_window_days: 14,
     curated_poi_count: CURATED_POIS.length,
-    note: 'Ob-havo moslashuvi tavsiyaviy. Ish vaqti, chipta narxi, vaqtinchalik yopilish va kirish qoidalarini rasmiy manbadan tekshirish kerak.',
+    note: 'Ish vaqti va chipta ma’lumoti mavjud bo‘lsa OpenStreetMap metadata asosida ko‘rsatiladi. Murakkab opening_hours ifodalari yoki narx yo‘q bo‘lsa tizim taxmin qilmaydi; rasmiy manbadan tekshirish kerak.',
   });
 });
 
@@ -767,15 +900,18 @@ router.post('/plan', asyncHandler(async (req, res) => {
     let route = null;
     if (intent.transport !== 'walking') route = await routeDriving(start, stops);
     if (!route) route = routeFallback(start, stops, intent.transport === 'walking');
-    const scheduled = daySchedule(stops, route, intent, i, weather, weatherAdaptive);
+    const visitDate = weather?.date || addDate(tripStart.date, i);
+    const scheduled = daySchedule(stops, route, intent, i, weather, weatherAdaptive, visitDate);
     scheduled.optimization = optimized.meta;
     days.push(scheduled);
   }
 
   const totalStops = days.reduce((sum, day) => sum + day.stops.length, 0);
   const adaptedDays = days.filter((day) => day.weather_adapted).length;
+  const knownClosedVisits = days.flatMap((day) => day.stops || []).filter((stop) => stop.operational?.planned?.status === 'closed');
+  const pricedStops = days.flatMap((day) => day.stops || []).filter((stop) => stop.operational?.ticket?.status !== 'unknown');
   res.json({
-    version: '1.4.0',
+    version: '1.5.0',
     prompt,
     intent,
     start,
@@ -790,6 +926,7 @@ router.post('/plan', asyncHandler(async (req, res) => {
       routing: [...new Set(days.map((d) => d.route?.source).filter(Boolean))],
       optimization: [...new Set(days.map((d) => d.optimization?.method).filter(Boolean))],
       weather: weatherBundle.source,
+      operational: 'OpenStreetMap opening_hours + fee/charge metadata',
       ai: intent.engine === 'openai' ? `OpenAI ${intent.model || ''}`.trim() : 'Local multilingual preference parser',
     },
     warnings: [
@@ -799,6 +936,8 @@ router.post('/plan', asyncHandler(async (req, res) => {
       weatherAdaptive && weatherBundle.rows.length ? 'Yomg‘ir, kuchli shamol, keskin issiq yoki sovuq aniqlansa, obyektlarning kunlar va kun ichidagi tartibi avtomatik qayta optimallashtiriladi.' : null,
       intent.wheelchair_accessible ? 'Accessibility talabi hisobga olindi, ammo obyektlarning pandus, lift va kirish sharoiti bo‘yicha ma’lumot to‘liq emas; tashrifdan oldin rasmiy manbadan tasdiqlang.' : null,
       days.some((day) => Number(day.preferred_window?.overrun_minutes || 0) > 0) ? 'Tanlangan kun yakuni vaqtiga sig‘magan kun bor; tashrif sonini kamaytirish yoki yakun vaqtini uzaytirish tavsiya etiladi.' : null,
+      knownClosedVisits.length ? `${knownClosedVisits.length} ta tashrifda OSM opening_hours bo‘yicha yopiq bo‘lish ehtimoli aniqlandi; tashrif vaqtini o‘zgartirish yoki rasmiy manbani tekshiring.` : null,
+      pricedStops.length ? null : 'Tanlangan obyektlarda ishonchli chipta narxi metadata topilmadi; tizim narxni taxmin qilmadi.',
       'Marshrut tavsiya xarakterida. Ish vaqti, chipta narxi, vaqtinchalik yopilish va kirish qoidalarini rasmiy manbalardan tekshiring.',
       intent.transport === 'walking' ? 'Piyoda rejimida yo‘l chizig‘i geodezik taxmin; piyodalar yo‘laklari bo‘yicha professional routing keyingi bosqichda ulanadi.' : null,
     ].filter(Boolean),
@@ -812,7 +951,7 @@ async function runStartupSmoke() {
     const selected = selectPois(discovered.rows, intent, CENTER).slice(0, 4);
     const route = selected.length ? (await routeDriving(CENTER, selected) || routeFallback(CENTER, selected, false)) : null;
     const names = selected.map((p) => p.name).join(' | ');
-    console.log(`[tour-smoke] v=1.4 provider=${discovered.provider} pois=${discovered.rows.length} external=${discovered.external_count} sample=${names || 'none'} route=${route?.source || 'none'} geometry=${route?.geometry?.type || 'none'}`);
+    console.log(`[tour-smoke] v=1.5 provider=${discovered.provider} pois=${discovered.rows.length} external=${discovered.external_count} sample=${names || 'none'} route=${route?.source || 'none'} geometry=${route?.geometry?.type || 'none'}`);
   } catch (error) {
     console.warn(`[tour-smoke] failed=${error.response?.status || error.message}`);
   }
