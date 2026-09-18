@@ -760,7 +760,8 @@ function renderMap(day,daySupport){
     const icon=L.divIcon({className:'poi-marker',html:String(stop.order),iconSize:[28,28],iconAnchor:[14,14]});
     const popup=poiPopupHtml(stop);
     const m=L.marker([stop.latitude,stop.longitude],{icon}).addTo(state.map)
-      .bindPopup(popup,{maxWidth:390,minWidth:300,className:'tfe-place-popup',autoPanPadding:[18,90]});
+      .bindPopup(popup,{maxWidth:390,minWidth:300,className:'tfe-place-popup',autoPan:true,autoPanPadding:[18,90],keepInView:true});
+    m.on('click',()=>m.openPopup());
     state.markers.push(m);
   });
   const seen=new Set();
