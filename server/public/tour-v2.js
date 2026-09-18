@@ -5,6 +5,8 @@
     pace: 'normal',
     transport: 'mixed',
     lowWalking: false,
+    wheelchair: false,
+    ownCar: false,
   };
 
   const labels = {
@@ -66,6 +68,21 @@
           <button type="button" class="pref-chip" data-low-walking="true">🪑 Kam yurish</button>
         </div>
       </div>
+      <div class="traveler-profile">
+        <div class="profile-head"><strong>Sayohatchi profili</strong><span>Ixtiyoriy. AI marshrutni guruh tarkibi va kun vaqtingizga moslashtiradi.</span></div>
+        <div class="profile-grid">
+          <label>Qayerdan kelasiz?<input id="originCountry" maxlength="60" placeholder="Masalan: O‘zbekiston, Rossiya" /></label>
+          <label>Bolalar soni<input id="childrenCount" type="number" min="0" max="10" value="0" inputmode="numeric" /></label>
+          <label>65+ yoshdagilar<input id="seniorCount" type="number" min="0" max="10" value="0" inputmode="numeric" /></label>
+          <label>Kun boshlanishi<input id="preferredStartTime" type="time" value="09:00" /></label>
+          <label>Kun yakuni<input id="preferredEndTime" type="time" value="18:00" /></label>
+        </div>
+        <div class="profile-toggle-row">
+          <button type="button" class="pref-chip" data-own-car="true">🚗 Shaxsiy avtomobil</button>
+          <button type="button" class="pref-chip" data-wheelchair="true">♿ Aravachaga qulaylik muhim</button>
+        </div>
+        <small class="profile-caveat">♿ Accessibility ma’lumoti barcha obyektlarda to‘liq emas; AI buni ehtiyotkor rejalash signali sifatida ishlatadi va yakuniy kirish sharoitini rasmiy manbadan tekshirish kerak.</small>
+      </div>
       <div class="template-strip">
         <button type="button" class="tour-template" data-template="classic">1 kun · Klassik Samarqand</button>
         <button type="button" class="tour-template" data-template="first">2 kun · Birinchi tashrif</button>
@@ -107,6 +124,22 @@
       event.currentTarget.classList.toggle('active', prefs.lowWalking);
     });
 
+    box.querySelector('[data-own-car]').addEventListener('click', (event) => {
+      prefs.ownCar = !prefs.ownCar;
+      event.currentTarget.classList.toggle('active', prefs.ownCar);
+      if (prefs.ownCar) {
+        prefs.transport = 'mixed';
+        box.querySelectorAll('[data-transport]').forEach((b) => b.classList.toggle('active', b.dataset.transport === 'mixed'));
+      }
+    });
+
+    box.querySelector('[data-wheelchair]').addEventListener('click', (event) => {
+      prefs.wheelchair = !prefs.wheelchair;
+      if (prefs.wheelchair) prefs.lowWalking = true;
+      event.currentTarget.classList.toggle('active', prefs.wheelchair);
+      box.querySelector('[data-low-walking]').classList.toggle('active', prefs.lowWalking);
+    });
+
     box.querySelectorAll('[data-template]').forEach((button) => {
       button.addEventListener('click', () => applyTemplate(button.dataset.template));
     });
@@ -114,12 +147,30 @@
     form.addEventListener('submit', () => {
       const base = textarea.value.trim();
       const interestText = [...prefs.interests].map((x) => labels.interests[x]).filter(Boolean).join(', ');
+      const origin = String(get('originCountry')?.value || '').trim();
+      const children = Math.max(0, Number(get('childrenCount')?.value) || 0);
+      const seniors = Math.max(0, Number(get('seniorCount')?.value) || 0);
+      const startTime = get('preferredStartTime')?.value || '';
+      const endTime = get('preferredEndTime')?.value || '';
+      const partySize = Math.max(1, Number(get('partySize')?.value) || 1);
+      const budget = Math.max(0, Number(get('budget')?.value) || 0);
+
       const extra = [
         interestText ? `Qiziqishlar: ${interestText}` : '',
         labels.pace[prefs.pace],
         labels.transport[prefs.transport],
         prefs.lowWalking ? 'ko‘p yurishni xohlamayman' : '',
+        origin ? `kelish mamlakati: ${origin}` : '',
+        `guruh: ${partySize} kishi`,
+        children ? `${children} bola` : '',
+        seniors ? `${seniors} kishi 65+ yoshda` : '',
+        prefs.ownCar ? 'shaxsiy avtomobil bor' : '',
+        prefs.wheelchair ? 'nogironlar aravachasi uchun qulaylik muhim' : '',
+        startTime ? `kunni ${startTime} da boshlash` : '',
+        endTime ? `kunni ${endTime} gacha yakunlash` : '',
+        budget ? `umumiy budjet ${Math.round(budget)} so‘m` : '',
       ].filter(Boolean).join('; ');
+
       if (!base || !extra) return;
       textarea.value = `${base}\n\nAniq sozlamalar: ${extra}.`;
       queueMicrotask(() => { textarea.value = base; });
@@ -138,22 +189,22 @@
       classic: {
         days: '1',
         text: 'Samarqandning eng muhim tarixiy obidalarini 1 kunda ko‘rmoqchiman. Vaqtni tejamkor tashkil qiling, tushlik uchun milliy taom ham bo‘lsin.',
-        interests: ['history','architecture'], pace: 'normal', transport: 'mixed', lowWalking: false,
+        interests: ['history','architecture'], pace: 'normal', transport: 'mixed', lowWalking: false, ownCar: false, wheelchair: false, children: 0, seniors: 0,
       },
       first: {
         days: '2',
         text: 'Samarqandga birinchi marta kelyapman. 2 kun ichida asosiy tarixiy joylar, muzey va milliy taomlarni ko‘rishni xohlayman.',
-        interests: ['history','museum','gastronomy'], pace: 'normal', transport: 'mixed', lowWalking: false,
+        interests: ['history','museum','gastronomy'], pace: 'normal', transport: 'mixed', lowWalking: false, ownCar: false, wheelchair: false, children: 0, seniors: 0,
       },
       family: {
         days: '2',
         text: 'Oila bilan Samarqand bo‘ylab 2 kunlik qulay tur kerak. Bolalar bilan ko‘p yurmaydigan, dam olishga vaqt qoladigan marshrut tuzing.',
-        interests: ['history','family','gastronomy'], pace: 'relaxed', transport: 'taxi', lowWalking: true,
+        interests: ['history','family','gastronomy'], pace: 'relaxed', transport: 'taxi', lowWalking: true, ownCar: false, wheelchair: false, children: 2, seniors: 0,
       },
       pilgrim: {
         days: '2',
         text: 'Samarqandning ziyorat joylari bo‘yicha 2 kunlik tur kerak. Tarixiy qadamjolar va milliy taomlar ham kiritsin, ortiqcha piyoda yurish bo‘lmasin.',
-        interests: ['pilgrimage','history','gastronomy'], pace: 'relaxed', transport: 'mixed', lowWalking: true,
+        interests: ['pilgrimage','history','gastronomy'], pace: 'relaxed', transport: 'mixed', lowWalking: true, ownCar: false, wheelchair: false, children: 0, seniors: 1,
       },
     };
     const t = templates[name];
@@ -165,6 +216,10 @@
     prefs.pace = t.pace;
     prefs.transport = t.transport;
     prefs.lowWalking = t.lowWalking;
+    prefs.ownCar = Boolean(t.ownCar);
+    prefs.wheelchair = Boolean(t.wheelchair);
+    if (get('childrenCount')) get('childrenCount').value = String(t.children || 0);
+    if (get('seniorCount')) get('seniorCount').value = String(t.seniors || 0);
     syncButtons();
     prompt.focus();
   }
@@ -175,6 +230,10 @@
     document.querySelectorAll('[data-transport]').forEach((b) => b.classList.toggle('active', b.dataset.transport === prefs.transport));
     const low = document.querySelector('[data-low-walking]');
     if (low) low.classList.toggle('active', prefs.lowWalking);
+    const own = document.querySelector('[data-own-car]');
+    if (own) own.classList.toggle('active', prefs.ownCar);
+    const wheelchair = document.querySelector('[data-wheelchair]');
+    if (wheelchair) wheelchair.classList.toggle('active', prefs.wheelchair);
   }
 
   function setProgress(step) {

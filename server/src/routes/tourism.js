@@ -79,6 +79,50 @@ function parseBudget(prompt) {
   return null;
 }
 
+function promptCount(prompt, pattern) {
+  const match = String(prompt || '').match(pattern);
+  return match ? clamp(Number(match[1]) || 0, 0, 10) : 0;
+}
+
+function profileTime(prompt, kind) {
+  const p = String(prompt || '');
+  const patterns = kind === 'start'
+    ? [/kunni\s*([01]?\d|2[0-3]):([0-5]\d)\s*da\s*boshlash/i, /(?:start|begin|boshlash)\D{0,12}([01]?\d|2[0-3]):([0-5]\d)/i]
+    : [/kunni\s*([01]?\d|2[0-3]):([0-5]\d)\s*gacha\s*yakunlash/i, /(?:end|finish|yakun)\D{0,12}([01]?\d|2[0-3]):([0-5]\d)/i];
+  for (const rx of patterns) {
+    const match = p.match(rx);
+    if (match) return `${String(Number(match[1])).padStart(2, '0')}:${match[2]}`;
+  }
+  return null;
+}
+
+function profileCountry(prompt) {
+  const match = String(prompt || '').match(/kelish mamlakati:\s*([^;\n.]{2,60})/i);
+  return match ? text(match[1], 60) : null;
+}
+
+function normalizeIntentProfile(raw = {}) {
+  const children = clamp(Number(raw.children_count || 0), 0, 10);
+  const seniors = clamp(Number(raw.seniors_count || 0), 0, 10);
+  const wheelchair = Boolean(raw.wheelchair_accessible);
+  const lowWalking = Boolean(raw.low_walking || wheelchair || seniors > 0);
+  let pace = ['relaxed','normal','active'].includes(raw.pace) ? raw.pace : 'normal';
+  if ((wheelchair || seniors > 0) && pace === 'active') pace = 'normal';
+  return {
+    ...raw,
+    children_count: children,
+    seniors_count: seniors,
+    wheelchair_accessible: wheelchair,
+    own_vehicle: Boolean(raw.own_vehicle),
+    low_walking: lowWalking,
+    family: Boolean(raw.family || children > 0),
+    pace,
+    preferred_start_time: /^\d{2}:\d{2}$/.test(String(raw.preferred_start_time || '')) ? raw.preferred_start_time : null,
+    preferred_end_time: /^\d{2}:\d{2}$/.test(String(raw.preferred_end_time || '')) ? raw.preferred_end_time : null,
+    origin_country: raw.origin_country ? text(raw.origin_country, 60) : null,
+  };
+}
+
 function fallbackIntent(prompt, explicitDays) {
   const p = prompt.toLocaleLowerCase('uz-UZ');
   const dayMatch = p.match(/\b([1-5])\s*(?:kun|day|days|дн(?:я|ей)?)/i);
@@ -88,11 +132,16 @@ function fallbackIntent(prompt, explicitDays) {
   const pilgrimage = /(ziyorat|maqbara|masjid|mosque|mausoleum|pilgrim|зиёрат|мечет|мавзол)/i.test(p);
   const gastronomy = /(milliy taom|osh|palov|plov|food|gastronom|restaurant|restoran|еда|кухн)/i.test(p);
   const museum = /(muzey|museum|музей)/i.test(p);
+  const childrenCount = promptCount(prompt, /(\d+)\s*(?:bola|bolalar|child(?:ren)?|реб(?:енок|енка|ёнок|ёнка|детей))/i);
+  const seniorsCount = promptCount(prompt, /(\d+)\s*(?:kishi\s*)?65\+\s*(?:yoshda|yosh|age)?/i);
+  const wheelchairAccessible = /(nogironlar aravachasi|wheelchair|инвалидн.*коляск)/i.test(p);
+  const ownVehicle = /(shaxsiy avtomobil|o.?z avtomobil|own car|private car|своя машин|личн.*авто)/i.test(p);
   let transport = 'mixed';
   if (/(faqat piyoda|walking only|пешком)/i.test(p)) transport = 'walking';
-  if (/(taksi|taxi|машин|авто)/i.test(p)) transport = 'taxi';
+  if (/(taksi|taxi|машин|авто)/i.test(p) && !ownVehicle) transport = 'taxi';
+  if (ownVehicle) transport = 'mixed';
   let pace = 'normal';
-  if (lowWalking || /(sekin|xotirjam|relax|спокой)/i.test(p)) pace = 'relaxed';
+  if (lowWalking || seniorsCount > 0 || wheelchairAccessible || /(sekin|xotirjam|relax|спокой)/i.test(p)) pace = 'relaxed';
   if (/(ko.?proq joy|maksimal|active|intensive|больше мест)/i.test(p)) pace = 'active';
   const interests = ['history'];
   if (pilgrimage) interests.push('pilgrimage');
@@ -108,6 +157,13 @@ function fallbackIntent(prompt, explicitDays) {
     pace,
     language: detectLanguage(prompt),
     budget_uzs: parseBudget(prompt),
+    children_count: childrenCount,
+    seniors_count: seniorsCount,
+    wheelchair_accessible: wheelchairAccessible,
+    own_vehicle: ownVehicle,
+    preferred_start_time: profileTime(prompt, 'start'),
+    preferred_end_time: profileTime(prompt, 'end'),
+    origin_country: profileCountry(prompt),
   };
 }
 
@@ -124,15 +180,22 @@ async function parseIntentWithOpenAI(prompt, fallback) {
       pace: { type: 'string', enum: ['relaxed','normal','active'] },
       language: { type: 'string', enum: ['uz','ru','en'] },
       budget_uzs: { anyOf: [{ type: 'integer', minimum: 0 }, { type: 'null' }] },
+      children_count: { type: 'integer', minimum: 0, maximum: 10 },
+      seniors_count: { type: 'integer', minimum: 0, maximum: 10 },
+      wheelchair_accessible: { type: 'boolean' },
+      own_vehicle: { type: 'boolean' },
+      preferred_start_time: { anyOf: [{ type: 'string', maxLength: 5 }, { type: 'null' }] },
+      preferred_end_time: { anyOf: [{ type: 'string', maxLength: 5 }, { type: 'null' }] },
+      origin_country: { anyOf: [{ type: 'string', maxLength: 60 }, { type: 'null' }] },
     },
-    required: ['days','interests','low_walking','family','transport','pace','language','budget_uzs'],
+    required: ['days','interests','low_walking','family','transport','pace','language','budget_uzs','children_count','seniors_count','wheelchair_accessible','own_vehicle','preferred_start_time','preferred_end_time','origin_country'],
     additionalProperties: false,
   };
   try {
     const response = await axios.post('https://api.openai.com/v1/responses', {
       model: process.env.OPENAI_MODEL || 'gpt-5.6-luna',
       input: [
-        { role: 'system', content: 'You extract travel-planning preferences for a Samarqand itinerary. Do not invent places. Return only the requested structured fields. Default interest is history and default trip length is 2 days when unclear.' },
+        { role: 'system', content: 'You extract travel-planning preferences for a Samarqand itinerary. Do not invent places. Return only the requested structured fields. Preserve explicit traveler-profile facts such as children, seniors, mobility needs, vehicle availability, origin country, and preferred daily start/end times. Default interest is history and default trip length is 2 days when unclear.' },
         { role: 'user', content: prompt },
       ],
       text: { format: { type: 'json_schema', name: 'samarkand_tour_intent', strict: true, schema } },
@@ -149,6 +212,13 @@ async function parseIntentWithOpenAI(prompt, fallback) {
       ...parsed,
       days: clamp(Number(parsed.days || fallback.days), 1, 5),
       interests: Array.isArray(parsed.interests) && parsed.interests.length ? parsed.interests : fallback.interests,
+      children_count: Math.max(Number(parsed.children_count || 0), Number(fallback.children_count || 0)),
+      seniors_count: Math.max(Number(parsed.seniors_count || 0), Number(fallback.seniors_count || 0)),
+      wheelchair_accessible: Boolean(parsed.wheelchair_accessible || fallback.wheelchair_accessible),
+      own_vehicle: Boolean(parsed.own_vehicle || fallback.own_vehicle),
+      preferred_start_time: parsed.preferred_start_time || fallback.preferred_start_time || null,
+      preferred_end_time: parsed.preferred_end_time || fallback.preferred_end_time || null,
+      origin_country: parsed.origin_country || fallback.origin_country || null,
       engine: 'openai',
       model: response.data?.model || process.env.OPENAI_MODEL || 'gpt-5.6-luna',
     };
@@ -192,6 +262,9 @@ function poiScore(poi, intent) {
   if (poi.category === 'market' && intent.interests.includes('gastronomy')) score += 12;
   if (PRIORITY_PATTERNS.some((rx) => rx.test(poi.name))) score += 28;
   if (intent.family && poi.category === 'museum') score += 4;
+  if (Number(intent.children_count || 0) > 0 && poi.category === 'museum') score += 3;
+  if (Number(intent.seniors_count || 0) > 0 && ['historic','pilgrimage','museum'].includes(poi.category)) score += 2;
+  if (intent.wheelchair_accessible && Number(poi.weather_resilience || 0) >= 2) score += 2;
   return score;
 }
 
@@ -372,9 +445,25 @@ function nearestOrder(rows, start) {
   return ordered;
 }
 
+function clockMinutes(value) {
+  const match = String(value || '').match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+  return match ? Number(match[1]) * 60 + Number(match[2]) : null;
+}
+
+function availableDayMinutes(intent) {
+  const start = clockMinutes(intent.preferred_start_time);
+  const end = clockMinutes(intent.preferred_end_time);
+  if (start === null || end === null || end <= start) return null;
+  return end - start;
+}
+
 function selectPois(pois, intent, start) {
-  const perDay = intent.pace === 'relaxed' || intent.low_walking ? 4 : intent.pace === 'active' ? 6 : 5;
-  const target = clamp(intent.days * perDay, intent.days * 3, 26);
+  let perDay = intent.pace === 'relaxed' || intent.low_walking ? 4 : intent.pace === 'active' ? 6 : 5;
+  if (intent.wheelchair_accessible || Number(intent.seniors_count || 0) > 0) perDay = Math.min(perDay, 4);
+  const windowMinutes = availableDayMinutes(intent);
+  if (windowMinutes !== null && windowMinutes <= 360) perDay = Math.min(perDay, 3);
+  else if (windowMinutes !== null && windowMinutes <= 480) perDay = Math.min(perDay, 4);
+  const target = clamp(intent.days * perDay, intent.days * 2, 26);
   const scored = pois
     .map((poi) => ({
       ...poi,
@@ -499,6 +588,8 @@ function visitMinutes(poi, intent, weather, adaptive) {
   let minutes = poi.category === 'museum' ? (intent.pace === 'relaxed' ? 90 : 75)
     : PRIORITY_PATTERNS.some((rx) => rx.test(poi.name)) ? (intent.pace === 'active' ? 60 : 80)
       : intent.pace === 'relaxed' ? 65 : 50;
+  if (Number(intent.children_count || 0) > 0 && minutes > 75) minutes = 75;
+  if (intent.wheelchair_accessible) minutes += 10;
   if (adaptive && weather?.risk?.severity >= 3) {
     if ((poi.weather_resilience || 0) >= 2) minutes += 10;
     else minutes = Math.max(35, minutes - 15);
@@ -508,9 +599,12 @@ function visitMinutes(poi, intent, weather, adaptive) {
 
 function daySchedule(dayStops, route, intent, dayIndex, weather, adaptive) {
   const risk = weather?.risk || { type: 'normal', advice: null };
-  let cursor = risk.type === 'hot' && adaptive ? 8 * 60 : risk.severity >= 3 && adaptive ? 9 * 60 + 30 : 9 * 60;
+  const requestedStart = clockMinutes(intent.preferred_start_time);
+  const requestedEnd = clockMinutes(intent.preferred_end_time);
+  let cursor = requestedStart ?? (risk.type === 'hot' && adaptive ? 8 * 60 : risk.severity >= 3 && adaptive ? 9 * 60 + 30 : 9 * 60);
+  const mobilityBuffer = (intent.low_walking || intent.wheelchair_accessible || Number(intent.seniors_count || 0) > 0) ? 5 : 0;
   const rows = dayStops.map((poi, index) => {
-    if (index > 0) cursor += Math.max(8, Math.round((route?.duration_min || 45) / Math.max(1, dayStops.length)));
+    if (index > 0) cursor += Math.max(8, Math.round((route?.duration_min || 45) / Math.max(1, dayStops.length))) + mobilityBuffer;
     if (index === Math.ceil(dayStops.length / 2) && intent.interests.includes('gastronomy')) cursor += risk.type === 'hot' && adaptive ? 90 : 60;
     const visit = visitMinutes(poi, intent, weather, adaptive);
     const startMinutes = cursor;
@@ -529,6 +623,11 @@ function daySchedule(dayStops, route, intent, dayIndex, weather, adaptive) {
     adaptation_note: adaptive && risk.severity > 0 ? risk.advice : null,
     distance_km: Number(((route?.distance_m || 0) / 1000).toFixed(1)),
     transfer_minutes: route?.duration_min || 0,
+    preferred_window: {
+      start: intent.preferred_start_time || null,
+      end: intent.preferred_end_time || null,
+      overrun_minutes: requestedEnd !== null ? Math.max(0, cursor - requestedEnd) : 0,
+    },
     meal_break: intent.interests.includes('gastronomy') ? (risk.type === 'hot' && adaptive ? 'Issiq vaqt oralig‘ida 90 daqiqalik tushlik va dam olish tanaffusi rejalashtirildi.' : 'Kun o‘rtasida milliy taomlar uchun 60 daqiqalik tanaffus rejalashtirilgan.') : null,
   };
 }
@@ -541,7 +640,7 @@ function localizedSummary(intent, count, adaptedDays) {
 
 router.get('/status', (_req, res) => {
   res.json({
-    version: '1.2.0',
+    version: '1.3.0',
     openai_configured: Boolean(process.env.OPENAI_API_KEY),
     openai_model: process.env.OPENAI_API_KEY ? (process.env.OPENAI_MODEL || 'gpt-5.6-luna') : null,
     poi_source: 'Verified curated Samarkand anchors + OpenStreetMap/Overpass enrichment',
@@ -558,7 +657,8 @@ router.post('/plan', asyncHandler(async (req, res) => {
   const prompt = text(req.body.prompt, 1500);
   if (prompt.length < 4) return res.status(400).json({ error: 'Sayohat istagingizni yozing.' });
   const fallback = fallbackIntent(prompt, req.body.days);
-  const intent = await parseIntentWithOpenAI(prompt, fallback);
+  const parsedIntent = await parseIntentWithOpenAI(prompt, fallback);
+  const intent = normalizeIntentProfile(parsedIntent);
   const startLat = number(req.body.start_latitude);
   const startLon = number(req.body.start_longitude);
   const requestedStart = validCoord(startLat, startLon)
@@ -592,7 +692,7 @@ router.post('/plan', asyncHandler(async (req, res) => {
   const totalStops = days.reduce((sum, day) => sum + day.stops.length, 0);
   const adaptedDays = days.filter((day) => day.weather_adapted).length;
   res.json({
-    version: '1.2.0',
+    version: '1.3.0',
     prompt,
     intent,
     start,
@@ -613,6 +713,8 @@ router.post('/plan', asyncHandler(async (req, res) => {
       weatherBundle.warning,
       discovered.provider === 'curated-fallback' ? 'OpenStreetMap real-vaqt katalogi sekin javob berdi; marshrut tasdiqlangan tayanch obyektlar katalogidan tuzildi.' : null,
       weatherAdaptive && weatherBundle.rows.length ? 'Yomg‘ir, kuchli shamol, keskin issiq yoki sovuq aniqlansa, obyektlarning kunlar va kun ichidagi tartibi avtomatik qayta optimallashtiriladi.' : null,
+      intent.wheelchair_accessible ? 'Accessibility talabi hisobga olindi, ammo obyektlarning pandus, lift va kirish sharoiti bo‘yicha ma’lumot to‘liq emas; tashrifdan oldin rasmiy manbadan tasdiqlang.' : null,
+      days.some((day) => Number(day.preferred_window?.overrun_minutes || 0) > 0) ? 'Tanlangan kun yakuni vaqtiga sig‘magan kun bor; tashrif sonini kamaytirish yoki yakun vaqtini uzaytirish tavsiya etiladi.' : null,
       'Marshrut tavsiya xarakterida. Ish vaqti, chipta narxi, vaqtinchalik yopilish va kirish qoidalarini rasmiy manbalardan tekshiring.',
       intent.transport === 'walking' ? 'Piyoda rejimida yo‘l chizig‘i geodezik taxmin; piyodalar yo‘laklari bo‘yicha professional routing keyingi bosqichda ulanadi.' : null,
     ].filter(Boolean),
@@ -626,7 +728,7 @@ async function runStartupSmoke() {
     const selected = selectPois(discovered.rows, intent, CENTER).slice(0, 4);
     const route = selected.length ? (await routeDriving(CENTER, selected) || routeFallback(CENTER, selected, false)) : null;
     const names = selected.map((p) => p.name).join(' | ');
-    console.log(`[tour-smoke] v=1.2 provider=${discovered.provider} pois=${discovered.rows.length} external=${discovered.external_count} sample=${names || 'none'} route=${route?.source || 'none'} geometry=${route?.geometry?.type || 'none'}`);
+    console.log(`[tour-smoke] v=1.3 provider=${discovered.provider} pois=${discovered.rows.length} external=${discovered.external_count} sample=${names || 'none'} route=${route?.source || 'none'} geometry=${route?.geometry?.type || 'none'}`);
   } catch (error) {
     console.warn(`[tour-smoke] failed=${error.response?.status || error.message}`);
   }
