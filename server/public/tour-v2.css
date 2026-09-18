@@ -47,3 +47,9 @@ body.tfe-map-open{overflow:hidden}
   .trip-progress{gap:5px}.trip-step{padding:7px 6px;justify-content:center}.trip-step span{display:none}
   .result-shell{border-radius:17px}.map-v2-tools{right:9px;bottom:12px}.map-gps-pill{left:9px;bottom:12px}
 }
+
+.traveler-profile{margin-top:10px;padding:12px;border:1px solid #dce8e1;border-radius:14px;background:#fff}
+.profile-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.profile-head strong,.profile-head span{display:block}.profile-head strong{font-size:12px;color:var(--tfe-ink)}.profile-head span{font-size:9px;color:var(--tfe-muted);max-width:420px;text-align:right}
+.profile-grid{display:grid;grid-template-columns:1.4fr repeat(4,1fr);gap:8px;margin-top:10px}.profile-grid label{font-size:9px;font-weight:900;color:#557065}.profile-grid input{display:block;width:100%;margin-top:4px;border:1px solid #d1dfd7;border-radius:9px;padding:8px 9px;background:#fbfdfc;color:#183027;font:inherit;font-size:11px}
+.profile-toggle-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.profile-caveat{display:block;margin-top:8px;color:#7b807d;font-size:8px;line-height:1.45}
+@media(max-width:1100px){.profile-grid{grid-template-columns:repeat(3,1fr)}}@media(max-width:760px){.profile-head{display:block}.profile-head span{margin-top:3px;text-align:left}.profile-grid{grid-template-columns:1fr 1fr}.profile-grid label:first-child{grid-column:1/-1}}
