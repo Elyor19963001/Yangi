@@ -140,64 +140,130 @@ const OFFICIAL_POI_CATALOG = [
 const AUDIO_GUIDES = [
   {
     match: /registan|registon/i,
-    uz: 'Registon Samarqandning eng mashhur tarixiy maydonlaridan biridir. Majmua Ulug‘bek, Sherdor va Tillakori madrasalaridan tashkil topgan. Bu yer Temuriylar va keyingi davr me’morchiligining eng muhim namunalari qatoriga kiradi.',
-    en: 'Registan is one of the best-known historic squares of Samarkand. The ensemble consists of the Ulugh Beg, Sher-Dor and Tilla-Kori madrasas. It is a major landmark of Timurid and later Central Asian architecture.',
-    ru: 'Регистан — одна из самых известных исторических площадей Самарканда. Ансамбль включает медресе Улугбека, Шердор и Тилля-Кари. Это один из ключевых памятников тимуридской и последующей архитектуры Центральной Азии.',
+    short: {
+      uz: 'Registon Samarqandning eng mashhur tarixiy maydonlaridan biridir. Majmua Ulug‘bek, Sherdor va Tillakori madrasalaridan tashkil topgan. U Temuriylar va keyingi davr Markaziy Osiyo me’morchiligining yirik timsolidir.',
+      en: 'Registan is one of Samarkand’s best-known historic squares. The ensemble consists of the Ulugh Beg, Sher-Dor and Tilla-Kori madrasas. It is a major symbol of Timurid and later Central Asian architecture.',
+      ru: 'Регистан — одна из самых известных исторических площадей Самарканда. Ансамбль включает медресе Улугбека, Шердор и Тилля-Кари. Это один из главных символов тимуридской и последующей архитектуры Центральной Азии.',
+    },
+    detailed: {
+      uz: 'Registon Samarqandning markaziy tarixiy maydoni bo‘lib, uning hozirgi ansambli uch yirik madrasa — Ulug‘bek, Sherdor va Tillakori madrasalaridan iborat. Ulug‘bek madrasasi XV asr boshlarida qurilgan va ilm-fan markazi sifatida mashhur bo‘lgan. Sherdor va Tillakori madrasalari esa XVII asrda maydonning me’moriy qiyofasini yakunlagan. Fasadlardagi koshinkor naqshlar, geometrik kompozitsiyalar va yozuvlar Markaziy Osiyo bezak san’atining yuqori darajasini ko‘rsatadi. Registon asrlar davomida shahar hayotining muhim markazi bo‘lib kelgan. Tashrif paytida har bir madrasa fasadini alohida kuzatish va ichki hovlilardagi bezaklarga e’tibor berish tavsiya etiladi.',
+      en: 'Registan is the historic central square of Samarkand, and its present ensemble is formed by three major madrasas: Ulugh Beg, Sher-Dor and Tilla-Kori. The Ulugh Beg Madrasa was built in the early fifteenth century and became an important center of learning. Sher-Dor and Tilla-Kori were added in the seventeenth century and completed the square’s monumental composition. The façades display elaborate glazed tiles, geometric patterns and calligraphic decoration that represent some of the finest traditions of Central Asian architecture. For centuries, Registan also served as an important civic center. When visiting, it is worth examining each façade separately and then comparing the different decorative styles inside the courtyards.',
+      ru: 'Регистан — историческая центральная площадь Самарканда. Современный ансамбль образуют три крупных медресе: Улугбека, Шердор и Тилля-Кари. Медресе Улугбека было построено в начале XV века и стало важным центром образования. Шердор и Тилля-Кари появились в XVII веке и завершили монументальную композицию площади. Фасады украшены сложной мозаикой, геометрическими орнаментами и каллиграфией, отражающими высокий уровень архитектурного искусства Центральной Азии. На протяжении веков Регистан был важным общественным центром города. Во время посещения стоит отдельно рассмотреть каждый фасад, а затем сравнить оформление внутренних дворов.',
+    },
   },
   {
     match: /go.?ri.?amir|gur.?e.?amir|guri.?amir|amir temur maqbarasi/i,
-    uz: 'Go‘ri Amir — Amir Temur va Temuriylar sulolasi vakillari dafn etilgan mashhur maqbara. Majmua o‘zining moviy qovurg‘ali gumbazi va nafis ichki bezaklari bilan ajralib turadi. U Samarqanddagi eng muhim tarixiy ziyorat maskanlaridan biridir.',
-    en: 'Gur-e Amir is the celebrated mausoleum associated with Amir Timur and members of the Timurid dynasty. It is distinguished by its blue ribbed dome and richly decorated interior. The monument is one of Samarkand’s most important historic pilgrimage sites.',
-    ru: 'Гур-Эмир — знаменитый мавзолей, связанный с Амиром Темуром и представителями династии Тимуридов. Он выделяется голубым ребристым куполом и богато украшенным интерьером. Это одно из важнейших исторических мест паломничества Самарканда.',
+    short: {
+      uz: 'Go‘ri Amir — Amir Temur va Temuriylar sulolasi vakillari dafn etilgan mashhur maqbara. U moviy qovurg‘ali gumbazi va nafis ichki bezaklari bilan ajralib turadi.',
+      en: 'Gur-e Amir is the famous mausoleum associated with Amir Timur and members of the Timurid dynasty. It is distinguished by its blue ribbed dome and richly decorated interior.',
+      ru: 'Гур-Эмир — знаменитый мавзолей, связанный с Амиром Темуром и представителями династии Тимуридов. Он известен голубым ребристым куполом и богато украшенным интерьером.',
+    },
+    detailed: {
+      uz: 'Go‘ri Amir maqbarasi Samarqanddagi eng muhim Temuriylar davri yodgorliklaridan biridir. Majmua dastlab Amir Temurning nabirasi Muhammad Sulton bilan bog‘liq ansambl sifatida shakllangan, keyinchalik esa Temuriylar sulolasining mashhur dafn maskaniga aylangan. Bu yerda Amir Temur, Mirzo Ulug‘bek va sulolaning boshqa vakillari bilan bog‘liq qabrlar mavjud. Maqbaraning baland, qovurg‘ali moviy gumbazi tashqi ko‘rinishning asosiy belgisi hisoblanadi. Ichki qismida zarhal, naqshinkor va yozuvli bezaklar ko‘p uchraydi. Ziyorat paytida sokinlikni saqlash, qabrlar atrofida hurmat bilan harakat qilish va ichki bezaklarni yaqindan kuzatish maqsadga muvofiq.',
+      en: 'Gur-e Amir is one of the most important Timurid monuments in Samarkand. The complex originally developed around a foundation associated with Muhammad Sultan, a grandson of Amir Timur, and later became a celebrated dynastic burial place. The site is connected with the tombs of Amir Timur, Mirzo Ulugh Beg and other members of the Timurid family. Its tall ribbed blue dome is the dominant exterior feature, while the interior is richly decorated with gilding, geometric ornament and calligraphy. Visitors should remember that the monument is both a major historical site and a place of reverence. A quiet, respectful visit also gives more time to appreciate the fine decorative details inside the chamber.',
+      ru: 'Гур-Эмир — один из важнейших памятников эпохи Тимуридов в Самарканде. Комплекс первоначально формировался вокруг сооружений, связанных с Мухаммадом Султаном, внуком Амира Темура, а позднее стал известным династическим местом погребения. Здесь находятся захоронения, связанные с Амиром Темуром, Мирзо Улугбеком и другими представителями династии. Главная внешняя особенность мавзолея — высокий ребристый голубой купол. В интерьере широко представлены позолота, орнамент и каллиграфия. Посетителям важно помнить, что это не только исторический памятник, но и почитаемое место, поэтому рекомендуется соблюдать тишину и уважительное поведение.',
+    },
   },
   {
     match: /bibi.?khan|bibi.?xon|bibixonim/i,
-    uz: 'Bibixonim masjidi XV asr boshida Amir Temur davrida bunyod etilgan ulkan jome masjididir. U o‘z davrining eng yirik me’moriy loyihalaridan biri bo‘lgan. Majmua Samarqanddagi Temuriylar davri me’morchiligining muhim timsolidir.',
-    en: 'Bibi-Khanum Mosque was built at the beginning of the fifteenth century during the reign of Amir Timur. It was one of the most ambitious architectural projects of its time. The complex remains a major symbol of Timurid architecture in Samarkand.',
-    ru: 'Мечеть Биби-Ханым была возведена в начале XV века при Амире Темуре. Для своего времени это был один из самых масштабных архитектурных проектов. Комплекс остается важным символом тимуридской архитектуры Самарканда.',
+    short: {
+      uz: 'Bibixonim masjidi XV asr boshida Amir Temur davrida bunyod etilgan ulkan jome masjididir. U o‘z davrining eng yirik me’moriy loyihalaridan biri bo‘lgan.',
+      en: 'Bibi-Khanum Mosque was built at the beginning of the fifteenth century during the reign of Amir Timur. It was one of the most ambitious architectural projects of its time.',
+      ru: 'Мечеть Биби-Ханым была возведена в начале XV века при Амире Темуре. Для своего времени это был один из самых масштабных архитектурных проектов.',
+    },
+    detailed: {
+      uz: 'Bibixonim masjidi Amir Temur davrida Samarqandning ulkan jome masjidi sifatida bunyod etilgan. Qurilish XIV asr oxiri va XV asr boshlaridagi Temuriylar me’moriy ambitsiyasini yaqqol namoyon etadi. Majmuada katta peshtoq, keng hovli, gumbazli inshootlar va koshinkor bezaklar muhim o‘rin tutadi. Masjid tarix davomida tabiiy ofatlar va vaqt ta’sirida jiddiy zarar ko‘rgan, keyinchalik katta hajmdagi restavratsiya ishlari amalga oshirilgan. Bugungi kunda u Samarqand siluetining eng taniqli qismlaridan biridir. Tashrifda ulkan peshtoqning masshtabini, gumbazlar nisbatini va bezaklarda ishlatilgan ko‘k ranglar uyg‘unligini kuzatish ayniqsa qiziqarli.',
+      en: 'Bibi-Khanum Mosque was commissioned in the era of Amir Timur as a monumental congregational mosque for Samarkand. Its scale reflects the architectural ambitions of the late fourteenth and early fifteenth centuries. The complex is characterized by a vast entrance portal, a large courtyard, domed structures and extensive glazed-tile decoration. Over the centuries, the monument suffered serious damage from time and natural forces, and substantial restoration work was later carried out. Today it remains one of the most recognizable features of Samarkand’s skyline. Visitors can best appreciate the monument by observing the enormous scale of the entrance portal, the relationship between the domes and the courtyard, and the layered use of blue ceramic decoration.',
+      ru: 'Мечеть Биби-Ханым была задумана в эпоху Амира Темура как грандиозная соборная мечеть Самарканда. Ее масштаб отражает архитектурные амбиции конца XIV — начала XV века. Комплекс включает огромный входной портал, просторный двор, купольные сооружения и богатую изразцовую отделку. На протяжении веков памятник серьезно пострадал от времени и природных воздействий, а позднее здесь проводились масштабные реставрационные работы. Сегодня мечеть остается одной из самых узнаваемых доминант Самарканда. Особенно интересно обратить внимание на размеры главного портала, соотношение куполов и двора, а также на разнообразие оттенков синей керамики.',
+    },
   },
   {
     match: /shah.?i.?zinda|shohi zinda/i,
-    uz: 'Shohi Zinda — Samarqanddagi mashhur maqbaralar va ziyorat inshootlari majmuasi. Ansambldagi yodgorliklar turli asrlarda shakllangan va koshinkor bezaklari bilan mashhur. Ziyorat an’analarida bu joy Qusam ibn Abbos nomi bilan bog‘lanadi.',
-    en: 'Shah-i-Zinda is a celebrated ensemble of mausoleums and pilgrimage structures in Samarkand. Its monuments were created over several centuries and are famous for their glazed tile decoration. In local pilgrimage tradition, the site is associated with Qutham ibn Abbas.',
-    ru: 'Шахи-Зинда — знаменитый ансамбль мавзолеев и паломнических сооружений Самарканда. Памятники комплекса создавались в разные века и известны своей изразцовой отделкой. В паломнической традиции это место связано с Кусамом ибн Аббасом.',
+    short: {
+      uz: 'Shohi Zinda — Samarqanddagi mashhur maqbaralar va ziyorat inshootlari majmuasi. Ansambl koshinkor bezaklari bilan mashhur va ziyorat an’analarida Qusam ibn Abbos nomi bilan bog‘lanadi.',
+      en: 'Shah-i-Zinda is a celebrated ensemble of mausoleums and pilgrimage structures in Samarkand. It is famous for glazed tile decoration and is associated in pilgrimage tradition with Qutham ibn Abbas.',
+      ru: 'Шахи-Зинда — знаменитый ансамбль мавзолеев и паломнических сооружений Самарканда. Он известен изразцовой отделкой и в паломнической традиции связан с Кусамом ибн Аббасом.',
+    },
+    detailed: {
+      uz: 'Shohi Zinda Samarqandning eng muhim ziyorat va me’moriy majmualaridan biridir. Ansambl Afrosiyob hududi yonbag‘rida joylashgan bo‘lib, turli asrlarda barpo etilgan maqbara va diniy inshootlardan tashkil topgan. Majmua ziyorat an’analarida Payg‘ambar Muhammad alayhissalomning amakivachchasi sifatida e’tirof etiladigan Qusam ibn Abbos nomi bilan bog‘lanadi. Shohi Zindaning eng katta badiiy boyligi — sirlangan koshinlar, murakkab geometrik naqshlar, o‘simliksimon bezaklar va yozuvlardir. Inshootlar bir davrda emas, bosqichma-bosqich yaratilgani uchun bezak uslublarini solishtirish mumkin. Bu muqaddas hudud bo‘lgani sababli sokinlik, kamtarona kiyinish va ziyoratchilarga hurmat bilan munosabat tavsiya etiladi.',
+      en: 'Shah-i-Zinda is one of Samarkand’s most important pilgrimage and architectural ensembles. Located on the edge of the ancient Afrasiab area, it consists of mausoleums and religious structures built over several centuries. In local Islamic pilgrimage tradition, the site is associated with Qutham ibn Abbas, traditionally regarded as a cousin of the Prophet Muhammad. The artistic richness of Shah-i-Zinda is especially visible in its glazed tiles, complex geometric patterns, floral ornament and calligraphic inscriptions. Because the monuments were created in different periods, visitors can compare changing decorative styles within a single complex. As this is an active sacred and commemorative space, respectful behavior, modest clothing and sensitivity toward worshippers and pilgrims are recommended.',
+      ru: 'Шахи-Зинда — один из важнейших паломнических и архитектурных ансамблей Самарканда. Он расположен у древнего Афросиаба и состоит из мавзолеев и религиозных сооружений, построенных в разные века. В исламской паломнической традиции место связано с Кусамом ибн Аббасом, которого традиционно считают двоюродным братом пророка Мухаммада. Главная художественная ценность комплекса — глазурованные изразцы, сложные геометрические узоры, растительный орнамент и каллиграфические надписи. Поскольку памятники создавались в разные периоды, здесь удобно сравнивать развитие декоративных стилей. Это действующее священное и мемориальное пространство, поэтому рекомендуется соблюдать тишину, скромный стиль одежды и уважение к паломникам.',
+    },
   },
   {
     match: /ulugh.?beg.*observ|ulug.?bek.*rasad|observ.*ulug.?bek/i,
-    uz: 'Ulug‘bek rasadxonasi XV asrda olim va hukmdor Mirzo Ulug‘bek tashabbusi bilan barpo etilgan. Bu yerda osmon jismlarini juda aniq kuzatish uchun ulkan astronomik asbobdan foydalanilgan. Rasadxona Samarqandning ilm-fan tarixidagi alohida o‘rnini ko‘rsatadi.',
-    en: 'Ulugh Beg Observatory was established in the fifteenth century by the scholar and ruler Mirzo Ulugh Beg. A monumental astronomical instrument was used here for highly precise observations of the sky. The site reflects Samarkand’s exceptional place in the history of science.',
-    ru: 'Обсерватория Улугбека была создана в XV веке ученым и правителем Мирзо Улугбеком. Здесь использовался огромный астрономический инструмент для очень точных наблюдений за небом. Памятник показывает особое место Самарканда в истории науки.',
+    short: {
+      uz: 'Ulug‘bek rasadxonasi XV asrda olim va hukmdor Mirzo Ulug‘bek tashabbusi bilan barpo etilgan. Bu yer Samarqandning ilm-fan tarixidagi alohida o‘rnini ko‘rsatadi.',
+      en: 'Ulugh Beg Observatory was established in the fifteenth century by the scholar and ruler Mirzo Ulugh Beg. The site reflects Samarkand’s exceptional place in the history of science.',
+      ru: 'Обсерватория Улугбека была создана в XV веке ученым и правителем Мирзо Улугбеком. Этот памятник показывает особое место Самарканда в истории науки.',
+    },
+    detailed: {
+      uz: 'Mirzo Ulug‘bek rasadxonasi XV asrda Samarqandda astronomik kuzatuvlar olib borish uchun barpo etilgan. Ulug‘bek hukmdor bo‘lish bilan birga matematika va astronomiyaga chuqur qiziqqan olim edi. Rasadxonada juda katta radiusli astronomik o‘lchov asbobining bir qismi yer ostida saqlanib qolgan. Shu ilmiy muhitda yulduzlarning koordinatalari va astronomik kuzatuvlarga asoslangan mashhur jadvallar tuzilgan. Rasadxona keyinchalik vayron bo‘lgan bo‘lsa-da, XX asrdagi arxeologik tadqiqotlar uning asosiy qismlarini aniqlashga yordam berdi. Bugungi muzey va saqlanib qolgan sekstant qismi Samarqandning faqat me’moriy emas, balki yirik ilmiy markaz bo‘lganini ham ko‘rsatadi.',
+      en: 'Ulugh Beg Observatory was built in fifteenth-century Samarkand for advanced astronomical observation. Mirzo Ulugh Beg was not only a ruler but also a scholar deeply interested in mathematics and astronomy. Part of the observatory’s enormous measuring instrument survives below ground, demonstrating the scale of the scientific work carried out here. The scholarly circle around Ulugh Beg produced highly important astronomical observations and star tables. Although the observatory was later destroyed, archaeological investigations in the twentieth century revealed key structural remains. Today, the museum and the surviving section of the instrument show that Samarkand was not only a center of monumental architecture, but also one of the major scientific centers of its age.',
+      ru: 'Обсерватория Улугбека была построена в Самарканде в XV веке для точных астрономических наблюдений. Мирзо Улугбек был не только правителем, но и ученым, глубоко интересовавшимся математикой и астрономией. Часть огромного измерительного инструмента обсерватории сохранилась под землей и показывает масштаб научной работы, проводившейся здесь. Научный круг Улугбека создал важные астрономические наблюдения и звездные таблицы. Позднее обсерватория была разрушена, однако археологические исследования XX века позволили обнаружить ее основные элементы. Современный музей и сохранившаяся часть инструмента напоминают, что Самарканд был не только архитектурным, но и крупным научным центром.',
+    },
   },
   {
     match: /afrasiyab.*museum|museum.*afrasiyab|afrosiyob.*muzey|muzey.*afrosiyob/i,
-    uz: 'Afrosiyob muzeyi qadimgi Samarqandning arxeologik tarixiga bag‘ishlangan. Muzeyda Afrosiyob shahristonidan topilgan buyumlar va mashhur devoriy suratlar namoyish etiladi. Bu ekspozitsiyalar Samarqandning islomdan avvalgi davr tarixini tushunishga yordam beradi.',
-    en: 'The Afrosiyob Museum presents the archaeological history of ancient Samarkand. Its collections include finds from the Afrasiab settlement and the celebrated wall paintings discovered there. The museum helps visitors understand the city’s pre-Islamic past.',
-    ru: 'Музей Афросиаба посвящен археологической истории древнего Самарканда. В его коллекции представлены находки с городища Афросиаб и знаменитые настенные росписи. Экспозиция помогает понять доисламское прошлое города.',
+    short: {
+      uz: 'Afrosiyob muzeyi qadimgi Samarqandning arxeologik tarixiga bag‘ishlangan. Muzeyda Afrosiyob shahristonidan topilgan buyumlar va mashhur devoriy suratlar namoyish etiladi.',
+      en: 'The Afrosiyob Museum presents the archaeological history of ancient Samarkand. Its collections include finds from Afrasiab and the celebrated wall paintings discovered there.',
+      ru: 'Музей Афросиаба посвящен археологической истории древнего Самарканда. Здесь представлены находки с городища Афросиаб и знаменитые настенные росписи.',
+    },
+    detailed: {
+      uz: 'Afrosiyob muzeyi qadimgi Samarqand shahristoni — Afrosiyob yodgorligi hududidan topilgan arxeologik materiallarga bag‘ishlangan. Muzey ekspozitsiyasida sopol buyumlar, tangalar, maishiy topilmalar va qadimgi shahar madaniyatini tushuntiruvchi boshqa ashyolar mavjud. Eng mashhur eksponatlar orasida VII asrga oid Afrosiyob devoriy suratlari alohida o‘rin tutadi. Ular marosimlar, elchilar va saroy hayotiga oid sahnalarni aks ettirib, qadimgi Samarqandning xalqaro aloqalari haqida muhim ma’lumot beradi. Muzeyga tashrif Shohi Zinda va Afrosiyob tepaligi bilan birgalikda rejalashtirilsa, shaharning qadimgi davrdan keyingi tarixiy bosqichlarga o‘tishini yaxshiroq anglash mumkin.',
+      en: 'The Afrosiyob Museum is devoted to archaeological material from Afrasiab, the ancient urban site of Samarkand. Its displays include pottery, coins, everyday objects and other finds that help explain the life of the early city. The museum’s most celebrated exhibits are the seventh-century Afrasiab wall paintings. These murals depict ceremonial scenes, envoys and courtly life, providing valuable evidence about ancient Samarkand’s international connections. A visit is especially useful when combined with Shah-i-Zinda and the Afrasiab archaeological landscape, because it helps place later monuments within the much longer history of the city. The museum therefore provides an important historical introduction to Samarkand before the Islamic and Timurid periods.',
+      ru: 'Музей Афросиаба посвящен археологическим материалам древнего городища Самарканда — Афросиаба. В экспозиции представлены керамика, монеты, предметы быта и другие находки, раскрывающие жизнь раннего города. Самые знаменитые экспонаты — настенные росписи VII века. На них изображены церемониальные сцены, послы и придворная жизнь, что дает важные сведения о международных связях древнего Самарканда. Посещение особенно полезно сочетать с Шахи-Зиндой и археологической территорией Афросиаба: так легче увидеть, как развивался город от древности к более поздним историческим эпохам.',
+    },
   },
   {
     match: /siyob|siab/i,
-    uz: 'Siyob bozori Samarqandning eng mashhur an’anaviy bozorlaridan biridir. Bu yerda meva, non, ziravorlar, shirinliklar va boshqa mahalliy mahsulotlarni ko‘rish mumkin. Bozor shaharning kundalik hayoti va gastronomik madaniyatini his qilish uchun qulay joydir.',
-    en: 'Siyob Bazaar is one of Samarkand’s best-known traditional markets. Visitors can find fruit, bread, spices, sweets and many other local products here. It is a lively place to experience the city’s everyday life and food culture.',
-    ru: 'Сиабский базар — один из самых известных традиционных рынков Самарканда. Здесь можно увидеть фрукты, хлеб, специи, сладости и другие местные продукты. Это хорошее место, чтобы почувствовать повседневную жизнь и гастрономическую культуру города.',
+    short: {
+      uz: 'Siyob bozori Samarqandning mashhur an’anaviy bozorlaridan biridir. Bu yerda non, meva, ziravorlar, shirinliklar va boshqa mahalliy mahsulotlarni ko‘rish mumkin.',
+      en: 'Siyob Bazaar is one of Samarkand’s best-known traditional markets. Visitors can find bread, fruit, spices, sweets and many other local products here.',
+      ru: 'Сиабский базар — один из самых известных традиционных рынков Самарканда. Здесь можно увидеть хлеб, фрукты, специи, сладости и другие местные продукты.',
+    },
+    detailed: {
+      uz: 'Siyob bozori Bibixonim masjidi yaqinida joylashgan va Samarqandning kundalik savdo hayotini ko‘rish uchun eng qulay joylardan biridir. Bozorda Samarqand noni, yangi va quritilgan mevalar, yong‘oq, ziravorlar, shirinliklar va boshqa mahalliy mahsulotlar sotiladi. Bu yer sayyoh uchun faqat xarid qilish joyi emas, balki mahalliy oziq-ovqat madaniyati va kundalik muloqotni kuzatish imkonini ham beradi. Narxlar mahsulot va mavsumga qarab farq qilishi mumkin. Tashrifni ertaroq vaqtda amalga oshirish ko‘pincha qulayroq bo‘ladi, chunki bozor faolroq va mahsulot tanlovi kengroq bo‘lishi mumkin.',
+      en: 'Siyob Bazaar is located close to Bibi-Khanum Mosque and is one of the best places to observe everyday commercial life in Samarkand. Stalls commonly sell Samarkand bread, fresh and dried fruit, nuts, spices, sweets and many other local products. For visitors, the bazaar is not only a shopping place but also an opportunity to experience local food culture and daily social interaction. Prices can vary by product and season. Visiting earlier in the day can often provide a livelier atmosphere and a wider selection of produce. The bazaar also fits naturally into a walking route that includes Bibi-Khanum Mosque and the Registan area.',
+      ru: 'Сиабский базар расположен рядом с мечетью Биби-Ханым и является одним из лучших мест для знакомства с повседневной торговой жизнью Самарканда. Здесь продают самаркандский хлеб, свежие и сушеные фрукты, орехи, специи, сладости и другие местные продукты. Для туриста базар — это не только место покупок, но и возможность увидеть местную гастрономическую культуру и повседневное общение. Цены зависят от товара и сезона. Утреннее посещение часто бывает более удобным: рынок активнее, а выбор продуктов шире. Базар легко включить в пеший маршрут вместе с Биби-Ханым и Регистаном.',
+    },
   },
   {
     match: /ruhabad|ruhobod/i,
-    uz: 'Ruhobod maqbarasi Samarqanddagi qadimiy ziyorat maskanlaridan biri. U shayx Burhoniddin Sog‘arjiy nomi bilan bog‘liq bo‘lib, XIV asr me’moriy yodgorliklari qatoriga kiradi. Maqbara o‘zining sodda va salobatli shakli bilan ajralib turadi.',
-    en: 'Ruhabad Mausoleum is one of Samarkand’s historic pilgrimage sites. It is associated with the Sufi scholar Burhan al-Din Sagarji and belongs to the city’s fourteenth-century architectural heritage. The monument is notable for its restrained and monumental form.',
-    ru: 'Мавзолей Рухабад — одно из исторических мест паломничества Самарканда. Он связан с суфийским ученым Бурхан ад-Дином Сагарджи и относится к архитектурному наследию XIV века. Памятник отличается сдержанной и монументальной формой.',
+    short: {
+      uz: 'Ruhobod maqbarasi Samarqanddagi qadimiy ziyorat maskanlaridan biri. U shayx Burhoniddin Sog‘arjiy nomi bilan bog‘liq va XIV asr me’moriy merosiga kiradi.',
+      en: 'Ruhabad Mausoleum is one of Samarkand’s historic pilgrimage sites. It is associated with the Sufi scholar Burhan al-Din Sagarji and belongs to the city’s fourteenth-century heritage.',
+      ru: 'Мавзолей Рухабад — одно из исторических мест паломничества Самарканда. Он связан с суфийским ученым Бурхан ад-Дином Сагарджи и относится к наследию XIV века.',
+    },
+    detailed: {
+      uz: 'Ruhobod maqbarasi Samarqandning tarixiy markazidagi muhim ziyorat yodgorliklaridan biridir. U shayx Burhoniddin Sog‘arjiy nomi bilan bog‘lanadi va XIV asrga oid me’moriy an’anani aks ettiradi. Inshootning tashqi qiyofasi Samarqanddagi ayrim keyingi davr maqbaralariga nisbatan ancha sodda va salobatli ko‘rinadi. Shu soddalik uning ziyoratgoh sifatidagi ruhiy muhitini kuchaytiradi. Maqbara Go‘ri Amirga juda yaqin joylashgani uchun ikki obyektni bir marshrutda ko‘rish qulay. Ziyorat vaqtida ovozni pasaytirish, ichkaridagi ibodat qilayotgan odamlarga xalaqit bermaslik va yodgorlikka hurmat bilan munosabatda bo‘lish tavsiya etiladi.',
+      en: 'Ruhabad Mausoleum is an important historic pilgrimage monument in central Samarkand. It is associated with the Sufi scholar Burhan al-Din Sagarji and reflects the architectural traditions of the fourteenth century. Compared with some later monuments in the city, its exterior is relatively restrained and monumental. This simplicity contributes to the contemplative atmosphere of the site. Ruhabad stands very close to Gur-e Amir, so the two monuments can easily be visited within the same walking itinerary. As the mausoleum is also a place of reverence, visitors are encouraged to speak quietly, avoid disturbing people who may be praying, and treat the interior space with respect.',
+      ru: 'Мавзолей Рухабад — важный исторический паломнический памятник в центре Самарканда. Он связан с суфийским ученым Бурхан ад-Дином Сагарджи и отражает архитектурные традиции XIV века. По сравнению с некоторыми более поздними памятниками города его внешний облик выглядит более сдержанно и монументально. Такая простота усиливает созерцательную атмосферу места. Рухабад находится совсем рядом с Гур-Эмиром, поэтому оба объекта удобно включить в один пешеходный маршрут. Поскольку мавзолей остается почитаемым местом, рекомендуется говорить тихо, не мешать молящимся и уважительно относиться к внутреннему пространству.',
+    },
   },
   {
     match: /hazrat.?khizr|hazrati.?xizr/i,
-    uz: 'Hazrati Xizr masjidi Samarqandning qadimiy muqaddas hududlaridan birida, Afrosiyob tepaligi yaqinida joylashgan. Masjid uzoq ziyorat an’anasi bilan bog‘liq. Hozirgi me’moriy qiyofasining asosiy qismi XIX asr oxiri va XX asr boshlariga mansub.',
-    en: 'Hazrati Khizr Mosque stands in one of Samarkand’s historic sacred areas near the Afrasiab hill. The site has a long pilgrimage tradition. Much of the mosque’s present architectural appearance dates from the late nineteenth and early twentieth centuries.',
-    ru: 'Мечеть Хазрати Хызр расположена в одном из исторических священных районов Самарканда, рядом с холмом Афросиаб. Место связано с давней паломнической традицией. Значительная часть современного архитектурного облика относится к концу XIX — началу XX века.',
+    short: {
+      uz: 'Hazrati Xizr masjidi Afrosiyob tepaligi yaqinidagi qadimiy muqaddas hududda joylashgan. Masjid uzoq ziyorat an’anasi bilan bog‘liq va shaharga chiroyli manzara ochiladi.',
+      en: 'Hazrati Khizr Mosque stands in a historic sacred area near the Afrasiab hill. The site has a long pilgrimage tradition and offers attractive views over Samarkand.',
+      ru: 'Мечеть Хазрати Хызр расположена в историческом священном районе рядом с холмом Афросиаб. Место связано с давней паломнической традицией и открывает красивые виды на Самарканд.',
+    },
+    detailed: {
+      uz: 'Hazrati Xizr masjidi Afrosiyob tepaligi va Shohi Zinda yaqinidagi baland hududda joylashgan tarixiy ziyorat maskanidir. Bu joy ko‘p asrlik muqaddaslik va ziyorat an’analari bilan bog‘lanadi. Hozirgi masjidning me’moriy qiyofasida XIX asr oxiri va XX asr boshlariga xos unsurlar ko‘rinadi. Ayvon, ustunlar va bezaklarda mahalliy me’moriy an’analar seziladi. Masjid joylashgan nuqtadan Samarqandning tarixiy qismi tomon keng manzara ochiladi. Bu faol diniy makon bo‘lgani sababli tashrif buyuruvchilarga kamtarona kiyinish, namoz vaqtida xalaqit bermaslik, ruxsatsiz yaqin masofadan odamlarni suratga olmaslik va umumiy ziyorat odobiga rioya qilish tavsiya etiladi.',
+      en: 'Hazrati Khizr Mosque occupies an elevated historic sacred area near Afrasiab and Shah-i-Zinda. The site is connected with a long tradition of pilgrimage and local religious memory. Much of the mosque’s present architectural appearance reflects features from the late nineteenth and early twentieth centuries. Its veranda, columns and decorative details show strong local architectural traditions. The elevated position also provides broad views toward the historic parts of Samarkand. Because this remains an active religious space, visitors should dress modestly, avoid disturbing worship during prayer times, refrain from intrusive photography of people, and follow normal etiquette for sacred sites.',
+      ru: 'Мечеть Хазрати Хызр находится на возвышенном историческом священном участке рядом с Афросиабом и Шахи-Зиндой. Место связано с давней паломнической традицией и религиозной памятью города. Значительная часть современного архитектурного облика относится к концу XIX — началу XX века. Айван, колонны и декоративные элементы отражают местные архитектурные традиции. С возвышенности открывается широкий вид на историческую часть Самарканда. Поскольку мечеть остается действующим религиозным пространством, рекомендуется скромная одежда, уважение к времени молитвы, отказ от навязчивой съемки людей и соблюдение обычных правил поведения в священных местах.',
+    },
   },
 ];
 
 function audioGuideFor(poi = {}) {
   const name = String(poi.name || '');
   const guide = AUDIO_GUIDES.find((row) => row.match.test(name));
-  return guide ? { uz: guide.uz, en: guide.en, ru: guide.ru } : null;
+  return guide ? {
+    short: { ...guide.short },
+    detailed: { ...guide.detailed },
+  } : null;
 }
 
 const PRIORITY_PATTERNS = [
@@ -1113,7 +1179,7 @@ function localizedSummary(intent, count, adaptedDays) {
 
 router.get('/status', (_req, res) => {
   res.json({
-    version: '1.7.0',
+    version: '1.8.0',
     openai_configured: Boolean(process.env.OPENAI_API_KEY),
     openai_model: process.env.OPENAI_API_KEY ? (process.env.OPENAI_MODEL || 'gpt-5.6-luna') : null,
     poi_source: 'Verified curated Samarkand anchors + OpenStreetMap/Overpass enrichment',
@@ -1178,7 +1244,7 @@ router.post('/plan', asyncHandler(async (req, res) => {
   const knownClosedVisits = days.flatMap((day) => day.stops || []).filter((stop) => stop.operational?.planned?.status === 'closed');
   const pricedStops = days.flatMap((day) => day.stops || []).filter((stop) => stop.operational?.ticket?.status !== 'unknown');
   res.json({
-    version: '1.7.0',
+    version: '1.8.0',
     prompt,
     intent,
     start,
@@ -1194,7 +1260,7 @@ router.post('/plan', asyncHandler(async (req, res) => {
       optimization: [...new Set(days.map((d) => d.optimization?.method).filter(Boolean))],
       weather: weatherBundle.source,
       operational: 'Official Registan/Samarkand Museum-Reserve catalog + OpenStreetMap fallback',
-      audio_guide: 'Curated Uzbek, English and Russian text + browser Speech Synthesis playback',
+      audio_guide: 'Curated short + detailed Uzbek, English and Russian guide text + browser Speech Synthesis playback',
       ai: intent.engine === 'openai' ? `OpenAI ${intent.model || ''}`.trim() : 'Local multilingual preference parser',
     },
     warnings: [
@@ -1219,7 +1285,7 @@ async function runStartupSmoke() {
     const selected = selectPois(discovered.rows, intent, CENTER).slice(0, 4);
     const route = selected.length ? (await routeDriving(CENTER, selected) || routeFallback(CENTER, selected, false)) : null;
     const names = selected.map((p) => p.name).join(' | ');
-    console.log(`[tour-smoke] v=1.7 provider=${discovered.provider} pois=${discovered.rows.length} external=${discovered.external_count} sample=${names || 'none'} route=${route?.source || 'none'} geometry=${route?.geometry?.type || 'none'}`);
+    console.log(`[tour-smoke] v=1.8 provider=${discovered.provider} pois=${discovered.rows.length} external=${discovered.external_count} sample=${names || 'none'} route=${route?.source || 'none'} geometry=${route?.geometry?.type || 'none'}`);
   } catch (error) {
     console.warn(`[tour-smoke] failed=${error.response?.status || error.message}`);
   }

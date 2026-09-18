@@ -99,3 +99,10 @@ body.tfe-map-open{overflow:hidden}
 .tour-poi-popup>strong,.tour-poi-popup>span{display:block}.tour-poi-popup>strong{font-size:13px;color:#173e2e}.tour-poi-popup>span{font-size:9px;color:#6c8177;margin-top:2px}
 .leaflet-popup-content .audio-guide{margin:9px 0 0}.leaflet-popup-content{margin:12px 14px}
 @media(max-width:760px){.audio-guide-actions{gap:4px}.audio-guide-play{padding:7px 8px}.audio-guide-text{font-size:10px!important}}
+
+.audio-guide-modes{display:flex;gap:5px;margin-top:7px}
+.audio-guide-mode{border:1px solid #d6e3dc;background:#fff;color:#536f62;border-radius:999px;padding:5px 9px;font-size:8px;font-weight:900;cursor:pointer}
+.audio-guide-mode.active{background:#173f30;color:#fff;border-color:#173f30}
+.audio-guide-hint{display:block!important;margin-top:6px;font-size:8px!important;line-height:1.35!important;color:#7a8a82!important}
+.audio-guide[data-mode="detailed"]{background:linear-gradient(135deg,#f8fbf9,#fffdf6);border-color:#d8dfd2}
+.audio-guide[data-mode="detailed"] .audio-guide-head strong:after{content:" · batafsil";font-weight:700;color:#7d806d}
