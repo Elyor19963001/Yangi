@@ -697,5 +697,37 @@ async function submit(e){
     $('planBtn').textContent='✨ Marshrut yaratish';
   }
 }
-async function boot(){initMap();syncDateRange();resetLiveUi();document.addEventListener('click',handleAudioGuideClick);$('days').addEventListener('change',syncDateRange);$('locateBtn').addEventListener('click',locate);$('plannerForm').addEventListener('submit',submit);$('startLiveBtn').addEventListener('click',startLive);$('pauseLiveBtn').addEventListener('click',togglePause);$('stopLiveBtn').addEventListener('click',()=>{stopLive(true);toast('Live Tour tugatildi')});$('centerLiveBtn').addEventListener('click',centerLive);state.map.on('dragstart',()=>{if(state.live.active)state.live.follow=false});try{const status=await api('/api/tourism/status');const live=await api('/api/tourism/live/status');state.audioEngine=status.professional_audio_configured?'openai-tts':'browser-fallback';if(status.professional_audio_configured)toast(`AI MP3 audio tayyor · ${status.professional_audio_model} · GPS ${live.version}`);else if(status.openai_configured)toast(`AI planner online · professional audio uchun TTS sozlamasi kutilmoqda`);else if(live.version)toast(`Tour Planner Live GPS ${live.version} tayyor · audio zaxira rejimida`)}catch{}}
+async function boot(){
+  initMap();syncDateRange();resetLiveUi();
+  document.addEventListener('click',handleAudioGuideClick);
+  $('days').addEventListener('change',syncDateRange);
+  $('locateBtn').addEventListener('click',locate);
+  $('plannerForm').addEventListener('submit',submit);
+  $('startLiveBtn').addEventListener('click',startLive);
+  $('pauseLiveBtn').addEventListener('click',togglePause);
+  $('stopLiveBtn').addEventListener('click',()=>{stopLive(true);toast('Live Tour tugatildi')});
+  $('centerLiveBtn').addEventListener('click',centerLive);
+  $('navLanguage')?.addEventListener('change',e=>{
+    state.live.voiceLang=e.target.value;
+    renderNavigationBanner();
+    toast('Navigator tili: '+e.target.options[e.target.selectedIndex].text);
+  });
+  $('navGuidance')?.addEventListener('change',e=>{
+    state.live.guidanceMode=e.target.value;
+    stopNavAudio();
+    toast(e.target.value==='mute'?'Navigator ovozi o‘chirildi':e.target.value==='full'?'To‘liq ovozli ko‘rsatma':'Muhim ovozli ko‘rsatmalar');
+  });
+  $('navAutoGuide')?.addEventListener('change',e=>{state.live.autoGuide=e.target.checked});
+  state.map.on('dragstart',()=>{if(state.live.active)state.live.follow=false});
+  try{
+    const status=await api('/api/tourism/status');
+    const live=await api('/api/tourism/live/status');
+    state.audioEngine=status.professional_audio_configured?'openai-tts':'browser-fallback';
+    state.live.professionalVoice=Boolean(live.professional_voice_configured);
+    syncNavigatorControls();
+    if(state.live.professionalVoice)toast('3 tildagi AI navigator tayyor · GPS '+live.version);
+    else if(status.professional_audio_configured)toast('Audio gid tayyor · navigator qurilma ovozida · GPS '+live.version);
+    else if(live.version)toast('Tour Planner Live GPS '+live.version+' tayyor · ovoz zaxira rejimida');
+  }catch{syncNavigatorControls()}
+}
 boot();
