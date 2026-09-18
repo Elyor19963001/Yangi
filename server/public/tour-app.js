@@ -339,13 +339,14 @@ function renderMap(day,daySupport){
   setTimeout(()=>state.map.invalidateSize(),50);
 }
 function sourceNote(){const data=state.result||{};const support=state.support||{};const sourceAI=data.sources?.ai||'Smart parser';const warnings=[...(data.warnings||[]),...(support.warnings||[])];return `<strong>Manbalar:</strong> ${esc(data.sources?.places||'Samarqand reference katalogi')} · routing: ${esc((data.sources?.routing||[]).join(', '))} · optimizatsiya: ${esc((data.sources?.optimization||[]).join(', ')||'—')} · AI: ${esc(sourceAI)} · ob-havo: ${esc(data.sources?.weather||support.sources?.weather||'—')} · ish vaqti/chipta: ${esc(data.sources?.operational||'—')} · xizmatlar: ${esc(support.sources?.services||'—')}<br>${warnings.map(w=>`⚠ ${esc(w)}`).join('<br>')}`}
-function switchDay(index){if((state.live.active||state.live.paused)&&index!==state.activeDay){stopLive(true);toast('Live Tour to‘xtatildi: boshqa kun tanlandi')}state.activeDay=index;$('dayTabs').querySelectorAll('.day-tab').forEach((x,i)=>x.classList.toggle('active',i===index));renderDetails()}
+function switchDay(index){if('speechSynthesis' in window)window.speechSynthesis.cancel();if((state.live.active||state.live.paused)&&index!==state.activeDay){stopLive(true);toast('Live Tour to‘xtatildi: boshqa kun tanlandi')}state.activeDay=index;$('dayTabs').querySelectorAll('.day-tab').forEach((x,i)=>x.classList.toggle('active',i===index));renderDetails()}
 function renderResult(data,support){stopLive(true);state.result=data;state.support=support||null;state.activeDay=0;$('resultShell').classList.remove('hidden');$('livePanel').classList.remove('hidden');$('summaryTitle').textContent=`${data.intent.days} kunlik Samarqand marshruti`;$('summaryText').textContent=data.summary;$('intentBadges').innerHTML=intentBadges(data.intent,support||{});$('dayTabs').innerHTML=data.days.map((d,i)=>`<button class="day-tab ${i===0?'active':''}" data-day="${i}">${esc(d.title)}${d.weather_adapted?' 🌦️':''}</button>`).join('');$('dayTabs').querySelectorAll('[data-day]').forEach(btn=>btn.addEventListener('click',()=>switchDay(Number(btn.dataset.day))));$('sourceNote').innerHTML=sourceNote();resetLiveUi();renderDetails();setTimeout(()=>$('resultShell').scrollIntoView({behavior:'smooth',block:'start'}),100)}
 async function submit(e){
   e.preventDefault();
   const prompt=$('prompt').value.trim();
   if(prompt.length<4){setMessage('Sayohat istagingizni yozing.','error');return}
   stopLive(true);
+  if('speechSynthesis' in window)window.speechSynthesis.cancel();
   state.selectedServices={};
   $('planBtn').disabled=true;
   $('planBtn').textContent='Marshrut tuzilmoqda…';
