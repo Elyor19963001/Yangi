@@ -16,19 +16,28 @@ function haversine(lat1,lon1,lat2,lon2){const toRad=v=>v*Math.PI/180,R=6371000,d
 function formatDistance(m){const n=Math.max(0,Number(m)||0);return n<1000?`${Math.round(n)} m`:`${(n/1000).toFixed(n<10000?1:0)} km`}
 function audioGuideHtml(stop,compact=false){
   const guide=stop?.audio_guide;
-  if(!guide?.uz&&!guide?.en&&!guide?.ru)return '';
-  const first=guide.uz||guide.en||guide.ru||'';
+  const short=guide?.short||{};
+  const detailed=guide?.detailed||{};
+  if(!short.uz&&!short.en&&!short.ru&&!detailed.uz&&!detailed.en&&!detailed.ru)return '';
+  const first=short.uz||short.en||short.ru||detailed.uz||detailed.en||detailed.ru||'';
   const name=stop?.name||'Turistik obyekt';
-  const button=(lang,label,guideText)=>guideText?`<button type="button" class="audio-guide-play" data-guide-lang="${esc(lang)}" data-guide-name="${esc(name)}" data-guide-text="${esc(guideText)}">🔊 ${esc(label)}</button>`:'';
-  return `<div class="audio-guide ${compact?'compact':''}">
-    <div class="audio-guide-head"><strong>🎧 Audio gid</strong><span>Tilni tanlang</span></div>
+  const button=(lang,label,shortText,detailedText)=>shortText||detailedText
+    ? `<button type="button" class="audio-guide-play" data-guide-lang="${esc(lang)}" data-guide-name="${esc(name)}" data-guide-short="${esc(shortText||detailedText||'')}" data-guide-detailed="${esc(detailedText||shortText||'')}">🔊 ${esc(label)}</button>`
+    : '';
+  return `<div class="audio-guide ${compact?'compact':''}" data-mode="short" data-lang="uz-UZ">
+    <div class="audio-guide-head"><strong>🎧 Audio gid</strong><span>Qisqa yoki batafsil</span></div>
+    <div class="audio-guide-modes">
+      <button type="button" class="audio-guide-mode active" data-guide-mode="short">Qisqa</button>
+      <button type="button" class="audio-guide-mode" data-guide-mode="detailed">Batafsil</button>
+    </div>
     <p class="audio-guide-text">${esc(first)}</p>
     <div class="audio-guide-actions">
-      ${button('uz-UZ','O‘zbek',guide.uz)}
-      ${button('en-US','English',guide.en)}
-      ${button('ru-RU','Русский',guide.ru)}
+      ${button('uz-UZ','O‘zbek',short.uz,detailed.uz)}
+      ${button('en-US','English',short.en,detailed.en)}
+      ${button('ru-RU','Русский',short.ru,detailed.ru)}
       <button type="button" class="audio-guide-stop" aria-label="Ovozni to‘xtatish">■</button>
     </div>
+    <small class="audio-guide-hint">Qisqa: tezkor tanishtirish · Batafsil: tarix, me’morchilik va ziyorat odobi.</small>
   </div>`;
 }
 function selectGuideVoice(lang){
@@ -40,22 +49,38 @@ function selectGuideVoice(lang){
     ||voices.find(v=>String(v.lang||'').toLowerCase().startsWith(base))
     ||null;
 }
+function guideTextForButton(button,mode){
+  if(!button)return '';
+  return mode==='detailed'
+    ? (button.dataset.guideDetailed||button.dataset.guideShort||'')
+    : (button.dataset.guideShort||button.dataset.guideDetailed||'');
+}
+function updateGuidePreview(box){
+  if(!box)return;
+  const mode=box.dataset.mode||'short';
+  const lang=box.dataset.lang||'uz-UZ';
+  const button=[...box.querySelectorAll('.audio-guide-play')].find(x=>x.dataset.guideLang===lang)
+    ||box.querySelector('.audio-guide-play');
+  const textNode=box.querySelector('.audio-guide-text');
+  if(textNode&&button)textNode.textContent=guideTextForButton(button,mode);
+}
 function speakGuide(button){
   if(!('speechSynthesis' in window)||typeof SpeechSynthesisUtterance==='undefined'){
     toast('Bu brauzer ovozli gidni qo‘llamaydi.');
     return;
   }
-  const guideText=button.dataset.guideText||'';
+  const box=button.closest('.audio-guide');
+  const mode=box?.dataset.mode||'short';
   const lang=button.dataset.guideLang||'uz-UZ';
+  const guideText=guideTextForButton(button,mode);
   if(!guideText)return;
+  if(box)box.dataset.lang=lang;
+  updateGuidePreview(box);
   window.speechSynthesis.cancel();
   document.querySelectorAll('.audio-guide-play.speaking').forEach(x=>x.classList.remove('speaking'));
-  const box=button.closest('.audio-guide');
-  const textNode=box?.querySelector('.audio-guide-text');
-  if(textNode)textNode.textContent=guideText;
   const utter=new SpeechSynthesisUtterance(guideText);
   utter.lang=lang;
-  utter.rate=lang.startsWith('ru')?0.92:0.94;
+  utter.rate=mode==='detailed' ? (lang.startsWith('ru')?0.90:0.92) : (lang.startsWith('ru')?0.94:0.96);
   utter.pitch=1;
   const voice=selectGuideVoice(lang);
   if(voice)utter.voice=voice;
@@ -65,6 +90,19 @@ function speakGuide(button){
   window.speechSynthesis.speak(utter);
 }
 function handleAudioGuideClick(event){
+  const modeButton=event.target.closest('.audio-guide-mode');
+  if(modeButton){
+    event.preventDefault();event.stopPropagation();
+    const box=modeButton.closest('.audio-guide');
+    if(!box)return;
+    const mode=modeButton.dataset.guideMode==='detailed'?'detailed':'short';
+    box.dataset.mode=mode;
+    box.querySelectorAll('.audio-guide-mode').forEach(x=>x.classList.toggle('active',x===modeButton));
+    if('speechSynthesis' in window)window.speechSynthesis.cancel();
+    box.querySelectorAll('.audio-guide-play.speaking').forEach(x=>x.classList.remove('speaking'));
+    updateGuidePreview(box);
+    return;
+  }
   const play=event.target.closest('.audio-guide-play');
   if(play){event.preventDefault();event.stopPropagation();speakGuide(play);return;}
   const stop=event.target.closest('.audio-guide-stop');
