@@ -123,6 +123,28 @@ function normalizeIntentProfile(raw = {}) {
   };
 }
 
+function mergeExplicitProfile(intent, raw = {}) {
+  const allowedInterests = new Set(['history','pilgrimage','gastronomy','museum','family','architecture']);
+  const interests = Array.isArray(raw.interests)
+    ? raw.interests.map((v) => text(v, 30)).filter((v) => allowedInterests.has(v)).slice(0, 6)
+    : [];
+  const merged = { ...intent };
+  if (interests.length) merged.interests = [...new Set(interests)];
+  if (['relaxed','normal','active'].includes(raw.pace)) merged.pace = raw.pace;
+  if (['walking','taxi','mixed'].includes(raw.transport)) merged.transport = raw.transport;
+  if (typeof raw.low_walking === 'boolean') merged.low_walking = raw.low_walking;
+  if (typeof raw.wheelchair_accessible === 'boolean') merged.wheelchair_accessible = raw.wheelchair_accessible;
+  if (typeof raw.own_vehicle === 'boolean') merged.own_vehicle = raw.own_vehicle;
+  if (raw.children_count !== undefined) merged.children_count = clamp(Number(raw.children_count) || 0, 0, 10);
+  if (raw.seniors_count !== undefined) merged.seniors_count = clamp(Number(raw.seniors_count) || 0, 0, 10);
+  if (/^\d{2}:\d{2}$/.test(String(raw.preferred_start_time || ''))) merged.preferred_start_time = String(raw.preferred_start_time);
+  if (/^\d{2}:\d{2}$/.test(String(raw.preferred_end_time || ''))) merged.preferred_end_time = String(raw.preferred_end_time);
+  if (raw.origin_country) merged.origin_country = text(raw.origin_country, 60);
+  const budget = number(raw.budget_uzs);
+  if (budget !== null && budget >= 0) merged.budget_uzs = Math.round(budget);
+  return merged;
+}
+
 function fallbackIntent(prompt, explicitDays) {
   const p = prompt.toLocaleLowerCase('uz-UZ');
   const dayMatch = p.match(/\b([1-5])\s*(?:kun|day|days|дн(?:я|ей)?)/i);
@@ -494,6 +516,62 @@ function splitDays(ordered, days) {
   return groups;
 }
 
+function pathDistanceM(start, stops) {
+  let total = 0;
+  let previous = start;
+  for (const stop of stops) {
+    total += haversine(previous.latitude, previous.longitude, stop.latitude, stop.longitude);
+    previous = stop;
+  }
+  return total;
+}
+
+function twoOptOpenPath(start, rows, maxPasses = 6) {
+  if (!Array.isArray(rows) || rows.length < 3) return [...rows];
+  let best = nearestOrder(rows, start);
+  let bestDistance = pathDistanceM(start, best);
+  for (let pass = 0; pass < maxPasses; pass += 1) {
+    let improved = false;
+    for (let i = 0; i < best.length - 1; i += 1) {
+      for (let k = i + 1; k < best.length; k += 1) {
+        const candidate = [
+          ...best.slice(0, i),
+          ...best.slice(i, k + 1).reverse(),
+          ...best.slice(k + 1),
+        ];
+        const candidateDistance = pathDistanceM(start, candidate);
+        if (candidateDistance + 25 < bestDistance) {
+          best = candidate;
+          bestDistance = candidateDistance;
+          improved = true;
+        }
+      }
+    }
+    if (!improved) break;
+  }
+  return best;
+}
+
+function optimizeDayOrder(rows, start, weather, adaptive) {
+  const baseline = nearestOrder(rows, start);
+  const before = pathDistanceM(start, baseline);
+  const riskSeverity = Number(weather?.risk?.severity || 0);
+  const optimized = adaptive && riskSeverity >= 3
+    ? weatherAwareOrder(rows, start, weather, true)
+    : twoOptOpenPath(start, rows);
+  const after = pathDistanceM(start, optimized);
+  return {
+    stops: optimized,
+    meta: {
+      method: adaptive && riskSeverity >= 3 ? 'weather-priority' : 'nearest-neighbor+2-opt',
+      origin: start.name || 'Boshlanish nuqtasi',
+      before_distance_m: Math.round(before),
+      after_distance_m: Math.round(after),
+      saved_distance_m: Math.max(0, Math.round(before - after)),
+    },
+  };
+}
+
 function rebalanceForWeather(groups, weatherRows, enabled) {
   const result = groups.map((group) => [...group]);
   if (!enabled || !weatherRows.length || result.length < 2) return result;
@@ -640,11 +718,12 @@ function localizedSummary(intent, count, adaptedDays) {
 
 router.get('/status', (_req, res) => {
   res.json({
-    version: '1.3.0',
+    version: '1.4.0',
     openai_configured: Boolean(process.env.OPENAI_API_KEY),
     openai_model: process.env.OPENAI_API_KEY ? (process.env.OPENAI_MODEL || 'gpt-5.6-luna') : null,
     poi_source: 'Verified curated Samarkand anchors + OpenStreetMap/Overpass enrichment',
-    routing_source: 'OSRM driving + geodesic fallback',
+    routing_source: 'Fixed-origin route ordering + OSRM driving + geodesic fallback',
+    route_optimization: 'Nearest-neighbor + 2-opt when weather is normal; weather-priority ordering in severe weather',
     weather_source: 'Open-Meteo',
     weather_adaptive_routing: true,
     forecast_window_days: 14,
@@ -658,7 +737,8 @@ router.post('/plan', asyncHandler(async (req, res) => {
   if (prompt.length < 4) return res.status(400).json({ error: 'Sayohat istagingizni yozing.' });
   const fallback = fallbackIntent(prompt, req.body.days);
   const parsedIntent = await parseIntentWithOpenAI(prompt, fallback);
-  const intent = normalizeIntentProfile(parsedIntent);
+  const explicitIntent = mergeExplicitProfile(parsedIntent, req.body.profile || {});
+  const intent = normalizeIntentProfile(explicitIntent);
   const startLat = number(req.body.start_latitude);
   const startLon = number(req.body.start_longitude);
   const requestedStart = validCoord(startLat, startLon)
@@ -682,17 +762,20 @@ router.post('/plan', asyncHandler(async (req, res) => {
   const days = [];
   for (let i = 0; i < groups.length; i += 1) {
     const weather = weatherBundle.rows[i] || null;
-    const stops = weatherAwareOrder(groups[i], start, weather, weatherAdaptive);
+    const optimized = optimizeDayOrder(groups[i], start, weather, weatherAdaptive);
+    const stops = optimized.stops;
     let route = null;
     if (intent.transport !== 'walking') route = await routeDriving(start, stops);
     if (!route) route = routeFallback(start, stops, intent.transport === 'walking');
-    days.push(daySchedule(stops, route, intent, i, weather, weatherAdaptive));
+    const scheduled = daySchedule(stops, route, intent, i, weather, weatherAdaptive);
+    scheduled.optimization = optimized.meta;
+    days.push(scheduled);
   }
 
   const totalStops = days.reduce((sum, day) => sum + day.stops.length, 0);
   const adaptedDays = days.filter((day) => day.weather_adapted).length;
   res.json({
-    version: '1.3.0',
+    version: '1.4.0',
     prompt,
     intent,
     start,
@@ -705,6 +788,7 @@ router.post('/plan', asyncHandler(async (req, res) => {
       places_provider: discovered.provider,
       external_poi_count: discovered.external_count,
       routing: [...new Set(days.map((d) => d.route?.source).filter(Boolean))],
+      optimization: [...new Set(days.map((d) => d.optimization?.method).filter(Boolean))],
       weather: weatherBundle.source,
       ai: intent.engine === 'openai' ? `OpenAI ${intent.model || ''}`.trim() : 'Local multilingual preference parser',
     },
@@ -728,7 +812,7 @@ async function runStartupSmoke() {
     const selected = selectPois(discovered.rows, intent, CENTER).slice(0, 4);
     const route = selected.length ? (await routeDriving(CENTER, selected) || routeFallback(CENTER, selected, false)) : null;
     const names = selected.map((p) => p.name).join(' | ');
-    console.log(`[tour-smoke] v=1.3 provider=${discovered.provider} pois=${discovered.rows.length} external=${discovered.external_count} sample=${names || 'none'} route=${route?.source || 'none'} geometry=${route?.geometry?.type || 'none'}`);
+    console.log(`[tour-smoke] v=1.4 provider=${discovered.provider} pois=${discovered.rows.length} external=${discovered.external_count} sample=${names || 'none'} route=${route?.source || 'none'} geometry=${route?.geometry?.type || 'none'}`);
   } catch (error) {
     console.warn(`[tour-smoke] failed=${error.response?.status || error.message}`);
   }
