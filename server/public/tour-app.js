@@ -164,6 +164,7 @@ function stopNavAudio(){
 }
 function browserSpeakNav(text,lang){
   if(!text||!('speechSynthesis' in window)||typeof SpeechSynthesisUtterance==='undefined')return;
+  if(guideAudioPlayer)stopGuideAudio();
   stopNavAudio();
   const utter=new SpeechSynthesisUtterance(text);
   utter.lang=navLocale(lang);
@@ -239,12 +240,15 @@ function nextNavigationStep(){return state.live.navSteps[state.live.navStepIndex
 function renderNavigationBanner(distance){
   const step=nextNavigationStep();
   const next=nextLiveStop();
+  const lang=state.live.voiceLang;
+  const labels={uz:{next:'Keyingi manzil',ready:'Marshrut tayyor',waiting:'GPS masofa aniqlanmoqda…',tracking:'Manzilgacha GPS kuzatuvi'},en:{next:'Next stop',ready:'Route ready',waiting:'Waiting for GPS distance…',tracking:'GPS guidance to destination'},ru:{next:'Следующая точка',ready:'Маршрут готов',waiting:'Определяю расстояние по GPS…',tracking:'GPS-навигация до точки'}};
+  const t=labels[lang]||labels.uz;
   const icon=document.getElementById('navManeuverIcon');
   const title=document.getElementById('navInstruction');
   const meta=document.getElementById('navInstructionDistance');
   if(icon)icon.textContent=step?maneuverIcon(step):'◎';
-  if(title)title.textContent=step?localTurnText(step):(next?'Keyingi manzil: '+next.name:'Marshrut tayyor');
-  if(meta)meta.textContent=Number.isFinite(Number(distance))?formatDistance(Number(distance)):(step?'GPS masofa aniqlanmoqda…':'Manzilgacha GPS kuzatuvi');
+  if(title)title.textContent=step?localTurnText(step):(next?t.next+': '+next.name:t.ready);
+  if(meta)meta.textContent=Number.isFinite(Number(distance))?formatDistance(Number(distance)):(step?t.waiting:t.tracking);
 }
 function stepDistanceM(current,step){
   const lat=Number(step&&step.maneuver&&step.maneuver.latitude),lon=Number(step&&step.maneuver&&step.maneuver.longitude);
@@ -501,7 +505,7 @@ function stopGpsWatch(){if(state.live.watchId!==null){navigator.geolocation.clea
 function stopLive(clear=true){stopGpsWatch();stopNavAudio();state.live.active=false;state.live.paused=false;state.live.rerouting=false;if(clear){clearLiveLayers();state.live.nextIndex=0;state.live.trailCoords=[];state.live.travelledM=0;state.live.lastPos=null;state.live.current=null;state.live.routeGeometry=null;resetLiveUi()}else{$('startLiveBtn').disabled=false;$('pauseLiveBtn').disabled=true;$('stopLiveBtn').disabled=true;$('centerLiveBtn').disabled=false}}
 function startGpsWatch(){if(!navigator.geolocation){setLiveStatus('GPS mavjud emas','error');toast('Brauzer GPS kuzatuvini qo‘llamaydi');return}stopGpsWatch();state.live.watchId=navigator.geolocation.watchPosition(onLivePosition,onLiveError,{enableHighAccuracy:true,timeout:15000,maximumAge:2500})}
 function startLive(){if(!state.result){toast('Avval marshrut yarating');return}if(!navigator.geolocation){toast('Brauzer geolokatsiyani qo‘llamaydi');return}stopLive(true);state.live.active=true;state.live.follow=true;state.live.routeGeometry=liveDay()?.route?.geometry||null;$('startLiveBtn').disabled=true;$('pauseLiveBtn').disabled=false;$('stopLiveBtn').disabled=false;$('centerLiveBtn').disabled=false;setLiveStatus('GPS ulanmoqda…','active');$('liveNextName').textContent=nextLiveStop()?.name||'—';$('liveNextMeta').textContent='Aniq joylashuv kutilmoqda…';renderNavigationBanner();startGpsWatch();speakNavEvent({event:'start',stop_name:nextLiveStop()?.name||''});toast('Live Tour boshlandi')}
-function togglePause(){if(!state.live.active&&state.live.paused){state.live.active=true;state.live.paused=false;$('pauseLiveBtn').textContent='⏸ Pauza';setLiveStatus('Live GPS faol','active');startGpsWatch();return}if(!state.live.active)return;stopGpsWatch();state.live.active=false;state.live.paused=true;$('pauseLiveBtn').textContent='▶ Davom ettirish';setLiveStatus('Pauza','paused')}
+function togglePause(){if(!state.live.active&&state.live.paused){state.live.active=true;state.live.paused=false;$('pauseLiveBtn').textContent='⏸ Pauza';setLiveStatus('Live GPS faol','active');startGpsWatch();return}if(!state.live.active)return;stopGpsWatch();stopNavAudio();state.live.active=false;state.live.paused=true;$('pauseLiveBtn').textContent='▶ Davom ettirish';setLiveStatus('Pauza','paused')}
 function finishLiveDay(){stopGpsWatch();state.live.active=false;state.live.paused=false;setLiveStatus('Kun marshruti yakunlandi','done');$('liveNextName').textContent='Barcha nuqtalarga yetib keldingiz';$('liveNextMeta').textContent=`Yurilgan GPS yo‘li: ${formatDistance(state.live.travelledM)}`;$('startLiveBtn').disabled=false;$('pauseLiveBtn').disabled=true;$('stopLiveBtn').disabled=true;toast('Bugungi Live Tour yakunlandi')}
 function onLiveError(err){const msg=err.code===1?'GPS ruxsati berilmadi':err.code===2?'Joylashuv aniqlanmadi':'GPS javobi kechikdi';setLiveStatus(msg,'error');$('liveNextMeta').textContent='Brauzer lokatsiya ruxsatini va GPS holatini tekshiring.';toast(msg)}
 function project(lat,lon,refLat){const r=6371000,rad=Math.PI/180;return {x:r*lon*rad*Math.cos(refLat*rad),y:r*lat*rad}}
@@ -561,8 +565,8 @@ async function onLivePosition(pos){
   if(l.navSteps.length)maybeSpeakTurn(current,accuracy);
   else{renderNavigationBanner(distance);maybeSpeakFallbackDistance(distance)}
 
-  const arrivalRadius=Math.max(70,Math.min(95,accuracy||80));
-  if(distance<=arrivalRadius&&accuracy<=120){
+  const arrivalRadius=Math.max(35,Math.min(70,Math.round((accuracy||35)*1.25)));
+  if(distance<=arrivalRadius&&accuracy<=100){
     speakNavEvent({event:'arrive',stop_name:next.name});
     toast(next.name+': yetib keldingiz');
     const arrived=next;
