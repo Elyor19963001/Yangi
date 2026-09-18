@@ -44,6 +44,98 @@ function audioGuideHtml(stop,compact=false){
     <small class="audio-guide-hint">AI MP3 mavjud bo‘lsa serverdan tabiiy ovoz keladi; aks holda brauzer ovozi faqat zaxira sifatida ishlaydi.</small>
   </div>`;
 }
+function poiCategoryMeta(stop={}){
+  const map={
+    historic:{icon:'🏛',label:'Tarixiy obida'},
+    museum:{icon:'🏺',label:'Muzey'},
+    pilgrimage:{icon:'🕌',label:'Ziyoratgoh'},
+    attraction:{icon:'✦',label:'Diqqatga sazovor joy'},
+    market:{icon:'🧺',label:'Bozor'},
+    heritage:{icon:'🏛',label:'Meros obyekti'},
+  };
+  return map[stop.category]||{icon:'📍',label:'Turistik obyekt'};
+}
+function poiPopupSummary(stop={}){
+  const guide=stop.audio_guide;
+  const lang=state.live?.voiceLang||'uz';
+  const short=guide?.short||{};
+  if(short[lang])return short[lang];
+  if(short.uz)return short.uz;
+  const meta=poiCategoryMeta(stop);
+  return meta.label+' · Samarqand marshrutidagi tavsiya etilgan tashrif nuqtasi.';
+}
+function poiPopupHtml(stop={}){
+  const meta=poiCategoryMeta(stop);
+  const op=stop.operational||{};
+  const planned=op.planned||{};
+  const ticket=op.ticket||{};
+  const official=op.official||null;
+  const statusClass=planned.status==='open'?'open':planned.status==='closed'?'closed':'unknown';
+  const statusText=planned.label||'Ish vaqti aniqlanmagan';
+  const ticketText=ticket.status==='official-published'?'Rasmiy chipta':(ticket.label||'Chipta ma’lumoti');
+  const sourceUrl=official?.source_url||op.website||stop.source_url||stop.osm_source_url||'';
+  const sourceLabel=official?'Rasmiy manba':(op.website?'Obyekt sayti':stop.source==='OpenStreetMap'?'OpenStreetMap':'Manba');
+  const hasAudio=Boolean(stop.audio_guide?.id);
+  const audio=hasAudio?audioGuideHtml(stop,true):'<div class="poi-audio-empty">🎧 Bu obyekt uchun audio gid hozircha tayyorlanmagan.</div>';
+  const order=Number(stop.order)||0;
+  const detailedTicket=ticket.status==='official-published'?ticketTariffHtml(ticket):'';
+  const infoHours=planned.label?'<div><span>🕒 Rejadagi holat</span><strong>'+esc(planned.label)+'</strong></div>':'';
+  const infoVisit=Number(stop.visit_minutes)>0?'<div><span>⏱ Tavsiya etilgan vaqt</span><strong>'+Number(stop.visit_minutes)+' daqiqa</strong></div>':'';
+  return '<article class="poi-place-card">'
+    +'<div class="poi-place-head">'
+      +'<div class="poi-place-icon">'+meta.icon+'</div>'
+      +'<div class="poi-place-title"><span>'+esc(meta.label)+(official?' · ✓ rasmiy ma’lumot':'')+'</span><strong>'+esc(stop.name||'Turistik obyekt')+'</strong><small>'+esc(stop.time_start||'')+(stop.time_end?'–'+esc(stop.time_end):'')+(order?' · '+order+'-nuqta':'')+'</small></div>'
+    +'</div>'
+    +'<p class="poi-place-summary">'+esc(poiPopupSummary(stop))+'</p>'
+    +'<div class="poi-place-chips">'
+      +(planned.label?'<span class="poi-chip '+statusClass+'">● '+esc(statusText)+'</span>':'')
+      +(ticket.label||ticket.status==='official-published'?'<span class="poi-chip ticket">🎟 '+esc(ticketText)+'</span>':'')
+    +'</div>'
+    +'<div class="poi-place-actions">'
+      +(hasAudio?'<button type="button" class="poi-action primary" data-popup-audio-open>🎧 Audio gid</button>':'')
+      +'<button type="button" class="poi-action navigate" data-popup-gps data-stop-lat="'+esc(stop.latitude)+'" data-stop-lon="'+esc(stop.longitude)+'" data-stop-name="'+esc(stop.name||'')+'">◎ Navigator</button>'
+    +'</div>'
+    +'<div class="poi-popup-audio hidden">'+audio+'</div>'
+    +'<details class="poi-place-more"><summary>Ma’lumotlar va chipta <span>⌄</span></summary>'
+      +'<div class="poi-place-info-grid">'+infoHours+infoVisit+'</div>'
+      +detailedTicket
+      +(sourceUrl?'<a class="poi-source-link" href="'+esc(sourceUrl)+'" target="_blank" rel="noopener">'+esc(sourceLabel)+' ↗</a>':'')
+    +'</details>'
+  +'</article>';
+}
+function popupStopIndex(button){
+  const lat=Number(button?.dataset?.stopLat),lon=Number(button?.dataset?.stopLon),name=String(button?.dataset?.stopName||'');
+  const stops=liveStops();
+  let index=stops.findIndex(x=>name&&String(x.name||'')===name);
+  if(index<0&&Number.isFinite(lat)&&Number.isFinite(lon)){
+    index=stops.findIndex(x=>haversine(lat,lon,Number(x.latitude),Number(x.longitude))<35);
+  }
+  return index;
+}
+function handlePoiPopupClick(event){
+  const audioButton=event.target.closest('[data-popup-audio-open]');
+  if(audioButton){
+    event.preventDefault();event.stopPropagation();
+    const card=audioButton.closest('.poi-place-card');
+    const panel=card?.querySelector('.poi-popup-audio');
+    if(panel){
+      panel.classList.toggle('hidden');
+      audioButton.classList.toggle('active',!panel.classList.contains('hidden'));
+      audioButton.textContent=panel.classList.contains('hidden')?'🎧 Audio gid':'✕ Audio yopish';
+    }
+    return;
+  }
+  const gpsButton=event.target.closest('[data-popup-gps]');
+  if(gpsButton){
+    event.preventDefault();event.stopPropagation();
+    const index=popupStopIndex(gpsButton);
+    if(index<0){toast('Bu nuqta joriy marshrutda topilmadi');return}
+    try{state.map.closePopup()}catch{}
+    startLive(index);
+    document.getElementById('livePanel')?.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+}
+
 function selectGuideVoice(lang){
   if(!('speechSynthesis' in window))return null;
   const locale={uz:'uz-UZ',en:'en-US',ru:'ru-RU'}[lang]||lang;
@@ -504,7 +596,7 @@ function clearLiveLayers(){const l=state.live;if(l.marker){state.map.removeLayer
 function stopGpsWatch(){if(state.live.watchId!==null){navigator.geolocation.clearWatch(state.live.watchId);state.live.watchId=null}}
 function stopLive(clear=true){stopGpsWatch();stopNavAudio();state.live.active=false;state.live.paused=false;state.live.rerouting=false;if(clear){clearLiveLayers();state.live.nextIndex=0;state.live.trailCoords=[];state.live.travelledM=0;state.live.lastPos=null;state.live.current=null;state.live.routeGeometry=null;resetLiveUi()}else{$('startLiveBtn').disabled=false;$('pauseLiveBtn').disabled=true;$('stopLiveBtn').disabled=true;$('centerLiveBtn').disabled=false}}
 function startGpsWatch(){if(!navigator.geolocation){setLiveStatus('GPS mavjud emas','error');toast('Brauzer GPS kuzatuvini qo‘llamaydi');return}stopGpsWatch();state.live.watchId=navigator.geolocation.watchPosition(onLivePosition,onLiveError,{enableHighAccuracy:true,timeout:15000,maximumAge:2500})}
-function startLive(){if(!state.result){toast('Avval marshrut yarating');return}if(!navigator.geolocation){toast('Brauzer geolokatsiyani qo‘llamaydi');return}stopLive(true);state.live.active=true;state.live.follow=true;state.live.routeGeometry=liveDay()?.route?.geometry||null;$('startLiveBtn').disabled=true;$('pauseLiveBtn').disabled=false;$('stopLiveBtn').disabled=false;$('centerLiveBtn').disabled=false;setLiveStatus('GPS ulanmoqda…','active');$('liveNextName').textContent=nextLiveStop()?.name||'—';$('liveNextMeta').textContent='Aniq joylashuv kutilmoqda…';renderNavigationBanner();startGpsWatch();speakNavEvent({event:'start',stop_name:nextLiveStop()?.name||''});toast('Live Tour boshlandi')}
+function startLive(targetIndex=null){if(!state.result){toast('Avval marshrut yarating');return}if(!navigator.geolocation){toast('Brauzer geolokatsiyani qo‘llamaydi');return}stopLive(true);if(Number.isInteger(targetIndex)&&targetIndex>=0&&targetIndex<liveStops().length)state.live.nextIndex=targetIndex;stopGuideAudio();state.live.active=true;state.live.follow=true;state.live.routeGeometry=liveDay()?.route?.geometry||null;$('startLiveBtn').disabled=true;$('pauseLiveBtn').disabled=false;$('stopLiveBtn').disabled=false;$('centerLiveBtn').disabled=false;setLiveStatus('GPS ulanmoqda…','active');$('liveNextName').textContent=nextLiveStop()?.name||'—';$('liveNextMeta').textContent='Aniq joylashuv kutilmoqda…';renderNavigationBanner();startGpsWatch();speakNavEvent({event:'start',stop_name:nextLiveStop()?.name||''});toast(targetIndex!==null?'Navigator tanlangan obyektga boshlandi':'Live Tour boshlandi')}
 function togglePause(){if(!state.live.active&&state.live.paused){state.live.active=true;state.live.paused=false;$('pauseLiveBtn').textContent='⏸ Pauza';setLiveStatus('Live GPS faol','active');startGpsWatch();return}if(!state.live.active)return;stopGpsWatch();stopNavAudio();state.live.active=false;state.live.paused=true;$('pauseLiveBtn').textContent='▶ Davom ettirish';setLiveStatus('Pauza','paused')}
 function finishLiveDay(){stopGpsWatch();state.live.active=false;state.live.paused=false;setLiveStatus('Kun marshruti yakunlandi','done');$('liveNextName').textContent='Barcha nuqtalarga yetib keldingiz';$('liveNextMeta').textContent=`Yurilgan GPS yo‘li: ${formatDistance(state.live.travelledM)}`;$('startLiveBtn').disabled=false;$('pauseLiveBtn').disabled=true;$('stopLiveBtn').disabled=true;toast('Bugungi Live Tour yakunlandi')}
 function onLiveError(err){const msg=err.code===1?'GPS ruxsati berilmadi':err.code===2?'Joylashuv aniqlanmadi':'GPS javobi kechikdi';setLiveStatus(msg,'error');$('liveNextMeta').textContent='Brauzer lokatsiya ruxsatini va GPS holatini tekshiring.';toast(msg)}
@@ -635,9 +727,9 @@ function renderMap(day,daySupport){
   state.markers.push(startMarker);
   day.stops.forEach(stop=>{
     const icon=L.divIcon({className:'poi-marker',html:String(stop.order),iconSize:[28,28],iconAnchor:[14,14]});
-    const popup=`<div class="tour-poi-popup"><strong>${esc(stop.name)}</strong><span>${esc(stop.time_start)}–${esc(stop.time_end)}</span>${audioGuideHtml(stop,false)}</div>`;
+    const popup=poiPopupHtml(stop);
     const m=L.marker([stop.latitude,stop.longitude],{icon}).addTo(state.map)
-      .bindPopup(popup,{maxWidth:360,minWidth:270});
+      .bindPopup(popup,{maxWidth:390,minWidth:300,className:'tfe-place-popup',autoPanPadding:[18,90]});
     state.markers.push(m);
   });
   const seen=new Set();
@@ -703,11 +795,11 @@ async function submit(e){
 }
 async function boot(){
   initMap();syncDateRange();resetLiveUi();
-  document.addEventListener('click',handleAudioGuideClick);
+  document.addEventListener('click',handleAudioGuideClick);document.addEventListener('click',handlePoiPopupClick);
   $('days').addEventListener('change',syncDateRange);
   $('locateBtn').addEventListener('click',locate);
   $('plannerForm').addEventListener('submit',submit);
-  $('startLiveBtn').addEventListener('click',startLive);
+  $('startLiveBtn').addEventListener('click',()=>startLive());
   $('pauseLiveBtn').addEventListener('click',togglePause);
   $('stopLiveBtn').addEventListener('click',()=>{stopLive(true);toast('Live Tour tugatildi')});
   $('centerLiveBtn').addEventListener('click',centerLive);

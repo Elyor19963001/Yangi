@@ -1,0 +1,59 @@
+/* Unified tourism place cards v14 — map-first, progressive disclosure */
+.tfe-place-popup .leaflet-popup-content-wrapper{
+  border-radius:20px;
+  border:1px solid rgba(207,222,214,.95);
+  background:rgba(255,255,255,.985);
+  box-shadow:0 18px 48px rgba(17,48,35,.20);
+  overflow:hidden;
+}
+.tfe-place-popup .leaflet-popup-content{margin:0!important;width:360px!important;max-width:calc(100vw - 28px)}
+.tfe-place-popup .leaflet-popup-tip{background:#fff;box-shadow:3px 3px 8px rgba(17,48,35,.08)}
+.tfe-place-popup .leaflet-popup-close-button{
+  top:9px!important;right:9px!important;width:30px!important;height:30px!important;
+  border-radius:999px!important;background:rgba(244,248,246,.96)!important;color:#60786d!important;
+  font-size:18px!important;line-height:28px!important;z-index:4;
+}
+.tfe-place-popup .leaflet-popup-close-button:hover{background:#e9f2ed!important;color:#214f3d!important}
+
+.poi-place-card{padding:14px;color:#17372a;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.poi-place-head{display:grid;grid-template-columns:43px minmax(0,1fr);gap:10px;align-items:center;padding-right:28px}
+.poi-place-icon{width:43px;height:43px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(145deg,#e9f6ef,#f8fbf9);border:1px solid #d3e6dc;font-size:21px}
+.poi-place-title{min-width:0}.poi-place-title span,.poi-place-title strong,.poi-place-title small{display:block}
+.poi-place-title span{font-size:8px;letter-spacing:.06em;text-transform:uppercase;color:#5f8172;font-weight:900}
+.poi-place-title strong{font-size:15px;line-height:1.18;margin-top:2px;color:#143c2d;padding-right:2px}
+.poi-place-title small{font-size:9px;color:#778c82;margin-top:3px;font-weight:750}
+.poi-place-summary{margin:10px 0 8px!important;font-size:10px!important;line-height:1.48!important;color:#526b60!important;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.poi-place-chips{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 9px}
+.poi-chip{display:inline-flex;align-items:center;min-height:24px;padding:4px 7px;border-radius:999px;font-size:7px;font-weight:900;border:1px solid #dde5e1;background:#f5f7f6;color:#687970}
+.poi-chip.open{background:#e9f7ef;border-color:#cde9da;color:#176b4d}.poi-chip.closed{background:#fff0ee;border-color:#efcbc6;color:#a13d32}.poi-chip.unknown{background:#f5f6f5;color:#6d7b74}.poi-chip.ticket{background:#fff8e8;border-color:#eadcae;color:#795e1b}
+.poi-place-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.poi-action{min-height:41px;border-radius:12px;border:1px solid #d4e3db;font-size:9px;font-weight:950;cursor:pointer;transition:.16s ease}
+.poi-action.primary{background:#edf7f2;color:#176b4d}.poi-action.primary.active{background:#173f30;color:#fff;border-color:#173f30}.poi-action.navigate{background:#176b4d;color:#fff;border-color:#176b4d;box-shadow:0 6px 14px rgba(23,107,77,.17)}
+.poi-action:hover{transform:translateY(-1px)}
+.poi-popup-audio{margin-top:8px}.poi-popup-audio .audio-guide{margin:0;padding:9px;border-radius:13px;background:#f8fbf9}.poi-popup-audio .audio-guide-head{margin-bottom:2px}.poi-popup-audio .audio-guide-text{max-height:88px;overflow:auto;font-size:9px!important}.poi-popup-audio .audio-guide-hint{display:none!important}.poi-popup-audio .audio-guide-actions{gap:4px}.poi-popup-audio .audio-guide-play{min-height:32px;padding:5px 7px}
+.poi-audio-empty{margin-top:8px;padding:9px;border-radius:11px;background:#f5f7f6;color:#73837b;font-size:8px;line-height:1.4}
+.poi-place-more{margin-top:8px;border-top:1px solid #e4ebe7}
+.poi-place-more>summary{list-style:none;cursor:pointer;min-height:38px;display:flex;align-items:center;justify-content:space-between;gap:10px;color:#456557;font-size:8px;font-weight:900}.poi-place-more>summary::-webkit-details-marker{display:none}.poi-place-more[open]>summary span{transform:rotate(180deg)}
+.poi-place-more>summary span{transition:.16s ease}
+.poi-place-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:2px 0 6px}.poi-place-info-grid>div{padding:7px 8px;border-radius:10px;background:#f7faf8;border:1px solid #e2ebe6}.poi-place-info-grid span,.poi-place-info-grid strong{display:block}.poi-place-info-grid span{font-size:7px;color:#7b8d84}.poi-place-info-grid strong{font-size:9px;color:#2d5545;margin-top:2px}
+.poi-place-more .official-tariff{margin-top:5px}.poi-source-link{display:inline-flex;margin-top:7px;color:#176b4d!important;font-size:8px!important;font-weight:900;text-decoration:none!important}
+
+@media(max-width:760px){
+  .tfe-place-popup.leaflet-popup{
+    position:absolute!important;
+    left:8px!important;right:8px!important;bottom:8px!important;top:auto!important;
+    transform:none!important;margin:0!important;width:auto!important;
+  }
+  .tfe-place-popup .leaflet-popup-content-wrapper{border-radius:21px;box-shadow:0 -10px 34px rgba(13,43,31,.22)}
+  .tfe-place-popup .leaflet-popup-content{width:auto!important;max-width:none!important;max-height:45dvh;overflow:auto;overscroll-behavior:contain}
+  .tfe-place-popup .leaflet-popup-tip-container{display:none!important}
+  .tfe-place-popup .leaflet-popup-close-button{top:10px!important;right:10px!important}
+  .poi-place-card{padding:12px}
+  .poi-place-head{grid-template-columns:40px minmax(0,1fr);gap:9px}.poi-place-icon{width:40px;height:40px;border-radius:12px;font-size:19px}
+  .poi-place-title strong{font-size:14px}.poi-place-title span{font-size:7px}.poi-place-title small{font-size:8px}
+  .poi-place-summary{font-size:9px!important;line-height:1.42!important;margin:8px 0!important;-webkit-line-clamp:2}
+  .poi-place-chips{margin-bottom:7px}.poi-chip{font-size:7px;padding:4px 6px}
+  .poi-action{min-height:42px;font-size:9px}
+  .poi-popup-audio .audio-guide-text{max-height:68px;font-size:8px!important}
+  .poi-place-info-grid{grid-template-columns:1fr 1fr}
+}
