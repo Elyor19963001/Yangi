@@ -1,0 +1,48 @@
+/* Audio-first POI cards v15 */
+.poi-place-card.audio-first{padding:13px}
+.poi-simple-head{padding-right:30px}
+.poi-simple-head>div{min-width:0}
+.poi-simple-type{display:block;font-size:8px;line-height:1.2;text-transform:uppercase;letter-spacing:.06em;color:#668276;font-weight:900;margin-bottom:3px}
+.poi-simple-head strong{display:block;font-size:15px;line-height:1.2;color:#143c2d}
+.poi-simple-head small{display:block;font-size:8px;color:#7b8d84;font-weight:800;margin-top:3px}
+.poi-place-card.audio-first .primary-facts{margin:9px 0 7px;gap:6px}
+.poi-place-card.audio-first .poi-chip{min-height:25px;padding:4px 8px;font-size:7px}
+.poi-place-card.audio-first .poi-chip.open{background:#e9f7ef;border-color:#c8e8d7;color:#176b4d}
+.poi-place-card.audio-first .poi-chip.closed{background:#fff0ee;border-color:#efcbc6;color:#a13d32}
+.poi-place-card.audio-first .poi-chip.ticket.official{background:#fff8e5;border-color:#ead796;color:#6f5714}
+.poi-place-card.audio-first .poi-chip.ticket.free{background:#edf8f2;border-color:#cce7d8;color:#176b4d}
+.poi-place-card.audio-first .poi-chip.ticket.known{background:#eef5ff;border-color:#d5e2f4;color:#315f8a}
+.poi-place-card.audio-first>.audio-guide{margin:0;padding:9px 10px;border-radius:13px;background:linear-gradient(135deg,#f7fbf9,#fff);border-color:#d5e5dd}
+.poi-place-card.audio-first>.audio-guide .audio-guide-head{margin-bottom:1px}
+.poi-place-card.audio-first>.audio-guide .audio-guide-head strong{font-size:9px}
+.poi-place-card.audio-first>.audio-guide .audio-engine-label{background:#edf7f2;color:#176b4d!important;padding:3px 7px}
+.poi-place-card.audio-first>.audio-guide .audio-guide-modes{margin-top:6px}
+.poi-place-card.audio-first>.audio-guide .audio-guide-text{font-size:9px!important;line-height:1.45!important;margin:7px 0!important;max-height:76px;overflow:auto}
+.poi-place-card.audio-first>.audio-guide .audio-guide-actions{gap:5px}
+.poi-place-card.audio-first>.audio-guide .audio-guide-play,
+.poi-place-card.audio-first>.audio-guide .audio-guide-stop,
+.poi-place-card.audio-first>.audio-guide .audio-guide-mode{min-height:31px}
+.compact-actions{margin-top:8px}
+.poi-action.details{background:#fff;color:#365f4e;border-color:#d6e3dc}
+.poi-action.details.active{background:#edf4f0;color:#173f30;border-color:#bfd4c9}
+.poi-place-details{margin-top:8px;padding-top:8px;border-top:1px solid #e3ebe6}
+.poi-place-details .full-summary{display:block!important;-webkit-line-clamp:unset!important;overflow:visible!important;margin:0 0 8px!important;font-size:9px!important;line-height:1.5!important}
+.poi-place-details .poi-place-info-grid{grid-template-columns:repeat(2,minmax(0,1fr));padding:0 0 5px}
+.poi-place-details .poi-place-info-grid>div:last-child:nth-child(3){grid-column:1/-1}
+.poi-place-details .official-tariff{margin-top:6px}
+.poi-place-details .poi-source-link{margin:7px 0 1px}
+@media(max-width:760px){
+  .tfe-place-popup .leaflet-popup-content{max-height:48dvh}
+  .poi-place-card.audio-first{padding:11px}
+  .poi-simple-head strong{font-size:14px}.poi-simple-type{font-size:7px}.poi-simple-head small{font-size:8px}
+  .poi-place-card.audio-first .primary-facts{margin:7px 0 6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.poi-place-card.audio-first .primary-facts::-webkit-scrollbar{display:none}
+  .poi-place-card.audio-first .poi-chip{flex:0 0 auto}
+  .poi-place-card.audio-first>.audio-guide{padding:8px 9px}
+  .poi-place-card.audio-first>.audio-guide .audio-guide-text{font-size:8px!important;max-height:62px}
+  .poi-place-card.audio-first>.audio-guide .audio-guide-play,
+  .poi-place-card.audio-first>.audio-guide .audio-guide-stop,
+  .poi-place-card.audio-first>.audio-guide .audio-guide-mode{min-height:32px;font-size:8px!important}
+  .compact-actions{grid-template-columns:1fr 1fr}
+  .poi-action{min-height:40px}
+  .poi-place-details .poi-place-info-grid{grid-template-columns:1fr 1fr}
+}
