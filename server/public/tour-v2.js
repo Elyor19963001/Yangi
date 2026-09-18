@@ -144,38 +144,7 @@
       button.addEventListener('click', () => applyTemplate(button.dataset.template));
     });
 
-    form.addEventListener('submit', () => {
-      const base = textarea.value.trim();
-      const interestText = [...prefs.interests].map((x) => labels.interests[x]).filter(Boolean).join(', ');
-      const origin = String(get('originCountry')?.value || '').trim();
-      const children = Math.max(0, Number(get('childrenCount')?.value) || 0);
-      const seniors = Math.max(0, Number(get('seniorCount')?.value) || 0);
-      const startTime = get('preferredStartTime')?.value || '';
-      const endTime = get('preferredEndTime')?.value || '';
-      const partySize = Math.max(1, Number(get('partySize')?.value) || 1);
-      const budget = Math.max(0, Number(get('budget')?.value) || 0);
-
-      const extra = [
-        interestText ? `Qiziqishlar: ${interestText}` : '',
-        labels.pace[prefs.pace],
-        labels.transport[prefs.transport],
-        prefs.lowWalking ? 'ko‘p yurishni xohlamayman' : '',
-        origin ? `kelish mamlakati: ${origin}` : '',
-        `guruh: ${partySize} kishi`,
-        children ? `${children} bola` : '',
-        seniors ? `${seniors} kishi 65+ yoshda` : '',
-        prefs.ownCar ? 'shaxsiy avtomobil bor' : '',
-        prefs.wheelchair ? 'nogironlar aravachasi uchun qulaylik muhim' : '',
-        startTime ? `kunni ${startTime} da boshlash` : '',
-        endTime ? `kunni ${endTime} gacha yakunlash` : '',
-        budget ? `umumiy budjet ${Math.round(budget)} so‘m` : '',
-      ].filter(Boolean).join('; ');
-
-      if (!base || !extra) return;
-      textarea.value = `${base}\n\nAniq sozlamalar: ${extra}.`;
-      queueMicrotask(() => { textarea.value = base; });
-      setProgress(2);
-    }, true);
+    form.addEventListener('submit', () => setProgress(2));
 
     get('startLiveBtn')?.addEventListener('click', () => setProgress(3));
     checkAiStatus();
