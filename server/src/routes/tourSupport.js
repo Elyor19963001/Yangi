@@ -167,6 +167,61 @@ function nearby(rows, anchor, kind, limit = 3) {
     .slice(0, limit);
 }
 
+function normalizeProfile(input = {}) {
+  return {
+    interests: Array.isArray(input.interests) ? input.interests.map((v) => cleanText(v, 30)).slice(0, 8) : [],
+    wheelchair_accessible: Boolean(input.wheelchair_accessible),
+    children_count: Math.min(10, Math.max(0, Math.round(num(input.children_count) || 0))),
+    seniors_count: Math.min(10, Math.max(0, Math.round(num(input.seniors_count) || 0))),
+    transport: ['walking','taxi','mixed'].includes(input.transport) ? input.transport : 'mixed',
+  };
+}
+
+function serviceQualityScore(row, kind, profile = {}) {
+  let score = 0;
+  if (row.opening_hours) score += 180;
+  if (row.phone) score += 70;
+  if (row.website) score += 90;
+  if (row.stars) score += Math.min(180, Number(row.stars) * 30 || 0);
+  if (profile.wheelchair_accessible) {
+    if (row.wheelchair === 'yes') score += 260;
+    if (row.wheelchair === 'no') score -= 400;
+  }
+  if (kind === 'restaurant') {
+    const cuisine = String(row.cuisine || '').toLowerCase();
+    if (/uzbek|central_asian|regional|plov|osh/.test(cuisine)) score += 320;
+    if (profile.interests.includes('gastronomy')) score += 80;
+  }
+  if (kind === 'hotel' && (profile.children_count > 0 || profile.seniors_count > 0)) {
+    if (row.website || row.phone) score += 80;
+  }
+  return score;
+}
+
+function chooseRecommended(rows, anchor, kind, selected, profile) {
+  const candidates = nearby(rows, anchor, kind, kind === 'restaurant' ? 8 : 6);
+  if (!candidates.length) return null;
+  const selectedItem = selected?.[kind];
+  if (selectedItem?.id) {
+    const exact = candidates.find((row) => row.id === selectedItem.id)
+      || rows.find((row) => row.category === kind && row.id === selectedItem.id);
+    if (exact) {
+      const distance_m = Math.round(haversine(anchor.latitude, anchor.longitude, exact.latitude, exact.longitude));
+      return { ...exact, distance_m, recommendation_reason: 'user-selected' };
+    }
+  }
+  return candidates
+    .map((row) => ({
+      ...row,
+      recommendation_score: serviceQualityScore(row, kind, profile) - Math.round(row.distance_m / 4),
+    }))
+    .sort((a, b) => b.recommendation_score - a.recommendation_score || a.distance_m - b.distance_m)
+    .map((row, index) => ({
+      ...row,
+      recommendation_reason: index === 0 ? 'distance+metadata-fit' : null,
+    }))[0];
+}
+
 function cleanSelected(input = {}) {
   const result = {};
   for (const kind of ['restaurant', 'hotel', 'taxi']) {
@@ -255,7 +310,13 @@ function budgetPlan(total, days, partySize, selected, planned) {
 }
 
 router.get('/support/status', (_req, res) => {
-  res.json({ version: '1.2.0', weather: 'Open-Meteo date-aware', services: 'OpenStreetMap/Overpass with graceful empty fallback', budget: 'selected-service + user-planned-cost allocator' });
+  res.json({
+    version: '1.3.0',
+    weather: 'Open-Meteo date-aware',
+    services: 'OpenStreetMap/Overpass with graceful empty fallback',
+    service_recommendation: 'distance + available metadata + traveler-profile fit; not a quality rating',
+    budget: 'selected-service + user-planned-cost allocator',
+  });
 });
 
 router.post('/support', asyncHandler(async (req, res) => {
@@ -265,6 +326,7 @@ router.post('/support', asyncHandler(async (req, res) => {
   const budget = num(req.body.budget_uzs);
   const selected = cleanSelected(req.body.selected_services || {});
   const planned = cleanPlannedCosts(req.body.planned_costs || {});
+  const profile = normalizeProfile(req.body.profile || {});
   const startDate = /^\d{4}-\d{2}-\d{2}$/.test(String(req.body.start_date || '')) ? String(req.body.start_date) : null;
   const [services, weather] = await Promise.all([
     discoverServices(),
@@ -273,20 +335,31 @@ router.post('/support', asyncHandler(async (req, res) => {
 
   const days = inputDays.map((day, index) => {
     const anchor = anchorFor(day);
+    const restaurants = nearby(services.rows, anchor, 'restaurant', 4);
+    const hotels = nearby(services.rows, anchor, 'hotel', 3);
+    const taxiPoints = nearby(services.rows, anchor, 'taxi', 3);
+    const recommendations = {
+      restaurant: chooseRecommended(services.rows, anchor, 'restaurant', selected, profile),
+      hotel: chooseRecommended(services.rows, anchor, 'hotel', selected, profile),
+      taxi: chooseRecommended(services.rows, anchor, 'taxi', selected, profile),
+    };
     return {
       day_number: index + 1,
       anchor,
       weather: weather[index] || day.weather || null,
-      restaurants: nearby(services.rows, anchor, 'restaurant', 4),
-      hotels: nearby(services.rows, anchor, 'hotel', 3),
-      taxi_points: nearby(services.rows, anchor, 'taxi', 3),
+      restaurants,
+      hotels,
+      taxi_points: taxiPoints,
+      recommendations,
+      recommendation_note: 'Avtomatik tanlov masofa, mavjud OSM metadata va sayohatchi profiliga asoslanadi; bu reyting yoki sifat kafolati emas.',
     };
   });
 
   res.json({
-    version: '1.2.0',
+    version: '1.3.0',
     party_size: partySize,
     selected_services: selected,
+    profile,
     budget: budgetPlan(budget, inputDays.length, partySize, selected, planned),
     days,
     sources: {
@@ -297,6 +370,7 @@ router.post('/support', asyncHandler(async (req, res) => {
       services.rows.length ? null : 'Yaqin restoran, mehmonxona va taksi punktlari bo‘yicha jonli OSM xizmati hozir javob bermadi; tarixiy marshrut ishlashda davom etadi.',
       weather.length ? null : 'Qo‘shimcha ob-havo so‘rovi javob bermadi; asosiy marshrutdagi prognoz mavjud bo‘lsa o‘sha ko‘rsatiladi.',
       'Restoran, mehmonxona va taksi yozuvlari OpenStreetMap ma’lumotidir; mavjudlik, narx va ish vaqtini xizmat ko‘rsatuvchidan tasdiqlang.',
+      'Avtomatik xizmat tanlovi sifat reytingi emas: masofa, OSMda mavjud metadata va sayohatchi profiliga moslik ishlatiladi.',
     ].filter(Boolean),
   });
 }));
