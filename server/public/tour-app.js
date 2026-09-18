@@ -1,7 +1,10 @@
 const state={
   map:null,start:null,result:null,support:null,activeDay:0,routeLayer:null,markers:[],supportMarkers:[],selectedServices:{},
+  audioEngine:'unknown',
   live:{watchId:null,active:false,paused:false,nextIndex:0,marker:null,accuracyCircle:null,trailLayer:null,trailCoords:[],travelledM:0,lastPos:null,liveRouteLayer:null,routeGeometry:null,lastRerouteAt:0,current:null,follow:true,rerouting:false}
 };
+const guideAudioCache=new Map();
+let guideAudioPlayer=null;
 const $=(id)=>document.getElementById(id);
 const esc=(v)=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
 const money=(v)=>new Intl.NumberFormat('uz-UZ').format(Number(v)||0);
@@ -18,32 +21,34 @@ function audioGuideHtml(stop,compact=false){
   const guide=stop?.audio_guide;
   const short=guide?.short||{};
   const detailed=guide?.detailed||{};
-  if(!short.uz&&!short.en&&!short.ru&&!detailed.uz&&!detailed.en&&!detailed.ru)return '';
+  if(!guide?.id||(!short.uz&&!short.en&&!short.ru&&!detailed.uz&&!detailed.en&&!detailed.ru))return '';
   const first=short.uz||short.en||short.ru||detailed.uz||detailed.en||detailed.ru||'';
   const name=stop?.name||'Turistik obyekt';
   const button=(lang,label,shortText,detailedText)=>shortText||detailedText
-    ? `<button type="button" class="audio-guide-play" data-guide-lang="${esc(lang)}" data-guide-name="${esc(name)}" data-guide-short="${esc(shortText||detailedText||'')}" data-guide-detailed="${esc(detailedText||shortText||'')}">🔊 ${esc(label)}</button>`
+    ? `<button type="button" class="audio-guide-play" data-guide-id="${esc(guide.id)}" data-guide-lang="${esc(lang)}" data-guide-name="${esc(name)}" data-guide-short="${esc(shortText||detailedText||'')}" data-guide-detailed="${esc(detailedText||shortText||'')}">🔊 ${esc(label)}</button>`
     : '';
+  const engineLabel=state.audioEngine==='openai-tts'?'AI MP3':state.audioEngine==='browser-fallback'?'Brauzer zaxira':'AI audio';
   return `<div class="audio-guide ${compact?'compact':''}" data-mode="short" data-lang="uz-UZ">
-    <div class="audio-guide-head"><strong>🎧 Audio gid</strong><span>Qisqa yoki batafsil</span></div>
+    <div class="audio-guide-head"><strong>🎧 Audio gid</strong><span class="audio-engine-label">${esc(engineLabel)}</span></div>
     <div class="audio-guide-modes">
       <button type="button" class="audio-guide-mode active" data-guide-mode="short">Qisqa</button>
       <button type="button" class="audio-guide-mode" data-guide-mode="detailed">Batafsil</button>
     </div>
     <p class="audio-guide-text">${esc(first)}</p>
     <div class="audio-guide-actions">
-      ${button('uz-UZ','O‘zbek',short.uz,detailed.uz)}
-      ${button('en-US','English',short.en,detailed.en)}
-      ${button('ru-RU','Русский',short.ru,detailed.ru)}
+      ${button('uz','O‘zbek',short.uz,detailed.uz)}
+      ${button('en','English',short.en,detailed.en)}
+      ${button('ru','Русский',short.ru,detailed.ru)}
       <button type="button" class="audio-guide-stop" aria-label="Ovozni to‘xtatish">■</button>
     </div>
-    <small class="audio-guide-hint">Qisqa: tezkor tanishtirish · Batafsil: tarix, me’morchilik va ziyorat odobi.</small>
+    <small class="audio-guide-hint">AI MP3 mavjud bo‘lsa serverdan tabiiy ovoz keladi; aks holda brauzer ovozi faqat zaxira sifatida ishlaydi.</small>
   </div>`;
 }
 function selectGuideVoice(lang){
   if(!('speechSynthesis' in window))return null;
+  const locale={uz:'uz-UZ',en:'en-US',ru:'ru-RU'}[lang]||lang;
   const voices=window.speechSynthesis.getVoices?.()||[];
-  const target=String(lang||'').toLowerCase();
+  const target=String(locale||'').toLowerCase();
   const base=target.split('-')[0];
   return voices.find(v=>String(v.lang||'').toLowerCase()===target)
     ||voices.find(v=>String(v.lang||'').toLowerCase().startsWith(base))
@@ -58,29 +63,34 @@ function guideTextForButton(button,mode){
 function updateGuidePreview(box){
   if(!box)return;
   const mode=box.dataset.mode||'short';
-  const lang=box.dataset.lang||'uz-UZ';
+  const lang=box.dataset.lang||'uz';
   const button=[...box.querySelectorAll('.audio-guide-play')].find(x=>x.dataset.guideLang===lang)
     ||box.querySelector('.audio-guide-play');
   const textNode=box.querySelector('.audio-guide-text');
   if(textNode&&button)textNode.textContent=guideTextForButton(button,mode);
 }
-function speakGuide(button){
+function stopGuideAudio(){
+  if(guideAudioPlayer){
+    try{guideAudioPlayer.pause();guideAudioPlayer.currentTime=0;}catch{}
+    guideAudioPlayer=null;
+  }
+  if('speechSynthesis' in window)window.speechSynthesis.cancel();
+  document.querySelectorAll('.audio-guide-play.speaking,.audio-guide-play.loading').forEach(x=>x.classList.remove('speaking','loading'));
+}
+function browserGuideFallback(button,notify=true){
   if(!('speechSynthesis' in window)||typeof SpeechSynthesisUtterance==='undefined'){
-    toast('Bu brauzer ovozli gidni qo‘llamaydi.');
+    toast('Audio gidni ijro etib bo‘lmadi.');
     return;
   }
   const box=button.closest('.audio-guide');
   const mode=box?.dataset.mode||'short';
-  const lang=button.dataset.guideLang||'uz-UZ';
+  const lang=button.dataset.guideLang||'uz';
   const guideText=guideTextForButton(button,mode);
   if(!guideText)return;
-  if(box)box.dataset.lang=lang;
-  updateGuidePreview(box);
-  window.speechSynthesis.cancel();
-  document.querySelectorAll('.audio-guide-play.speaking').forEach(x=>x.classList.remove('speaking'));
+  const locale={uz:'uz-UZ',en:'en-US',ru:'ru-RU'}[lang]||lang;
   const utter=new SpeechSynthesisUtterance(guideText);
-  utter.lang=lang;
-  utter.rate=mode==='detailed' ? (lang.startsWith('ru')?0.90:0.92) : (lang.startsWith('ru')?0.94:0.96);
+  utter.lang=locale;
+  utter.rate=mode==='detailed' ? (lang==='ru'?0.90:0.92) : (lang==='ru'?0.94:0.96);
   utter.pitch=1;
   const voice=selectGuideVoice(lang);
   if(voice)utter.voice=voice;
@@ -88,6 +98,44 @@ function speakGuide(button){
   utter.onend=()=>button.classList.remove('speaking');
   utter.onerror=()=>{button.classList.remove('speaking');toast('Ovozli ma’lumotni ijro etib bo‘lmadi.');};
   window.speechSynthesis.speak(utter);
+  if(notify)toast('AI MP3 hozir mavjud emas — brauzer ovozi zaxira sifatida ishladi.');
+}
+async function playProfessionalGuide(button){
+  const box=button.closest('.audio-guide');
+  const mode=box?.dataset.mode||'short';
+  const lang=button.dataset.guideLang||'uz';
+  const guideId=button.dataset.guideId||'';
+  if(!guideId)return browserGuideFallback(button);
+  if(box)box.dataset.lang=lang;
+  updateGuidePreview(box);
+  stopGuideAudio();
+  button.classList.add('loading');
+  const key=`${guideId}:${lang}:${mode}`;
+  try{
+    let url=guideAudioCache.get(key);
+    if(!url){
+      const response=await fetch(`/api/tourism/audio-guide/${encodeURIComponent(guideId)}?lang=${encodeURIComponent(lang)}&mode=${encodeURIComponent(mode)}`,{headers:{Accept:'audio/mpeg'}});
+      if(!response.ok){
+        let detail='';
+        try{detail=(await response.json())?.error||''}catch{}
+        throw new Error(detail||`HTTP ${response.status}`);
+      }
+      const blob=await response.blob();
+      if(!blob.size)throw new Error('Audio bo‘sh qaytdi.');
+      url=URL.createObjectURL(blob);
+      guideAudioCache.set(key,url);
+    }
+    button.classList.remove('loading');
+    guideAudioPlayer=new Audio(url);
+    guideAudioPlayer.preload='auto';
+    button.classList.add('speaking');
+    guideAudioPlayer.onended=()=>{button.classList.remove('speaking');guideAudioPlayer=null;};
+    guideAudioPlayer.onerror=()=>{button.classList.remove('speaking');guideAudioPlayer=null;browserGuideFallback(button,false);};
+    await guideAudioPlayer.play();
+  }catch(err){
+    button.classList.remove('loading');
+    browserGuideFallback(button,true);
+  }
 }
 function handleAudioGuideClick(event){
   const modeButton=event.target.closest('.audio-guide-mode');
@@ -95,22 +143,16 @@ function handleAudioGuideClick(event){
     event.preventDefault();event.stopPropagation();
     const box=modeButton.closest('.audio-guide');
     if(!box)return;
-    const mode=modeButton.dataset.guideMode==='detailed'?'detailed':'short';
-    box.dataset.mode=mode;
+    box.dataset.mode=modeButton.dataset.guideMode==='detailed'?'detailed':'short';
     box.querySelectorAll('.audio-guide-mode').forEach(x=>x.classList.toggle('active',x===modeButton));
-    if('speechSynthesis' in window)window.speechSynthesis.cancel();
-    box.querySelectorAll('.audio-guide-play.speaking').forEach(x=>x.classList.remove('speaking'));
+    stopGuideAudio();
     updateGuidePreview(box);
     return;
   }
   const play=event.target.closest('.audio-guide-play');
-  if(play){event.preventDefault();event.stopPropagation();speakGuide(play);return;}
+  if(play){event.preventDefault();event.stopPropagation();playProfessionalGuide(play);return;}
   const stop=event.target.closest('.audio-guide-stop');
-  if(stop){
-    event.preventDefault();event.stopPropagation();
-    if('speechSynthesis' in window)window.speechSynthesis.cancel();
-    document.querySelectorAll('.audio-guide-play.speaking').forEach(x=>x.classList.remove('speaking'));
-  }
+  if(stop){event.preventDefault();event.stopPropagation();stopGuideAudio();}
 }
 function locate(){if(!navigator.geolocation){toast('Brauzer geolokatsiyani qo‘llamaydi');return}const replan=Boolean(state.result);toast('Joylashuv aniqlanmoqda…');navigator.geolocation.getCurrentPosition(pos=>{state.start={latitude:pos.coords.latitude,longitude:pos.coords.longitude,name:'Mening GPS joylashuvim'};$('locationLine').textContent=`Boshlanish: GPS joylashuvim · ±${Math.round(pos.coords.accuracy||0)} m`;if(replan){toast('GPS olindi — marshrut shu joydan qayta optimallashtirilmoqda');setTimeout(()=>$('plannerForm')?.requestSubmit(),250)}else toast('Joylashuv olindi — marshrut shu nuqtadan boshlanadi')},()=>toast('Joylashuvga ruxsat berilmadi'),{enableHighAccuracy:true,timeout:10000,maximumAge:60000})}
 function intentBadges(intent={},support={}){const labels={history:'Tarix',pilgrimage:'Ziyorat',gastronomy:'Gastronomiya',museum:'Muzey',family:'Oilaviy',architecture:'Arxitektura'};const timeWindow=intent.preferred_start_time&&intent.preferred_end_time?`🕘 ${intent.preferred_start_time}–${intent.preferred_end_time}`:intent.preferred_start_time?`🕘 ${intent.preferred_start_time} dan`:null;const rows=[...(intent.interests||[]).map(i=>labels[i]||i),`${intent.days||2} kun`,state.result?.trip_start_date?`📅 ${state.result.trip_start_date}`:null,state.result?.weather_adaptive?'🌦️ Adaptive':null,intent.low_walking?'Kam yurish':null,intent.transport==='taxi'?'Taksi':intent.transport==='walking'?'Piyoda':intent.own_vehicle?'🚗 Shaxsiy avtomobil':'Aralash transport',Number(intent.children_count||0)>0?`👧 ${Number(intent.children_count)} bola`:null,Number(intent.seniors_count||0)>0?`👵 ${Number(intent.seniors_count)} kishi 65+`:null,intent.wheelchair_accessible?'♿ Qulaylik muhim':null,timeWindow,intent.origin_country?`🌍 ${intent.origin_country}`:null,support.party_size?`${support.party_size} sayohatchi`:null,support.budget?.total_uzs?`${money(support.budget.total_uzs)} so‘m budjet`:intent.budget_uzs?`${money(intent.budget_uzs)} so‘m budjet`:null].filter(Boolean);return rows.map(x=>`<span class="badge">${esc(x)}</span>`).join('')}
@@ -377,14 +419,14 @@ function renderMap(day,daySupport){
   setTimeout(()=>state.map.invalidateSize(),50);
 }
 function sourceNote(){const data=state.result||{};const support=state.support||{};const sourceAI=data.sources?.ai||'Smart parser';const warnings=[...(data.warnings||[]),...(support.warnings||[])];return `<strong>Manbalar:</strong> ${esc(data.sources?.places||'Samarqand reference katalogi')} · routing: ${esc((data.sources?.routing||[]).join(', '))} · optimizatsiya: ${esc((data.sources?.optimization||[]).join(', ')||'—')} · AI: ${esc(sourceAI)} · ob-havo: ${esc(data.sources?.weather||support.sources?.weather||'—')} · ish vaqti/chipta: ${esc(data.sources?.operational||'—')} · xizmatlar: ${esc(support.sources?.services||'—')}<br>${warnings.map(w=>`⚠ ${esc(w)}`).join('<br>')}`}
-function switchDay(index){if('speechSynthesis' in window)window.speechSynthesis.cancel();if((state.live.active||state.live.paused)&&index!==state.activeDay){stopLive(true);toast('Live Tour to‘xtatildi: boshqa kun tanlandi')}state.activeDay=index;$('dayTabs').querySelectorAll('.day-tab').forEach((x,i)=>x.classList.toggle('active',i===index));renderDetails()}
+function switchDay(index){stopGuideAudio();if((state.live.active||state.live.paused)&&index!==state.activeDay){stopLive(true);toast('Live Tour to‘xtatildi: boshqa kun tanlandi')}state.activeDay=index;$('dayTabs').querySelectorAll('.day-tab').forEach((x,i)=>x.classList.toggle('active',i===index));renderDetails()}
 function renderResult(data,support){stopLive(true);state.result=data;state.support=support||null;state.activeDay=0;$('resultShell').classList.remove('hidden');$('livePanel').classList.remove('hidden');$('summaryTitle').textContent=`${data.intent.days} kunlik Samarqand marshruti`;$('summaryText').textContent=data.summary;$('intentBadges').innerHTML=intentBadges(data.intent,support||{});$('dayTabs').innerHTML=data.days.map((d,i)=>`<button class="day-tab ${i===0?'active':''}" data-day="${i}">${esc(d.title)}${d.weather_adapted?' 🌦️':''}</button>`).join('');$('dayTabs').querySelectorAll('[data-day]').forEach(btn=>btn.addEventListener('click',()=>switchDay(Number(btn.dataset.day))));$('sourceNote').innerHTML=sourceNote();resetLiveUi();renderDetails();setTimeout(()=>$('resultShell').scrollIntoView({behavior:'smooth',block:'start'}),100)}
 async function submit(e){
   e.preventDefault();
   const prompt=$('prompt').value.trim();
   if(prompt.length<4){setMessage('Sayohat istagingizni yozing.','error');return}
   stopLive(true);
-  if('speechSynthesis' in window)window.speechSynthesis.cancel();
+  stopGuideAudio();
   state.selectedServices={};
   $('planBtn').disabled=true;
   $('planBtn').textContent='Marshrut tuzilmoqda…';
@@ -410,5 +452,5 @@ async function submit(e){
     $('planBtn').textContent='✨ Marshrut yaratish';
   }
 }
-async function boot(){initMap();syncDateRange();resetLiveUi();document.addEventListener('click',handleAudioGuideClick);$('days').addEventListener('change',syncDateRange);$('locateBtn').addEventListener('click',locate);$('plannerForm').addEventListener('submit',submit);$('startLiveBtn').addEventListener('click',startLive);$('pauseLiveBtn').addEventListener('click',togglePause);$('stopLiveBtn').addEventListener('click',()=>{stopLive(true);toast('Live Tour tugatildi')});$('centerLiveBtn').addEventListener('click',centerLive);state.map.on('dragstart',()=>{if(state.live.active)state.live.follow=false});try{const status=await api('/api/tourism/status');const live=await api('/api/tourism/live/status');if(status.openai_configured)toast(`AI online · ${status.openai_model} · GPS ${live.version}`);else if(live.version)toast(`Tour Planner Live GPS ${live.version} tayyor`)}catch{}}
+async function boot(){initMap();syncDateRange();resetLiveUi();document.addEventListener('click',handleAudioGuideClick);$('days').addEventListener('change',syncDateRange);$('locateBtn').addEventListener('click',locate);$('plannerForm').addEventListener('submit',submit);$('startLiveBtn').addEventListener('click',startLive);$('pauseLiveBtn').addEventListener('click',togglePause);$('stopLiveBtn').addEventListener('click',()=>{stopLive(true);toast('Live Tour tugatildi')});$('centerLiveBtn').addEventListener('click',centerLive);state.map.on('dragstart',()=>{if(state.live.active)state.live.follow=false});try{const status=await api('/api/tourism/status');const live=await api('/api/tourism/live/status');state.audioEngine=status.professional_audio_configured?'openai-tts':'browser-fallback';if(status.professional_audio_configured)toast(`AI MP3 audio tayyor · ${status.professional_audio_model} · GPS ${live.version}`);else if(status.openai_configured)toast(`AI planner online · professional audio uchun TTS sozlamasi kutilmoqda`);else if(live.version)toast(`Tour Planner Live GPS ${live.version} tayyor · audio zaxira rejimida`)}catch{}}
 boot();

@@ -29,6 +29,7 @@ const CURATED_POIS = [
 const OFFICIAL_POI_CATALOG = [
   {
     id: 'registan',
+    id: 'registan',
     match: /registan|registon/i,
     canonical_name: 'Registon ansambli',
     authority: 'Registon Ansambli direksiyasi',
@@ -53,6 +54,7 @@ const OFFICIAL_POI_CATALOG = [
   },
   {
     id: 'gur-amir',
+    id: 'gur-amir',
     match: /go.?ri.?amir|gur.?e.?amir|guri.?amir|amir temur maqbarasi/i,
     canonical_name: 'Amir Temur maqbarasi (Go‘ri Amir)',
     authority: 'Samarqand davlat muzey-qo‘riqxonasi',
@@ -73,6 +75,7 @@ const OFFICIAL_POI_CATALOG = [
     },
   },
   {
+    id: 'bibi-khanum',
     id: 'bibi-khanum',
     match: /bibi.?khan|bibi.?xon|bibixonim/i,
     canonical_name: 'Bibixonim masjidi',
@@ -95,6 +98,7 @@ const OFFICIAL_POI_CATALOG = [
   },
   {
     id: 'ulugbek-observatory',
+    id: 'ulugbek-observatory',
     match: /ulugh.?beg.*observ|ulug.?bek.*rasad|observ.*ulug.?bek/i,
     canonical_name: 'Mirzo Ulug‘bek rasadxonasi muzey majmuasi',
     authority: 'Samarqand davlat muzey-qo‘riqxonasi',
@@ -115,6 +119,7 @@ const OFFICIAL_POI_CATALOG = [
     },
   },
   {
+    id: 'afrosiyob-museum',
     id: 'afrosiyob-museum',
     match: /afrasiyab.*museum|museum.*afrasiyab|afrosiyob.*muzey|muzey.*afrosiyob/i,
     canonical_name: 'Samarqand tarixi Afrosiyob muzeyi',
@@ -178,6 +183,7 @@ const AUDIO_GUIDES = [
     },
   },
   {
+    id: 'shah-i-zinda',
     match: /shah.?i.?zinda|shohi zinda/i,
     short: {
       uz: 'Shohi Zinda — Samarqanddagi mashhur maqbaralar va ziyorat inshootlari majmuasi. Ansambl koshinkor bezaklari bilan mashhur va ziyorat an’analarida Qusam ibn Abbos nomi bilan bog‘lanadi.',
@@ -217,6 +223,7 @@ const AUDIO_GUIDES = [
     },
   },
   {
+    id: 'siyob-bazaar',
     match: /siyob|siab/i,
     short: {
       uz: 'Siyob bozori Samarqandning mashhur an’anaviy bozorlaridan biridir. Bu yerda non, meva, ziravorlar, shirinliklar va boshqa mahalliy mahsulotlarni ko‘rish mumkin.',
@@ -230,6 +237,7 @@ const AUDIO_GUIDES = [
     },
   },
   {
+    id: 'ruhabad',
     match: /ruhabad|ruhobod/i,
     short: {
       uz: 'Ruhobod maqbarasi Samarqanddagi qadimiy ziyorat maskanlaridan biri. U shayx Burhoniddin Sog‘arjiy nomi bilan bog‘liq va XIV asr me’moriy merosiga kiradi.',
@@ -243,6 +251,7 @@ const AUDIO_GUIDES = [
     },
   },
   {
+    id: 'hazrati-khizr',
     match: /hazrat.?khizr|hazrati.?xizr/i,
     short: {
       uz: 'Hazrati Xizr masjidi Afrosiyob tepaligi yaqinidagi qadimiy muqaddas hududda joylashgan. Masjid uzoq ziyorat an’anasi bilan bog‘liq va shaharga chiroyli manzara ochiladi.',
@@ -261,9 +270,92 @@ function audioGuideFor(poi = {}) {
   const name = String(poi.name || '');
   const guide = AUDIO_GUIDES.find((row) => row.match.test(name));
   return guide ? {
+    id: guide.id,
     short: { ...guide.short },
     detailed: { ...guide.detailed },
+    audio: {
+      engine: process.env.OPENAI_API_KEY ? 'openai-tts' : 'browser-fallback',
+      endpoint: `/api/tourism/audio-guide/${encodeURIComponent(guide.id)}`,
+    },
   } : null;
+}
+
+const TTS_CACHE_MAX = 80;
+const ttsCache = new Map();
+const ttsInFlight = new Map();
+const ttsRate = new Map();
+
+function ttsConfig(lang) {
+  const configs = {
+    uz: {
+      voice: process.env.TOUR_TTS_VOICE_UZ || 'cedar',
+      instructions: 'Speak in clear, natural Uzbek. Use a warm professional museum audio-guide tone. Pronounce Uzbek names carefully, with natural pauses and confident but calm pacing.',
+    },
+    en: {
+      voice: process.env.TOUR_TTS_VOICE_EN || 'marin',
+      instructions: 'Speak in natural English with a warm, polished museum audio-guide tone. Use clear pronunciation, measured pacing, and subtle expressive emphasis.',
+    },
+    ru: {
+      voice: process.env.TOUR_TTS_VOICE_RU || 'cedar',
+      instructions: 'Speak in natural Russian with a warm professional museum audio-guide tone. Use clear Russian pronunciation, measured pacing, and respectful intonation.',
+    },
+  };
+  return configs[lang] || null;
+}
+
+function limitedTtsRequest(req) {
+  const ip = String(req.ip || req.headers['x-forwarded-for'] || 'unknown').split(',')[0].trim();
+  const now = Date.now();
+  const entry = ttsRate.get(ip) || { start: now, count: 0 };
+  if (now - entry.start > 60_000) {
+    entry.start = now;
+    entry.count = 0;
+  }
+  entry.count += 1;
+  ttsRate.set(ip, entry);
+  return entry.count > 30;
+}
+
+function rememberTts(key, buffer) {
+  if (ttsCache.size >= TTS_CACHE_MAX) {
+    const oldest = ttsCache.keys().next().value;
+    if (oldest) ttsCache.delete(oldest);
+  }
+  ttsCache.set(key, buffer);
+}
+
+async function generateTtsMp3(guide, lang, mode) {
+  const cfg = ttsConfig(lang);
+  const input = guide?.[mode]?.[lang];
+  if (!cfg || !input) {
+    const error = new Error('Audio gid matni topilmadi.');
+    error.statusCode = 404;
+    throw error;
+  }
+  if (!process.env.OPENAI_API_KEY) {
+    const error = new Error('Server AI audio hali sozlanmagan.');
+    error.statusCode = 503;
+    throw error;
+  }
+  const model = process.env.TOUR_TTS_MODEL || 'gpt-4o-mini-tts';
+  const response = await axios.post('https://api.openai.com/v1/audio/speech', {
+    model,
+    voice: cfg.voice,
+    input,
+    instructions: cfg.instructions,
+    response_format: 'mp3',
+    speed: mode === 'detailed' ? 0.95 : 1.0,
+  }, {
+    headers: {
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      'Content-Type': 'application/json',
+      Accept: 'audio/mpeg',
+    },
+    responseType: 'arraybuffer',
+    timeout: 45_000,
+    maxContentLength: 15 * 1024 * 1024,
+  });
+  return Buffer.from(response.data);
 }
 
 const PRIORITY_PATTERNS = [
@@ -1179,7 +1271,7 @@ function localizedSummary(intent, count, adaptedDays) {
 
 router.get('/status', (_req, res) => {
   res.json({
-    version: '1.8.0',
+    version: '1.9.0',
     openai_configured: Boolean(process.env.OPENAI_API_KEY),
     openai_model: process.env.OPENAI_API_KEY ? (process.env.OPENAI_MODEL || 'gpt-5.6-luna') : null,
     poi_source: 'Verified curated Samarkand anchors + OpenStreetMap/Overpass enrichment',
@@ -1194,9 +1286,63 @@ router.get('/status', (_req, res) => {
     official_catalog_checked_on: '2026-09-18',
     audio_guide_languages: ['uz-UZ','en-US','ru-RU'],
     audio_guide_poi_count: AUDIO_GUIDES.length,
+    professional_audio_configured: Boolean(process.env.OPENAI_API_KEY),
+    professional_audio_model: process.env.OPENAI_API_KEY ? (process.env.TOUR_TTS_MODEL || 'gpt-4o-mini-tts') : null,
+    professional_audio_format: 'mp3',
+    professional_audio_voices: process.env.OPENAI_API_KEY ? {
+      uz: process.env.TOUR_TTS_VOICE_UZ || 'cedar',
+      en: process.env.TOUR_TTS_VOICE_EN || 'marin',
+      ru: process.env.TOUR_TTS_VOICE_RU || 'cedar',
+    } : null,
     note: 'Registon va ayrim Samarqand davlat muzey-qo‘riqxonasi obyektlari uchun rasmiy sahifalarda e’lon qilingan ish vaqti/tariflar katalogi ishlatiladi; qolgan joylarda OSM fallback. Narxlar o‘zgarishi mumkin, xarid oldidan manbani tekshiring.',
   });
 });
+
+router.get('/audio-guide/:guideId', asyncHandler(async (req, res) => {
+  if (limitedTtsRequest(req)) return res.status(429).json({ error: 'Audio so‘rovlar juda ko‘p. Bir ozdan keyin qayta urinib ko‘ring.' });
+  const guideId = text(req.params.guideId, 80);
+  const lang = ['uz','en','ru'].includes(String(req.query.lang)) ? String(req.query.lang) : 'uz';
+  const mode = req.query.mode === 'detailed' ? 'detailed' : 'short';
+  const guide = AUDIO_GUIDES.find((row) => row.id === guideId);
+  if (!guide) return res.status(404).json({ error: 'Audio gid topilmadi.' });
+
+  const model = process.env.TOUR_TTS_MODEL || 'gpt-4o-mini-tts';
+  const voice = ttsConfig(lang)?.voice || 'cedar';
+  const cacheKey = `${guideId}:${lang}:${mode}:${model}:${voice}`;
+  let audio = ttsCache.get(cacheKey);
+  if (!audio) {
+    let pending = ttsInFlight.get(cacheKey);
+    if (!pending) {
+      pending = generateTtsMp3(guide, lang, mode)
+        .then((buffer) => {
+          rememberTts(cacheKey, buffer);
+          return buffer;
+        })
+        .finally(() => ttsInFlight.delete(cacheKey));
+      ttsInFlight.set(cacheKey, pending);
+    }
+    try {
+      audio = await pending;
+    } catch (error) {
+      const status = Number(error.statusCode || error.response?.status || 502);
+      if (status === 401) return res.status(503).json({ error: 'AI audio kaliti ishlamayapti.' });
+      if (status === 429) return res.status(503).json({ error: 'AI audio xizmati vaqtincha band.' });
+      return res.status(status >= 400 && status < 600 ? status : 502).json({ error: error.message || 'AI audio yaratilmadi.' });
+    }
+  }
+
+  res.set({
+    'Content-Type': 'audio/mpeg',
+    'Content-Length': String(audio.length),
+    'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
+    'X-Audio-Engine': 'OpenAI',
+    'X-Audio-Model': model,
+    'X-Audio-Voice': voice,
+    'X-Audio-Mode': mode,
+    'X-Audio-Language': lang,
+  });
+  res.send(audio);
+}));
 
 router.post('/plan', asyncHandler(async (req, res) => {
   const prompt = text(req.body.prompt, 1500);
@@ -1244,7 +1390,7 @@ router.post('/plan', asyncHandler(async (req, res) => {
   const knownClosedVisits = days.flatMap((day) => day.stops || []).filter((stop) => stop.operational?.planned?.status === 'closed');
   const pricedStops = days.flatMap((day) => day.stops || []).filter((stop) => stop.operational?.ticket?.status !== 'unknown');
   res.json({
-    version: '1.8.0',
+    version: '1.9.0',
     prompt,
     intent,
     start,
@@ -1260,7 +1406,7 @@ router.post('/plan', asyncHandler(async (req, res) => {
       optimization: [...new Set(days.map((d) => d.optimization?.method).filter(Boolean))],
       weather: weatherBundle.source,
       operational: 'Official Registan/Samarkand Museum-Reserve catalog + OpenStreetMap fallback',
-      audio_guide: 'Curated short + detailed Uzbek, English and Russian guide text + browser Speech Synthesis playback',
+      audio_guide: process.env.OPENAI_API_KEY ? 'Server-generated MP3 via OpenAI TTS with browser fallback' : 'Browser Speech Synthesis fallback until server AI audio is configured',
       ai: intent.engine === 'openai' ? `OpenAI ${intent.model || ''}`.trim() : 'Local multilingual preference parser',
     },
     warnings: [
@@ -1285,7 +1431,7 @@ async function runStartupSmoke() {
     const selected = selectPois(discovered.rows, intent, CENTER).slice(0, 4);
     const route = selected.length ? (await routeDriving(CENTER, selected) || routeFallback(CENTER, selected, false)) : null;
     const names = selected.map((p) => p.name).join(' | ');
-    console.log(`[tour-smoke] v=1.8 provider=${discovered.provider} pois=${discovered.rows.length} external=${discovered.external_count} sample=${names || 'none'} route=${route?.source || 'none'} geometry=${route?.geometry?.type || 'none'}`);
+    console.log(`[tour-smoke] v=1.9 provider=${discovered.provider} pois=${discovered.rows.length} external=${discovered.external_count} sample=${names || 'none'} route=${route?.source || 'none'} geometry=${route?.geometry?.type || 'none'}`);
   } catch (error) {
     console.warn(`[tour-smoke] failed=${error.response?.status || error.message}`);
   }

@@ -106,3 +106,7 @@ body.tfe-map-open{overflow:hidden}
 .audio-guide-hint{display:block!important;margin-top:6px;font-size:8px!important;line-height:1.35!important;color:#7a8a82!important}
 .audio-guide[data-mode="detailed"]{background:linear-gradient(135deg,#f8fbf9,#fffdf6);border-color:#d8dfd2}
 .audio-guide[data-mode="detailed"] .audio-guide-head strong:after{content:" · batafsil";font-weight:700;color:#7d806d}
+
+.audio-guide-play.loading{position:relative;opacity:.72;cursor:wait}.audio-guide-play.loading:after{content:"";width:8px;height:8px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;display:inline-block;margin-left:5px;vertical-align:-1px;animation:tfeSpin .7s linear infinite}
+.audio-engine-label{display:inline-flex;align-items:center;gap:4px;padding:3px 6px;border-radius:999px;background:#edf7f2;color:#1b6b4d!important;font-weight:900}
+@keyframes tfeSpin{to{transform:rotate(360deg)}}
