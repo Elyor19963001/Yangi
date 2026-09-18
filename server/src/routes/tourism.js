@@ -26,6 +26,117 @@ const CURATED_POIS = [
   { id:'wikidata/Q13201584', name:'Hazrati Xizr masjidi', latitude:39.663453, longitude:66.983256, category:'pilgrimage', weather_resilience:1, wikidata:'Q13201584', source:'Wikidata', source_url:'https://www.wikidata.org/wiki/Q13201584' },
 ];
 
+const OFFICIAL_POI_CATALOG = [
+  {
+    id: 'registan',
+    match: /registan|registon/i,
+    canonical_name: 'Registon ansambli',
+    authority: 'Registon Ansambli direksiyasi',
+    source_url: 'https://registon.uz/uz/media-center-uz/mass-media-uz/item/252-registon-qaysi-kun-bepul',
+    ticket_url: 'https://tickets.registon.uz/',
+    checked_on: '2026-09-18',
+    hours: {
+      type: 'seasonal',
+      season: { from: '02-20', to: '11-20', open: '07:00', close: '24:00' },
+      off_season: { open: '08:00', close: '20:00' },
+      note: 'Direksiya sahifasida dam olish kunlarisiz ishlashi ko‘rsatilgan.',
+    },
+    tariff: {
+      currency: 'UZS',
+      rows: [
+        { audience: 'O‘zbekiston fuqarosi', fixed: 15000, note: 'Kirish bileti' },
+        { audience: 'Xorijiy mehmon', fixed: 100000, note: 'Kirish bileti' },
+        { audience: 'Maktab o‘quvchisi', fixed: 10000, note: 'O‘zbekiston maktab o‘quvchilari uchun' },
+      ],
+      note: 'Narxlar Registon direksiyasining 2025-yil 2-oktabrdagi rasmiy sahifasida e’lon qilingan; xarid oldidan onlayn chipta portalida qayta tekshiring.',
+    },
+  },
+  {
+    id: 'gur-amir',
+    match: /go.?ri.?amir|gur.?e.?amir|guri.?amir|amir temur maqbarasi/i,
+    canonical_name: 'Amir Temur maqbarasi (Go‘ri Amir)',
+    authority: 'Samarqand davlat muzey-qo‘riqxonasi',
+    source_url: 'https://samarkandmuseum.uz/uz/muzei-dlya-menyu/mavzolei-amira-temura',
+    checked_on: '2026-09-18',
+    hours: { type: 'daily', open: '09:00', close: '18:00' },
+    tariff: {
+      currency: 'UZS',
+      seasonal_local: true,
+      rows: [
+        { audience: 'O‘zbekiston fuqarosi · katta', season: 3000, off_season: 1500 },
+        { audience: 'O‘zbekiston fuqarosi · 18 yoshgacha', season: 2000, off_season: 1000 },
+        { audience: 'MDH/xorijiy · katta', fixed: 20000 },
+        { audience: 'MDH/xorijiy · 18 yoshgacha', fixed: 10000 },
+      ],
+      note: 'Muzey-qo‘riqxona rasmiy sahifasidagi prayslist. Mahalliy tarifda 20-fevral–20-noyabr mavsum, qolgan davr mavsumdan tashqari.',
+      free_note: 'Rasmiy sahifada har oyning birinchi yakshanbasi davlat muzeylariga bepul; 18 yoshgacha bolalar va hamrohlari seshanba/juma kunlari bepul ekani ko‘rsatilgan.',
+    },
+  },
+  {
+    id: 'bibi-khanum',
+    match: /bibi.?khan|bibi.?xon|bibixonim/i,
+    canonical_name: 'Bibixonim masjidi',
+    authority: 'Samarqand davlat muzey-qo‘riqxonasi',
+    source_url: 'https://samarkandmuseum.uz/uz/muzei-dlya-menyu/mecet-bibi-xanym',
+    checked_on: '2026-09-18',
+    hours: { type: 'daily', open: '09:00', close: '18:00' },
+    tariff: {
+      currency: 'UZS',
+      seasonal_local: true,
+      rows: [
+        { audience: 'O‘zbekiston fuqarosi · katta', season: 3000, off_season: 1500 },
+        { audience: 'O‘zbekiston fuqarosi · 18 yoshgacha', season: 2000, off_season: 1000 },
+        { audience: 'MDH/xorijiy · katta', fixed: 20000 },
+        { audience: 'MDH/xorijiy · 18 yoshgacha', fixed: 10000 },
+      ],
+      note: 'Muzey-qo‘riqxona rasmiy sahifasidagi prayslist.',
+      free_note: 'Rasmiy sahifada har oyning birinchi yakshanbasi davlat muzeylariga bepul; 18 yoshgacha bolalar va hamrohlari seshanba/juma kunlari bepul ekani ko‘rsatilgan.',
+    },
+  },
+  {
+    id: 'ulugbek-observatory',
+    match: /ulugh.?beg.*observ|ulug.?bek.*rasad|observ.*ulug.?bek/i,
+    canonical_name: 'Mirzo Ulug‘bek rasadxonasi muzey majmuasi',
+    authority: 'Samarqand davlat muzey-qo‘riqxonasi',
+    source_url: 'https://www.samarkandmuseum.uz/muzei-dlya-menyu/memorialnyi-muzei-i-observatoriya-mirzo-ulugbeka',
+    checked_on: '2026-09-18',
+    hours: { type: 'daily', open: '09:00', close: '17:00' },
+    tariff: {
+      currency: 'UZS',
+      seasonal_local: true,
+      rows: [
+        { audience: 'O‘zbekiston fuqarosi · katta', season: 3000, off_season: 1500 },
+        { audience: 'O‘zbekiston fuqarosi · 18 yoshgacha', season: 2000, off_season: 1000 },
+        { audience: 'MDH/xorijiy · katta', fixed: 20000 },
+        { audience: 'MDH/xorijiy · 18 yoshgacha', fixed: 10000 },
+      ],
+      note: 'Muzey-qo‘riqxona rasmiy sahifasidagi prayslist.',
+      free_note: 'Rasmiy sahifada har oyning birinchi yakshanbasi davlat muzeylariga bepul; 18 yoshgacha bolalar va hamrohlari seshanba/juma kunlari bepul ekani ko‘rsatilgan.',
+    },
+  },
+  {
+    id: 'afrosiyob-museum',
+    match: /afrasiyab.*museum|museum.*afrasiyab|afrosiyob.*muzey|muzey.*afrosiyob/i,
+    canonical_name: 'Samarqand tarixi Afrosiyob muzeyi',
+    authority: 'Samarqand davlat muzey-qo‘riqxonasi',
+    source_url: 'https://samarkandmuseum.uz/en/muzei-dlya-menyu/museum-of-the-history-of-samarkand-and-the-city-of-afrosiab',
+    checked_on: '2026-09-18',
+    hours: { type: 'daily', open: '09:00', close: '18:00' },
+    tariff: {
+      currency: 'UZS',
+      seasonal_local: true,
+      rows: [
+        { audience: 'O‘zbekiston fuqarosi · katta', season: 3000, off_season: 1500 },
+        { audience: 'O‘zbekiston fuqarosi · 18 yoshgacha', season: 2000, off_season: 1000 },
+        { audience: 'MDH/xorijiy · katta', fixed: 20000 },
+        { audience: 'MDH/xorijiy · 18 yoshgacha', fixed: 10000 },
+      ],
+      note: 'Muzey-qo‘riqxona rasmiy sahifasidagi prayslist.',
+      free_note: 'Rasmiy sahifada har oyning birinchi yakshanbasi davlat muzeylariga bepul; 18 yoshgacha bolalar va hamrohlari seshanba/juma kunlari bepul ekani ko‘rsatilgan.',
+    },
+  },
+];
+
 const PRIORITY_PATTERNS = [
   /registan|registon/i,
   /gur.?e.?amir|go.?ri.?amir|guri.?amir|amir temur/i,
@@ -681,6 +792,71 @@ function routeFallback(start, stops, walking) {
   };
 }
 
+function officialPoiRecord(poi = {}) {
+  const name = String(poi.name || '');
+  return OFFICIAL_POI_CATALOG.find((row) => row.match.test(name)) || null;
+}
+
+function inMuseumSeason(dateText) {
+  const md = String(dateText || '').slice(5);
+  return /^\d{2}-\d{2}$/.test(md) && md >= '02-20' && md < '11-20';
+}
+
+function officialHoursWindow(record, dateText) {
+  if (!record?.hours) return null;
+  if (record.hours.type === 'daily') {
+    return { open: record.hours.open, close: record.hours.close, label: `${record.hours.open}–${record.hours.close}` };
+  }
+  if (record.hours.type === 'seasonal') {
+    const md = String(dateText || '').slice(5);
+    const seasonal = /^\d{2}-\d{2}$/.test(md) && md >= record.hours.season.from && md < record.hours.season.to;
+    const hours = seasonal ? record.hours.season : record.hours.off_season;
+    return { open: hours.open, close: hours.close, label: `${hours.open}–${hours.close}` };
+  }
+  return null;
+}
+
+function evaluateOfficialHours(record, dateText, timeText) {
+  const window = officialHoursWindow(record, dateText);
+  const visit = minutesOfClock(timeText);
+  if (!window || visit === null) return { status: 'unknown', label: window?.label || 'Ish vaqti noma’lum', source: record?.authority || null };
+  const start = minutesOfClock(window.open);
+  const end = minutesOfClock(window.close);
+  if (start === null || end === null) return { status: 'unknown', label: window.label, source: record.authority };
+  const normalizedEnd = end === 24 * 60 ? 24 * 60 : end;
+  const isOpen = visit >= start && visit < normalizedEnd;
+  return {
+    status: isOpen ? 'open' : 'closed',
+    label: `${isOpen ? 'Ochiq' : 'Yopiq'} · ${window.label}`,
+    source: record.authority,
+  };
+}
+
+function officialTariff(record, dateText) {
+  if (!record?.tariff) return null;
+  const season = inMuseumSeason(dateText);
+  const rows = record.tariff.rows.map((row) => {
+    const amount = Number.isFinite(row.fixed) ? row.fixed : season ? row.season : row.off_season;
+    return {
+      audience: row.audience,
+      amount_uzs: Number.isFinite(amount) ? amount : null,
+      note: row.note || null,
+    };
+  });
+  return {
+    status: 'official-published',
+    currency: record.tariff.currency || 'UZS',
+    rows,
+    season: record.tariff.seasonal_local ? (season ? 'mavsum' : 'mavsumdan tashqari') : null,
+    note: record.tariff.note || null,
+    free_note: record.tariff.free_note || null,
+    authority: record.authority,
+    source_url: record.source_url,
+    ticket_url: record.ticket_url || null,
+    checked_on: record.checked_on,
+  };
+}
+
 const OSM_DAY_CODES = ['Su','Mo','Tu','We','Th','Fr','Sa'];
 
 function minutesOfClock(value) {
@@ -774,8 +950,31 @@ function ticketInfo(poi = {}) {
 }
 
 function enrichOperationalStatus(poi, visitDate, visitTime) {
-  const planned = evaluateSimpleOpeningHours(poi.opening_hours, visitDate, visitTime);
+  const official = officialPoiRecord(poi);
   const nowParts = tashkentNowParts();
+  if (official) {
+    return {
+      ...poi,
+      operational: {
+        planned: evaluateOfficialHours(official, visitDate, visitTime),
+        now: evaluateOfficialHours(official, nowParts.date, nowParts.time),
+        ticket: officialTariff(official, visitDate),
+        website: official.source_url || poi.website || null,
+        phone: poi.phone || null,
+        official: {
+          id: official.id,
+          canonical_name: official.canonical_name,
+          authority: official.authority,
+          source_url: official.source_url,
+          ticket_url: official.ticket_url || null,
+          checked_on: official.checked_on,
+          hours_note: official.hours?.note || null,
+        },
+        data_note: 'Rasmiy tashkilot sahifasidagi ish vaqti va tarif katalogi ustuvor ishlatildi. Narx va rejim o‘zgarishi mumkin; xarid/tashrif oldidan manbani tekshiring.',
+      },
+    };
+  }
+  const planned = evaluateSimpleOpeningHours(poi.opening_hours, visitDate, visitTime);
   const now = evaluateSimpleOpeningHours(poi.opening_hours, nowParts.date, nowParts.time);
   return {
     ...poi,
@@ -785,6 +984,7 @@ function enrichOperationalStatus(poi, visitDate, visitTime) {
       ticket: ticketInfo(poi),
       website: poi.website || null,
       phone: poi.phone || null,
+      official: null,
       data_note: 'Ish vaqti va to‘lov OpenStreetMap metadata asosida. Rasmiy manbada tekshirish tavsiya etiladi.',
     },
   };
@@ -850,18 +1050,20 @@ function localizedSummary(intent, count, adaptedDays) {
 
 router.get('/status', (_req, res) => {
   res.json({
-    version: '1.5.0',
+    version: '1.6.0',
     openai_configured: Boolean(process.env.OPENAI_API_KEY),
     openai_model: process.env.OPENAI_API_KEY ? (process.env.OPENAI_MODEL || 'gpt-5.6-luna') : null,
     poi_source: 'Verified curated Samarkand anchors + OpenStreetMap/Overpass enrichment',
     routing_source: 'Fixed-origin route ordering + OSRM driving + geodesic fallback',
     route_optimization: 'Nearest-neighbor + 2-opt when weather is normal; weather-priority ordering in severe weather',
     weather_source: 'Open-Meteo',
-    operational_metadata: 'OpenStreetMap opening_hours + fee/charge tags; simple schedule evaluator with safe unknown fallback',
+    operational_metadata: 'Official Registan and Samarkand Museum-Reserve catalog where verified; OpenStreetMap fallback elsewhere',
     weather_adaptive_routing: true,
     forecast_window_days: 14,
     curated_poi_count: CURATED_POIS.length,
-    note: 'Ish vaqti va chipta ma’lumoti mavjud bo‘lsa OpenStreetMap metadata asosida ko‘rsatiladi. Murakkab opening_hours ifodalari yoki narx yo‘q bo‘lsa tizim taxmin qilmaydi; rasmiy manbadan tekshirish kerak.',
+    official_catalog_count: OFFICIAL_POI_CATALOG.length,
+    official_catalog_checked_on: '2026-09-18',
+    note: 'Registon va ayrim Samarqand davlat muzey-qo‘riqxonasi obyektlari uchun rasmiy sahifalarda e’lon qilingan ish vaqti/tariflar katalogi ishlatiladi; qolgan joylarda OSM fallback. Narxlar o‘zgarishi mumkin, xarid oldidan manbani tekshiring.',
   });
 });
 
@@ -911,7 +1113,7 @@ router.post('/plan', asyncHandler(async (req, res) => {
   const knownClosedVisits = days.flatMap((day) => day.stops || []).filter((stop) => stop.operational?.planned?.status === 'closed');
   const pricedStops = days.flatMap((day) => day.stops || []).filter((stop) => stop.operational?.ticket?.status !== 'unknown');
   res.json({
-    version: '1.5.0',
+    version: '1.6.0',
     prompt,
     intent,
     start,
@@ -926,7 +1128,7 @@ router.post('/plan', asyncHandler(async (req, res) => {
       routing: [...new Set(days.map((d) => d.route?.source).filter(Boolean))],
       optimization: [...new Set(days.map((d) => d.optimization?.method).filter(Boolean))],
       weather: weatherBundle.source,
-      operational: 'OpenStreetMap opening_hours + fee/charge metadata',
+      operational: 'Official Registan/Samarkand Museum-Reserve catalog + OpenStreetMap fallback',
       ai: intent.engine === 'openai' ? `OpenAI ${intent.model || ''}`.trim() : 'Local multilingual preference parser',
     },
     warnings: [
@@ -937,7 +1139,7 @@ router.post('/plan', asyncHandler(async (req, res) => {
       intent.wheelchair_accessible ? 'Accessibility talabi hisobga olindi, ammo obyektlarning pandus, lift va kirish sharoiti bo‘yicha ma’lumot to‘liq emas; tashrifdan oldin rasmiy manbadan tasdiqlang.' : null,
       days.some((day) => Number(day.preferred_window?.overrun_minutes || 0) > 0) ? 'Tanlangan kun yakuni vaqtiga sig‘magan kun bor; tashrif sonini kamaytirish yoki yakun vaqtini uzaytirish tavsiya etiladi.' : null,
       knownClosedVisits.length ? `${knownClosedVisits.length} ta tashrifda OSM opening_hours bo‘yicha yopiq bo‘lish ehtimoli aniqlandi; tashrif vaqtini o‘zgartirish yoki rasmiy manbani tekshiring.` : null,
-      pricedStops.length ? null : 'Tanlangan obyektlarda ishonchli chipta narxi metadata topilmadi; tizim narxni taxmin qilmadi.',
+      pricedStops.length ? null : 'Tanlangan obyektlarda rasmiy yoki ishonchli chipta tarifi topilmadi; tizim narxni taxmin qilmadi.',
       'Marshrut tavsiya xarakterida. Ish vaqti, chipta narxi, vaqtinchalik yopilish va kirish qoidalarini rasmiy manbalardan tekshiring.',
       intent.transport === 'walking' ? 'Piyoda rejimida yo‘l chizig‘i geodezik taxmin; piyodalar yo‘laklari bo‘yicha professional routing keyingi bosqichda ulanadi.' : null,
     ].filter(Boolean),
@@ -951,7 +1153,7 @@ async function runStartupSmoke() {
     const selected = selectPois(discovered.rows, intent, CENTER).slice(0, 4);
     const route = selected.length ? (await routeDriving(CENTER, selected) || routeFallback(CENTER, selected, false)) : null;
     const names = selected.map((p) => p.name).join(' | ');
-    console.log(`[tour-smoke] v=1.5 provider=${discovered.provider} pois=${discovered.rows.length} external=${discovered.external_count} sample=${names || 'none'} route=${route?.source || 'none'} geometry=${route?.geometry?.type || 'none'}`);
+    console.log(`[tour-smoke] v=1.6 provider=${discovered.provider} pois=${discovered.rows.length} external=${discovered.external_count} sample=${names || 'none'} route=${route?.source || 'none'} geometry=${route?.geometry?.type || 'none'}`);
   } catch (error) {
     console.warn(`[tour-smoke] failed=${error.response?.status || error.message}`);
   }

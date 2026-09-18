@@ -16,29 +16,50 @@ function haversine(lat1,lon1,lat2,lon2){const toRad=v=>v*Math.PI/180,R=6371000,d
 function formatDistance(m){const n=Math.max(0,Number(m)||0);return n<1000?`${Math.round(n)} m`:`${(n/1000).toFixed(n<10000?1:0)} km`}
 function locate(){if(!navigator.geolocation){toast('Brauzer geolokatsiyani qo‘llamaydi');return}const replan=Boolean(state.result);toast('Joylashuv aniqlanmoqda…');navigator.geolocation.getCurrentPosition(pos=>{state.start={latitude:pos.coords.latitude,longitude:pos.coords.longitude,name:'Mening GPS joylashuvim'};$('locationLine').textContent=`Boshlanish: GPS joylashuvim · ±${Math.round(pos.coords.accuracy||0)} m`;if(replan){toast('GPS olindi — marshrut shu joydan qayta optimallashtirilmoqda');setTimeout(()=>$('plannerForm')?.requestSubmit(),250)}else toast('Joylashuv olindi — marshrut shu nuqtadan boshlanadi')},()=>toast('Joylashuvga ruxsat berilmadi'),{enableHighAccuracy:true,timeout:10000,maximumAge:60000})}
 function intentBadges(intent={},support={}){const labels={history:'Tarix',pilgrimage:'Ziyorat',gastronomy:'Gastronomiya',museum:'Muzey',family:'Oilaviy',architecture:'Arxitektura'};const timeWindow=intent.preferred_start_time&&intent.preferred_end_time?`🕘 ${intent.preferred_start_time}–${intent.preferred_end_time}`:intent.preferred_start_time?`🕘 ${intent.preferred_start_time} dan`:null;const rows=[...(intent.interests||[]).map(i=>labels[i]||i),`${intent.days||2} kun`,state.result?.trip_start_date?`📅 ${state.result.trip_start_date}`:null,state.result?.weather_adaptive?'🌦️ Adaptive':null,intent.low_walking?'Kam yurish':null,intent.transport==='taxi'?'Taksi':intent.transport==='walking'?'Piyoda':intent.own_vehicle?'🚗 Shaxsiy avtomobil':'Aralash transport',Number(intent.children_count||0)>0?`👧 ${Number(intent.children_count)} bola`:null,Number(intent.seniors_count||0)>0?`👵 ${Number(intent.seniors_count)} kishi 65+`:null,intent.wheelchair_accessible?'♿ Qulaylik muhim':null,timeWindow,intent.origin_country?`🌍 ${intent.origin_country}`:null,support.party_size?`${support.party_size} sayohatchi`:null,support.budget?.total_uzs?`${money(support.budget.total_uzs)} so‘m budjet`:intent.budget_uzs?`${money(intent.budget_uzs)} so‘m budjet`:null].filter(Boolean);return rows.map(x=>`<span class="badge">${esc(x)}</span>`).join('')}
+function ticketTariffHtml(ticket={}){
+  if(ticket.status!=='official-published'||!Array.isArray(ticket.rows))return ticket.label?`<span class="ticket-status">🎟 ${esc(ticket.label)}</span>`:'';
+  const rows=ticket.rows.filter(row=>Number.isFinite(Number(row.amount_uzs))).map(row=>`<div class="official-price-row"><span>${esc(row.audience)}</span><strong>${money(row.amount_uzs)} so‘m</strong></div>`).join('');
+  if(!rows)return '';
+  const season=ticket.season?` · ${esc(ticket.season)}`:'';
+  return `<details class="official-tariff"><summary>🎟 Rasmiy tariflar${season}</summary>
+    <div class="official-price-list">${rows}</div>
+    ${ticket.free_note?`<small>${esc(ticket.free_note)}</small>`:''}
+    ${ticket.note?`<small>${esc(ticket.note)}</small>`:''}
+    <div class="official-source-line">Tekshirildi: ${esc(ticket.checked_on||'—')} · ${esc(ticket.authority||'rasmiy manba')}</div>
+    <div class="official-actions">${ticket.source_url?`<a href="${esc(ticket.source_url)}" target="_blank" rel="noopener">Tarif manbasi ↗</a>`:''}${ticket.ticket_url?`<a href="${esc(ticket.ticket_url)}" target="_blank" rel="noopener">Chipta portali ↗</a>`:''}</div>
+  </details>`;
+}
 function stopCard(stop){
   const cat={historic:'Tarixiy obida',museum:'Muzey',pilgrimage:'Ziyorat joyi',attraction:'Turistik obyekt',market:'Bozor',heritage:'Meros obyekt'}[stop.category]||'Turistik nuqta';
   const sourceLabel=stop.source==='OpenStreetMap'?'OpenStreetMap manbasi':'Obyekt manbasi';
   const shelter=Number(stop.weather_resilience||0)>=2?' · ob-havoga nisbatan qulayroq':'';
-  const planned=stop.operational?.planned||{};
-  const now=stop.operational?.now||{};
-  const ticket=stop.operational?.ticket||{};
+  const op=stop.operational||{};
+  const planned=op.planned||{};
+  const now=op.now||{};
+  const ticket=op.ticket||{};
+  const officialMeta=op.official||null;
   const statusClass=planned.status==='open'?'open':planned.status==='closed'?'closed':'unknown';
   const statusIcon=planned.status==='open'?'●':planned.status==='closed'?'●':'◌';
   const visitStatus=planned.label?`<span class="visit-status ${statusClass}">${statusIcon} Rejadagi vaqtda: ${esc(planned.label)}</span>`:'';
   const nowStatus=now.status&&now.status!=='unknown'?`<span class="now-status ${now.status}">Hozir: ${esc(now.label)}</span>`:'';
-  const ticketStatus=ticket.label?`<span class="ticket-status">🎟 ${esc(ticket.label)}</span>`:'';
-  const official=stop.operational?.website?`<a href="${esc(stop.operational.website)}" target="_blank" rel="noopener">Rasmiy/obyekt sayti ↗</a>`:'';
-  const osm=stop.osm_source_url|| (stop.source==='OpenStreetMap'?stop.source_url:null);
-  return `<article class="stop ${planned.status==='closed'?'stop-closed':''}">
+  const ticketStatus=ticket.status==='official-published'?'<span class="ticket-status official">✓ Rasmiy tarif mavjud</span>':ticket.label?`<span class="ticket-status">🎟 ${esc(ticket.label)}</span>`:'';
+  const primaryOfficial=officialMeta?.source_url||op.website||null;
+  const officialLink=primaryOfficial?`<a href="${esc(primaryOfficial)}" target="_blank" rel="noopener">${officialMeta?'Rasmiy manba':'Obyekt sayti'} ↗</a>`:'';
+  const osm=stop.osm_source_url||(stop.source==='OpenStreetMap'?stop.source_url:null);
+  const hoursLine=officialMeta
+    ? `<small class="official-verified">✓ Ish vaqti: ${esc(planned.source||officialMeta.authority||'rasmiy manba')} · katalog ${esc(officialMeta.checked_on||'')}</small>`
+    : stop.opening_hours?`<small>OSM ish vaqti: ${esc(stop.opening_hours)}</small>`:'';
+  return `<article class="stop ${planned.status==='closed'?'stop-closed':''} ${officialMeta?'stop-official':''}">
     <div class="stop-number">${Number(stop.order)}</div>
     <div><strong>${esc(stop.name)}</strong>
       <span>${esc(stop.time_start)}–${esc(stop.time_end)} · ${esc(cat)} · ${Number(stop.visit_minutes||0)} daqiqa${shelter}</span>
       <div class="operational-row">${visitStatus}${nowStatus}${ticketStatus}</div>
-      ${stop.opening_hours?`<small>OSM ish vaqti: ${esc(stop.opening_hours)}</small>`:''}
-      <div class="stop-links">${official}${osm?`<a href="${esc(osm)}" target="_blank" rel="noopener">OSM metadata ↗</a>`:''}${!osm&&stop.source_url?`<a href="${esc(stop.source_url)}" target="_blank" rel="noopener">${esc(sourceLabel)} ↗</a>`:''}</div>
+      ${hoursLine}
+      ${ticketTariffHtml(ticket)}
+      <div class="stop-links">${officialLink}${osm?`<a href="${esc(osm)}" target="_blank" rel="noopener">OSM metadata ↗</a>`:''}${!osm&&!primaryOfficial&&stop.source_url?`<a href="${esc(stop.source_url)}" target="_blank" rel="noopener">${esc(sourceLabel)} ↗</a>`:''}</div>
     </div>
-  </article>`}
+  </article>`;
+}
 function weatherLabel(code){const n=Number(code);if(n===0)return 'Ochiq';if([1,2,3].includes(n))return 'Bulutli';if([45,48].includes(n))return 'Tuman';if(n>=51&&n<=67)return 'Yomg‘ir';if(n>=71&&n<=77)return 'Qor';if(n>=80&&n<=82)return 'Jala';if(n>=95)return 'Momaqaldiroq';return 'Prognoz'}
 function selected(kind,row){return state.selectedServices?.[kind]?.id===row.id}
 function serviceItem(row,kind){const distance=Number(row.distance_m||0);const meta=[distance?formatDistance(distance):null,row.cuisine?`oshxona: ${row.cuisine}`:null,row.opening_hours?`ish vaqti: ${row.opening_hours}`:null].filter(Boolean).join(' · ');const chosen=selected(kind,row);const chooseButton=`<button type="button" class="select-service ${chosen?'selected':''}" data-kind="${esc(kind)}" data-id="${esc(row.id)}" data-name="${esc(row.name)}">${chosen?'✓ Tanlangan':'Tanlash'}</button>`;const hotelButton=kind==='hotel'?`<button type="button" class="hotel-start" data-lat="${Number(row.latitude)}" data-lon="${Number(row.longitude)}" data-name="${esc(row.name)}">🏨 Shu yerdan qayta rejalash</button>`:'';return `<div class="service-item ${chosen?'chosen':''}"><strong>${esc(row.name)}</strong>${meta?`<span>${esc(meta)}</span>`:''}${row.phone?`<span>☎ ${esc(row.phone)}</span>`:''}<a href="${esc(row.source_url)}" target="_blank" rel="noopener">Xaritada ko‘rish ↗</a><div class="service-actions">${chooseButton}${hotelButton}</div></div>`}

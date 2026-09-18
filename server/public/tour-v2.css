@@ -76,3 +76,14 @@ body.tfe-map-open{overflow:hidden}
 .ticket-status{background:#fff8e8;color:#7b5e18;border:1px solid #eadcae}
 .stop-closed{border-color:#efcbc6!important;background:linear-gradient(90deg,#fff8f7,#fff)!important}
 .stop-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:5px}.stop-links a{font-size:9px;font-weight:850;color:#1f6f50;text-decoration:none}
+
+.ticket-status.official{background:#eaf7ef;color:#166545;border-color:#c8e8d7}
+.stop-official{box-shadow:inset 3px 0 0 #2a8a62}
+.official-verified{color:#2c6e53!important;font-weight:850}
+.official-tariff{margin-top:7px;border:1px solid #d6e5dc;border-radius:10px;background:#fbfdfc;overflow:hidden}
+.official-tariff summary{cursor:pointer;padding:8px 9px;font-size:9px;font-weight:900;color:#275c47;list-style:none}.official-tariff summary::-webkit-details-marker{display:none}
+.official-tariff[open] summary{border-bottom:1px solid #e0e9e4;background:#f2f8f5}
+.official-price-list{padding:5px 9px}.official-price-row{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px dashed #e2e9e5}.official-price-row:last-child{border-bottom:0}
+.official-price-row span{font-size:9px!important;color:#5b7066}.official-price-row strong{font-size:10px;color:#173d2d;white-space:nowrap}
+.official-tariff>small{display:block!important;padding:2px 9px;font-size:8px!important;line-height:1.45;color:#77847e}
+.official-source-line{padding:6px 9px 2px;font-size:8px;color:#6c7f75}.official-actions{display:flex;gap:10px;flex-wrap:wrap;padding:5px 9px 8px}.official-actions a{font-size:9px;font-weight:900;color:#1f6f50;text-decoration:none}
