@@ -11,7 +11,7 @@ body{background:
 .planner-card{position:relative;overflow:hidden;border-color:#d7e5dd;box-shadow:0 20px 60px rgba(20,62,45,.09)}
 .planner-card:before{content:"";position:absolute;inset:0 auto auto 0;width:100%;height:4px;background:linear-gradient(90deg,#176b4d,#48a47e,#d7a63d)}
 .planner-copy h2{letter-spacing:-.035em;color:var(--tfe-ink)}
-.planner-copy p{font-size:14px}.planner-copy:after{content:"AI + GPS + ob-havo + budjet";display:inline-flex;margin-top:16px;padding:7px 10px;border-radius:999px;background:var(--tfe-soft);color:var(--tfe-brand);font-size:10px;font-weight:900;letter-spacing:.06em}
+.planner-copy p{font-size:14px}.planner-copy:after{content:"AI + GPS + ish vaqti + budjet";display:inline-flex;margin-top:16px;padding:7px 10px;border-radius:999px;background:var(--tfe-soft);color:var(--tfe-brand);font-size:10px;font-weight:900;letter-spacing:.06em}
 .ai-console{margin:12px 0 2px;border:1px solid #dce8e1;background:linear-gradient(180deg,#fbfdfc,#f3f8f5);border-radius:16px;padding:13px}
 .ai-console-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:10px}
 .ai-console-title strong,.ai-console-title span{display:block}.ai-console-title strong{font-size:13px;color:var(--tfe-ink)}.ai-console-title span{font-size:10px;color:var(--tfe-muted);margin-top:2px}
