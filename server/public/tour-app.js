@@ -27,9 +27,8 @@ function audioGuideHtml(stop,compact=false){
   const button=(lang,label,shortText,detailedText)=>shortText||detailedText
     ? `<button type="button" class="audio-guide-play" data-guide-id="${esc(guide.id)}" data-guide-lang="${esc(lang)}" data-guide-name="${esc(name)}" data-guide-short="${esc(shortText||detailedText||'')}" data-guide-detailed="${esc(detailedText||shortText||'')}">🔊 ${esc(label)}</button>`
     : '';
-  const engineLabel=state.audioEngine==='openai-tts'?'AI MP3':state.audioEngine==='browser-fallback'?'Brauzer zaxira':'AI audio';
-  return `<div class="audio-guide ${compact?'compact':''}" data-mode="short" data-lang="uz-UZ">
-    <div class="audio-guide-head"><strong>🎧 Audio gid</strong><span class="audio-engine-label">${esc(engineLabel)}</span></div>
+  return `<div class="audio-guide ${compact?'compact':''}" data-mode="short" data-lang="uz">
+    <div class="audio-guide-head"><strong>🎧 Audio gid</strong><span class="audio-engine-label">3 tilda</span></div>
     <div class="audio-guide-modes">
       <button type="button" class="audio-guide-mode active" data-guide-mode="short">Qisqa</button>
       <button type="button" class="audio-guide-mode" data-guide-mode="detailed">Batafsil</button>
@@ -41,7 +40,6 @@ function audioGuideHtml(stop,compact=false){
       ${button('ru','Русский',short.ru,detailed.ru)}
       <button type="button" class="audio-guide-stop" aria-label="Ovozni to‘xtatish">■</button>
     </div>
-    <small class="audio-guide-hint">AI MP3 mavjud bo‘lsa serverdan tabiiy ovoz keladi; aks holda brauzer ovozi faqat zaxira sifatida ishlaydi.</small>
   </div>`;
 }
 function poiCategoryMeta(stop={}){
@@ -55,6 +53,35 @@ function poiCategoryMeta(stop={}){
   };
   return map[stop.category]||{icon:'📍',label:'Turistik obyekt'};
 }
+function compactOpenStatus(op={}){
+  const row=op.now?.status&&op.now.status!=='unknown'?op.now:(op.planned||{});
+  const raw=String(row.label||'').trim();
+  if(row.status==='open'){
+    const match=raw.match(/(?:Ochiq\s*·\s*)?(\d{1,2}:\d{2})[–-](\d{1,2}:\d{2})/i);
+    return {className:'open',text:match?`Hozir ochiq · ${match[2]} gacha`:'Hozir ochiq'};
+  }
+  if(row.status==='closed'){
+    const match=raw.match(/(\d{1,2}:\d{2})[–-](\d{1,2}:\d{2})/);
+    return {className:'closed',text:match?`Hozir yopiq · ${match[1]}–${match[2]}`:'Hozir yopiq'};
+  }
+  return {className:'unknown',text:raw||'Ish vaqti aniqlanmagan'};
+}
+function compactTicketStatus(ticket={}){
+  if(ticket.status==='official-published'){
+    const amounts=(ticket.rows||[]).map(x=>Number(x.amount_uzs)).filter(x=>Number.isFinite(x)&&x>=0);
+    if(amounts.length){
+      const min=Math.min(...amounts),max=Math.max(...amounts);
+      if(min===0&&max===0)return {className:'free',text:'Bepul'};
+      if(min===max)return {className:'official',text:`${money(min)} so‘m`};
+      return {className:'official',text:`${money(min)}–${money(max)} so‘m`};
+    }
+    return {className:'official',text:'Rasmiy tarif'};
+  }
+  if(ticket.status==='free')return {className:'free',text:'Bepul'};
+  if(ticket.status==='known')return {className:'known',text:String(ticket.label||'Narx ma’lum')};
+  if(ticket.status==='paid-unknown')return {className:'unknown',text:'Pullik · narx noma’lum'};
+  return {className:'unknown',text:'Narxni tekshirish'};
+}
 function poiPopupSummary(stop={}){
   const guide=stop.audio_guide;
   const lang=state.live?.voiceLang||'uz';
@@ -67,41 +94,45 @@ function poiPopupSummary(stop={}){
 function poiPopupHtml(stop={}){
   const meta=poiCategoryMeta(stop);
   const op=stop.operational||{};
-  const planned=op.planned||{};
   const ticket=op.ticket||{};
   const official=op.official||null;
-  const statusClass=planned.status==='open'?'open':planned.status==='closed'?'closed':'unknown';
-  const statusText=planned.label||'Ish vaqti aniqlanmagan';
-  const ticketText=ticket.status==='official-published'?'Rasmiy chipta':(ticket.label||'Chipta ma’lumoti');
+  const open=compactOpenStatus(op);
+  const price=compactTicketStatus(ticket);
   const sourceUrl=official?.source_url||op.website||stop.source_url||stop.osm_source_url||'';
   const sourceLabel=official?'Rasmiy manba':(op.website?'Obyekt sayti':stop.source==='OpenStreetMap'?'OpenStreetMap':'Manba');
   const hasAudio=Boolean(stop.audio_guide?.id);
-  const audio=hasAudio?audioGuideHtml(stop,true):'<div class="poi-audio-empty">🎧 Bu obyekt uchun audio gid hozircha tayyorlanmagan.</div>';
   const order=Number(stop.order)||0;
+  const planned=op.planned||{};
+  const now=op.now||{};
   const detailedTicket=ticket.status==='official-published'?ticketTariffHtml(ticket):'';
-  const infoHours=planned.label?'<div><span>🕒 Rejadagi holat</span><strong>'+esc(planned.label)+'</strong></div>':'';
-  const infoVisit=Number(stop.visit_minutes)>0?'<div><span>⏱ Tavsiya etilgan vaqt</span><strong>'+Number(stop.visit_minutes)+' daqiqa</strong></div>':'';
-  return '<article class="poi-place-card">'
-    +'<div class="poi-place-head">'
-      +'<div class="poi-place-icon">'+meta.icon+'</div>'
-      +'<div class="poi-place-title"><span>'+esc(meta.label)+(official?' · ✓ rasmiy ma’lumot':'')+'</span><strong>'+esc(stop.name||'Turistik obyekt')+'</strong><small>'+esc(stop.time_start||'')+(stop.time_end?'–'+esc(stop.time_end):'')+(order?' · '+order+'-nuqta':'')+'</small></div>'
-    +'</div>'
-    +'<p class="poi-place-summary">'+esc(poiPopupSummary(stop))+'</p>'
-    +'<div class="poi-place-chips">'
-      +(planned.label?'<span class="poi-chip '+statusClass+'">● '+esc(statusText)+'</span>':'')
-      +(ticket.label||ticket.status==='official-published'?'<span class="poi-chip ticket">🎟 '+esc(ticketText)+'</span>':'')
-    +'</div>'
-    +'<div class="poi-place-actions">'
-      +(hasAudio?'<button type="button" class="poi-action primary" data-popup-audio-open>🎧 Audio gid</button>':'')
-      +'<button type="button" class="poi-action navigate" data-popup-gps data-stop-lat="'+esc(stop.latitude)+'" data-stop-lon="'+esc(stop.longitude)+'" data-stop-name="'+esc(stop.name||'')+'">◎ Navigator</button>'
-    +'</div>'
-    +'<div class="poi-popup-audio hidden">'+audio+'</div>'
-    +'<details class="poi-place-more"><summary>Ma’lumotlar va chipta <span>⌄</span></summary>'
-      +'<div class="poi-place-info-grid">'+infoHours+infoVisit+'</div>'
-      +detailedTicket
-      +(sourceUrl?'<a class="poi-source-link" href="'+esc(sourceUrl)+'" target="_blank" rel="noopener">'+esc(sourceLabel)+' ↗</a>':'')
-    +'</details>'
-  +'</article>';
+  const audio=hasAudio?audioGuideHtml(stop,true):'<div class="poi-audio-empty">🎧 Bu obyekt uchun audio gid hozircha tayyorlanmagan.</div>';
+  const visitInfo=Number(stop.visit_minutes)>0?`<div><span>⏱ Tavsiya etilgan tashrif</span><strong>${Number(stop.visit_minutes)} daqiqa</strong></div>`:'';
+  const nowInfo=now.label?`<div><span>🕒 Hozirgi holat</span><strong>${esc(now.label)}</strong></div>`:'';
+  const planInfo=planned.label?`<div><span>📅 Rejadagi vaqt</span><strong>${esc(stop.time_start||'')} · ${esc(planned.label)}</strong></div>`:'';
+  return `<article class="poi-place-card audio-first">
+    <div class="poi-simple-head">
+      <div>
+        <span class="poi-simple-type">${meta.icon} ${esc(meta.label)}${official?' · ✓ rasmiy':''}</span>
+        <strong>${esc(stop.name||'Turistik obyekt')}</strong>
+        <small>${esc(stop.time_start||'')}${stop.time_end?'–'+esc(stop.time_end):''}${order?' · '+order+'-nuqta':''}</small>
+      </div>
+    </div>
+    <div class="poi-place-chips primary-facts">
+      <span class="poi-chip ${open.className}">● ${esc(open.text)}</span>
+      <span class="poi-chip ticket ${price.className}">🎟 ${esc(price.text)}</span>
+    </div>
+    ${audio}
+    <div class="poi-place-actions compact-actions">
+      <button type="button" class="poi-action navigate" data-popup-gps data-stop-lat="${esc(stop.latitude)}" data-stop-lon="${esc(stop.longitude)}" data-stop-name="${esc(stop.name||'')}">◎ Navigator</button>
+      <button type="button" class="poi-action details" data-popup-details>Batafsil ma’lumot</button>
+    </div>
+    <div class="poi-place-details hidden">
+      <p class="poi-place-summary full-summary">${esc(poiPopupSummary(stop))}</p>
+      <div class="poi-place-info-grid">${nowInfo}${planInfo}${visitInfo}</div>
+      ${detailedTicket}
+      ${sourceUrl?`<a class="poi-source-link" href="${esc(sourceUrl)}" target="_blank" rel="noopener">${esc(sourceLabel)} ↗</a>`:''}
+    </div>
+  </article>`;
 }
 function popupStopIndex(button){
   const lat=Number(button?.dataset?.stopLat),lon=Number(button?.dataset?.stopLon),name=String(button?.dataset?.stopName||'');
@@ -113,15 +144,16 @@ function popupStopIndex(button){
   return index;
 }
 function handlePoiPopupClick(event){
-  const audioButton=event.target.closest('[data-popup-audio-open]');
-  if(audioButton){
+  const detailsButton=event.target.closest('[data-popup-details]');
+  if(detailsButton){
     event.preventDefault();event.stopPropagation();
-    const card=audioButton.closest('.poi-place-card');
-    const panel=card?.querySelector('.poi-popup-audio');
+    const card=detailsButton.closest('.poi-place-card');
+    const panel=card?.querySelector('.poi-place-details');
     if(panel){
       panel.classList.toggle('hidden');
-      audioButton.classList.toggle('active',!panel.classList.contains('hidden'));
-      audioButton.textContent=panel.classList.contains('hidden')?'🎧 Audio gid':'✕ Audio yopish';
+      const open=!panel.classList.contains('hidden');
+      detailsButton.classList.toggle('active',open);
+      detailsButton.textContent=open?'Batafsilni yopish':'Batafsil ma’lumot';
     }
     return;
   }
@@ -135,7 +167,6 @@ function handlePoiPopupClick(event){
     document.getElementById('livePanel')?.scrollIntoView({behavior:'smooth',block:'center'});
   }
 }
-
 function selectGuideVoice(lang){
   if(!('speechSynthesis' in window))return null;
   const locale={uz:'uz-UZ',en:'en-US',ru:'ru-RU'}[lang]||lang;
