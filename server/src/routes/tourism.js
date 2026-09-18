@@ -95,7 +95,7 @@ const OFFICIAL_POI_CATALOG = [
   },
   {
     id: 'ulugbek-observatory',
-    match: /ulugh.?beg.*observ|ulug.?bek.*rasad|mirzo ulug.?bek/i,
+    match: /ulugh.?beg.*observ|ulug.?bek.*rasad|observ.*ulug.?bek/i,
     canonical_name: 'Mirzo Ulug‘bek rasadxonasi muzey majmuasi',
     authority: 'Samarqand davlat muzey-qo‘riqxonasi',
     source_url: 'https://www.samarkandmuseum.uz/muzei-dlya-menyu/memorialnyi-muzei-i-observatoriya-mirzo-ulugbeka',
@@ -116,7 +116,7 @@ const OFFICIAL_POI_CATALOG = [
   },
   {
     id: 'afrosiyob-museum',
-    match: /afrasiyab|afrosiyob/i,
+    match: /afrasiyab.*museum|museum.*afrasiyab|afrosiyob.*muzey|muzey.*afrosiyob/i,
     canonical_name: 'Samarqand tarixi Afrosiyob muzeyi',
     authority: 'Samarqand davlat muzey-qo‘riqxonasi',
     source_url: 'https://samarkandmuseum.uz/en/muzei-dlya-menyu/museum-of-the-history-of-samarkand-and-the-city-of-afrosiab',
