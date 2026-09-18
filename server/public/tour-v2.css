@@ -57,3 +57,13 @@ body.tfe-map-open{overflow:hidden}
 .route-optimization{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding:10px 11px;border:1px solid #cfe4d8;border-radius:12px;background:linear-gradient(90deg,#edf8f2,#f8fbf9)}
 .route-optimization strong,.route-optimization span{display:block}.route-optimization strong{font-size:10px;color:#1d684a}.route-optimization span{font-size:9px;color:#61796e;text-align:right}
 @media(max-width:760px){.route-optimization{display:block}.route-optimization span{text-align:left;margin-top:3px}}
+
+.integrated-service{display:grid;grid-template-columns:38px 1fr;gap:10px;margin:8px 0;padding:11px 12px;border:1px solid #d8e5de;border-radius:13px;background:#fff;box-shadow:0 5px 16px rgba(23,63,45,.05)}
+.integrated-service.integrated-restaurant{background:linear-gradient(135deg,#fffaf0,#fff);border-color:#eadfbe}
+.integrated-service.integrated-hotel{background:linear-gradient(135deg,#f3f7ff,#fff);border-color:#d5e0ef}
+.integrated-service.integrated-taxi{background:linear-gradient(135deg,#f7f8f7,#fff);border-color:#dce3df}
+.integrated-icon{width:34px;height:34px;border-radius:10px;background:#fff;display:grid;place-items:center;font-size:17px;border:1px solid rgba(34,77,58,.1)}
+.integrated-service strong,.integrated-service small,.integrated-service a,.integrated-kicker{display:block}
+.integrated-kicker{font-size:8px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;color:#738a7f;margin-bottom:2px}
+.integrated-service strong{font-size:12px;color:#183d2e}.integrated-service small{font-size:9px;line-height:1.4;color:#718178;margin-top:2px}.integrated-service a{font-size:9px;color:#1f6f50;text-decoration:none;font-weight:900;margin-top:4px}
+.stop-list .integrated-service{margin:1px 0}
