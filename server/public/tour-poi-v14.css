@@ -39,14 +39,10 @@
 .poi-place-more .official-tariff{margin-top:5px}.poi-source-link{display:inline-flex;margin-top:7px;color:#176b4d!important;font-size:8px!important;font-weight:900;text-decoration:none!important}
 
 @media(max-width:760px){
-  .tfe-place-popup.leaflet-popup{
-    position:absolute!important;
-    left:8px!important;right:8px!important;bottom:8px!important;top:auto!important;
-    transform:none!important;margin:0!important;width:auto!important;
-  }
-  .tfe-place-popup .leaflet-popup-content-wrapper{border-radius:21px;box-shadow:0 -10px 34px rgba(13,43,31,.22)}
-  .tfe-place-popup .leaflet-popup-content{width:auto!important;max-width:none!important;max-height:45dvh;overflow:auto;overscroll-behavior:contain}
-  .tfe-place-popup .leaflet-popup-tip-container{display:none!important}
+  .tfe-place-popup.leaflet-popup{margin-bottom:8px!important}
+  .tfe-place-popup .leaflet-popup-content-wrapper{border-radius:21px;box-shadow:0 14px 34px rgba(13,43,31,.22)}
+  .tfe-place-popup .leaflet-popup-content{width:min(340px,calc(100vw - 34px))!important;max-width:calc(100vw - 34px)!important;max-height:48dvh;overflow:auto;overscroll-behavior:contain}
+  .tfe-place-popup .leaflet-popup-tip-container{display:block!important}
   .tfe-place-popup .leaflet-popup-close-button{top:10px!important;right:10px!important}
   .poi-place-card{padding:12px}
   .poi-place-head{grid-template-columns:40px minmax(0,1fr);gap:9px}.poi-place-icon{width:40px;height:40px;border-radius:12px;font-size:19px}
