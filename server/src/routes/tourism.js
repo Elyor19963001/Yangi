@@ -137,6 +137,69 @@ const OFFICIAL_POI_CATALOG = [
   },
 ];
 
+const AUDIO_GUIDES = [
+  {
+    match: /registan|registon/i,
+    uz: 'Registon Samarqandning eng mashhur tarixiy maydonlaridan biridir. Majmua Ulug‘bek, Sherdor va Tillakori madrasalaridan tashkil topgan. Bu yer Temuriylar va keyingi davr me’morchiligining eng muhim namunalari qatoriga kiradi.',
+    en: 'Registan is one of the best-known historic squares of Samarkand. The ensemble consists of the Ulugh Beg, Sher-Dor and Tilla-Kori madrasas. It is a major landmark of Timurid and later Central Asian architecture.',
+    ru: 'Регистан — одна из самых известных исторических площадей Самарканда. Ансамбль включает медресе Улугбека, Шердор и Тилля-Кари. Это один из ключевых памятников тимуридской и последующей архитектуры Центральной Азии.',
+  },
+  {
+    match: /go.?ri.?amir|gur.?e.?amir|guri.?amir|amir temur maqbarasi/i,
+    uz: 'Go‘ri Amir — Amir Temur va Temuriylar sulolasi vakillari dafn etilgan mashhur maqbara. Majmua o‘zining moviy qovurg‘ali gumbazi va nafis ichki bezaklari bilan ajralib turadi. U Samarqanddagi eng muhim tarixiy ziyorat maskanlaridan biridir.',
+    en: 'Gur-e Amir is the celebrated mausoleum associated with Amir Timur and members of the Timurid dynasty. It is distinguished by its blue ribbed dome and richly decorated interior. The monument is one of Samarkand’s most important historic pilgrimage sites.',
+    ru: 'Гур-Эмир — знаменитый мавзолей, связанный с Амиром Темуром и представителями династии Тимуридов. Он выделяется голубым ребристым куполом и богато украшенным интерьером. Это одно из важнейших исторических мест паломничества Самарканда.',
+  },
+  {
+    match: /bibi.?khan|bibi.?xon|bibixonim/i,
+    uz: 'Bibixonim masjidi XV asr boshida Amir Temur davrida bunyod etilgan ulkan jome masjididir. U o‘z davrining eng yirik me’moriy loyihalaridan biri bo‘lgan. Majmua Samarqanddagi Temuriylar davri me’morchiligining muhim timsolidir.',
+    en: 'Bibi-Khanum Mosque was built at the beginning of the fifteenth century during the reign of Amir Timur. It was one of the most ambitious architectural projects of its time. The complex remains a major symbol of Timurid architecture in Samarkand.',
+    ru: 'Мечеть Биби-Ханым была возведена в начале XV века при Амире Темуре. Для своего времени это был один из самых масштабных архитектурных проектов. Комплекс остается важным символом тимуридской архитектуры Самарканда.',
+  },
+  {
+    match: /shah.?i.?zinda|shohi zinda/i,
+    uz: 'Shohi Zinda — Samarqanddagi mashhur maqbaralar va ziyorat inshootlari majmuasi. Ansambldagi yodgorliklar turli asrlarda shakllangan va koshinkor bezaklari bilan mashhur. Ziyorat an’analarida bu joy Qusam ibn Abbos nomi bilan bog‘lanadi.',
+    en: 'Shah-i-Zinda is a celebrated ensemble of mausoleums and pilgrimage structures in Samarkand. Its monuments were created over several centuries and are famous for their glazed tile decoration. In local pilgrimage tradition, the site is associated with Qutham ibn Abbas.',
+    ru: 'Шахи-Зинда — знаменитый ансамбль мавзолеев и паломнических сооружений Самарканда. Памятники комплекса создавались в разные века и известны своей изразцовой отделкой. В паломнической традиции это место связано с Кусамом ибн Аббасом.',
+  },
+  {
+    match: /ulugh.?beg.*observ|ulug.?bek.*rasad|observ.*ulug.?bek/i,
+    uz: 'Ulug‘bek rasadxonasi XV asrda olim va hukmdor Mirzo Ulug‘bek tashabbusi bilan barpo etilgan. Bu yerda osmon jismlarini juda aniq kuzatish uchun ulkan astronomik asbobdan foydalanilgan. Rasadxona Samarqandning ilm-fan tarixidagi alohida o‘rnini ko‘rsatadi.',
+    en: 'Ulugh Beg Observatory was established in the fifteenth century by the scholar and ruler Mirzo Ulugh Beg. A monumental astronomical instrument was used here for highly precise observations of the sky. The site reflects Samarkand’s exceptional place in the history of science.',
+    ru: 'Обсерватория Улугбека была создана в XV веке ученым и правителем Мирзо Улугбеком. Здесь использовался огромный астрономический инструмент для очень точных наблюдений за небом. Памятник показывает особое место Самарканда в истории науки.',
+  },
+  {
+    match: /afrasiyab.*museum|museum.*afrasiyab|afrosiyob.*muzey|muzey.*afrosiyob/i,
+    uz: 'Afrosiyob muzeyi qadimgi Samarqandning arxeologik tarixiga bag‘ishlangan. Muzeyda Afrosiyob shahristonidan topilgan buyumlar va mashhur devoriy suratlar namoyish etiladi. Bu ekspozitsiyalar Samarqandning islomdan avvalgi davr tarixini tushunishga yordam beradi.',
+    en: 'The Afrosiyob Museum presents the archaeological history of ancient Samarkand. Its collections include finds from the Afrasiab settlement and the celebrated wall paintings discovered there. The museum helps visitors understand the city’s pre-Islamic past.',
+    ru: 'Музей Афросиаба посвящен археологической истории древнего Самарканда. В его коллекции представлены находки с городища Афросиаб и знаменитые настенные росписи. Экспозиция помогает понять доисламское прошлое города.',
+  },
+  {
+    match: /siyob|siab/i,
+    uz: 'Siyob bozori Samarqandning eng mashhur an’anaviy bozorlaridan biridir. Bu yerda meva, non, ziravorlar, shirinliklar va boshqa mahalliy mahsulotlarni ko‘rish mumkin. Bozor shaharning kundalik hayoti va gastronomik madaniyatini his qilish uchun qulay joydir.',
+    en: 'Siyob Bazaar is one of Samarkand’s best-known traditional markets. Visitors can find fruit, bread, spices, sweets and many other local products here. It is a lively place to experience the city’s everyday life and food culture.',
+    ru: 'Сиабский базар — один из самых известных традиционных рынков Самарканда. Здесь можно увидеть фрукты, хлеб, специи, сладости и другие местные продукты. Это хорошее место, чтобы почувствовать повседневную жизнь и гастрономическую культуру города.',
+  },
+  {
+    match: /ruhabad|ruhobod/i,
+    uz: 'Ruhobod maqbarasi Samarqanddagi qadimiy ziyorat maskanlaridan biri. U shayx Burhoniddin Sog‘arjiy nomi bilan bog‘liq bo‘lib, XIV asr me’moriy yodgorliklari qatoriga kiradi. Maqbara o‘zining sodda va salobatli shakli bilan ajralib turadi.',
+    en: 'Ruhabad Mausoleum is one of Samarkand’s historic pilgrimage sites. It is associated with the Sufi scholar Burhan al-Din Sagarji and belongs to the city’s fourteenth-century architectural heritage. The monument is notable for its restrained and monumental form.',
+    ru: 'Мавзолей Рухабад — одно из исторических мест паломничества Самарканда. Он связан с суфийским ученым Бурхан ад-Дином Сагарджи и относится к архитектурному наследию XIV века. Памятник отличается сдержанной и монументальной формой.',
+  },
+  {
+    match: /hazrat.?khizr|hazrati.?xizr/i,
+    uz: 'Hazrati Xizr masjidi Samarqandning qadimiy muqaddas hududlaridan birida, Afrosiyob tepaligi yaqinida joylashgan. Masjid uzoq ziyorat an’anasi bilan bog‘liq. Hozirgi me’moriy qiyofasining asosiy qismi XIX asr oxiri va XX asr boshlariga mansub.',
+    en: 'Hazrati Khizr Mosque stands in one of Samarkand’s historic sacred areas near the Afrasiab hill. The site has a long pilgrimage tradition. Much of the mosque’s present architectural appearance dates from the late nineteenth and early twentieth centuries.',
+    ru: 'Мечеть Хазрати Хызр расположена в одном из исторических священных районов Самарканда, рядом с холмом Афросиаб. Место связано с давней паломнической традицией. Значительная часть современного архитектурного облика относится к концу XIX — началу XX века.',
+  },
+];
+
+function audioGuideFor(poi = {}) {
+  const name = String(poi.name || '');
+  const guide = AUDIO_GUIDES.find((row) => row.match.test(name));
+  return guide ? { uz: guide.uz, en: guide.en, ru: guide.ru } : null;
+}
+
 const PRIORITY_PATTERNS = [
   /registan|registon/i,
   /gur.?e.?amir|go.?ri.?amir|guri.?amir|amir temur/i,
@@ -1020,7 +1083,7 @@ function daySchedule(dayStops, route, intent, dayIndex, weather, adaptive, visit
     const endText = fmt(cursor);
     const dated = visitDate || weather?.date || null;
     const enriched = enrichOperationalStatus(poi, dated, startText);
-    return { ...enriched, order: index + 1, visit_minutes: visit, time_start: startText, time_end: endText };
+    return { ...enriched, audio_guide: audioGuideFor(enriched), order: index + 1, visit_minutes: visit, time_start: startText, time_end: endText };
   });
   return {
     day: dayIndex + 1,
@@ -1050,7 +1113,7 @@ function localizedSummary(intent, count, adaptedDays) {
 
 router.get('/status', (_req, res) => {
   res.json({
-    version: '1.6.0',
+    version: '1.7.0',
     openai_configured: Boolean(process.env.OPENAI_API_KEY),
     openai_model: process.env.OPENAI_API_KEY ? (process.env.OPENAI_MODEL || 'gpt-5.6-luna') : null,
     poi_source: 'Verified curated Samarkand anchors + OpenStreetMap/Overpass enrichment',
@@ -1063,6 +1126,8 @@ router.get('/status', (_req, res) => {
     curated_poi_count: CURATED_POIS.length,
     official_catalog_count: OFFICIAL_POI_CATALOG.length,
     official_catalog_checked_on: '2026-09-18',
+    audio_guide_languages: ['uz-UZ','en-US','ru-RU'],
+    audio_guide_poi_count: AUDIO_GUIDES.length,
     note: 'Registon va ayrim Samarqand davlat muzey-qo‘riqxonasi obyektlari uchun rasmiy sahifalarda e’lon qilingan ish vaqti/tariflar katalogi ishlatiladi; qolgan joylarda OSM fallback. Narxlar o‘zgarishi mumkin, xarid oldidan manbani tekshiring.',
   });
 });
@@ -1113,7 +1178,7 @@ router.post('/plan', asyncHandler(async (req, res) => {
   const knownClosedVisits = days.flatMap((day) => day.stops || []).filter((stop) => stop.operational?.planned?.status === 'closed');
   const pricedStops = days.flatMap((day) => day.stops || []).filter((stop) => stop.operational?.ticket?.status !== 'unknown');
   res.json({
-    version: '1.6.0',
+    version: '1.7.0',
     prompt,
     intent,
     start,
@@ -1129,6 +1194,7 @@ router.post('/plan', asyncHandler(async (req, res) => {
       optimization: [...new Set(days.map((d) => d.optimization?.method).filter(Boolean))],
       weather: weatherBundle.source,
       operational: 'Official Registan/Samarkand Museum-Reserve catalog + OpenStreetMap fallback',
+      audio_guide: 'Curated Uzbek, English and Russian text + browser Speech Synthesis playback',
       ai: intent.engine === 'openai' ? `OpenAI ${intent.model || ''}`.trim() : 'Local multilingual preference parser',
     },
     warnings: [
@@ -1153,7 +1219,7 @@ async function runStartupSmoke() {
     const selected = selectPois(discovered.rows, intent, CENTER).slice(0, 4);
     const route = selected.length ? (await routeDriving(CENTER, selected) || routeFallback(CENTER, selected, false)) : null;
     const names = selected.map((p) => p.name).join(' | ');
-    console.log(`[tour-smoke] v=1.6 provider=${discovered.provider} pois=${discovered.rows.length} external=${discovered.external_count} sample=${names || 'none'} route=${route?.source || 'none'} geometry=${route?.geometry?.type || 'none'}`);
+    console.log(`[tour-smoke] v=1.7 provider=${discovered.provider} pois=${discovered.rows.length} external=${discovered.external_count} sample=${names || 'none'} route=${route?.source || 'none'} geometry=${route?.geometry?.type || 'none'}`);
   } catch (error) {
     console.warn(`[tour-smoke] failed=${error.response?.status || error.message}`);
   }
