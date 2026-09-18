@@ -44,9 +44,9 @@ const OFFICIAL_POI_CATALOG = [
     tariff: {
       currency: 'UZS',
       rows: [
-        { audience: 'O‘zbekiston fuqarosi', adult: 15000, child: null, note: 'Kirish bileti' },
-        { audience: 'Xorijiy mehmon', adult: 100000, child: null, note: 'Kirish bileti' },
-        { audience: 'Maktab o‘quvchisi', adult: null, child: 10000, note: 'O‘zbekiston maktab o‘quvchilari uchun' },
+        { audience: 'O‘zbekiston fuqarosi', fixed: 15000, note: 'Kirish bileti' },
+        { audience: 'Xorijiy mehmon', fixed: 100000, note: 'Kirish bileti' },
+        { audience: 'Maktab o‘quvchisi', fixed: 10000, note: 'O‘zbekiston maktab o‘quvchilari uchun' },
       ],
       note: 'Narxlar Registon direksiyasining 2025-yil 2-oktabrdagi rasmiy sahifasida e’lon qilingan; xarid oldidan onlayn chipta portalida qayta tekshiring.',
     },
