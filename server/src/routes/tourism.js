@@ -123,6 +123,28 @@ function normalizeIntentProfile(raw = {}) {
   };
 }
 
+function mergeExplicitProfile(intent, raw = {}) {
+  const allowedInterests = new Set(['history','pilgrimage','gastronomy','museum','family','architecture']);
+  const interests = Array.isArray(raw.interests)
+    ? raw.interests.map((v) => text(v, 30)).filter((v) => allowedInterests.has(v)).slice(0, 6)
+    : [];
+  const merged = { ...intent };
+  if (interests.length) merged.interests = [...new Set(interests)];
+  if (['relaxed','normal','active'].includes(raw.pace)) merged.pace = raw.pace;
+  if (['walking','taxi','mixed'].includes(raw.transport)) merged.transport = raw.transport;
+  if (typeof raw.low_walking === 'boolean') merged.low_walking = raw.low_walking;
+  if (typeof raw.wheelchair_accessible === 'boolean') merged.wheelchair_accessible = raw.wheelchair_accessible;
+  if (typeof raw.own_vehicle === 'boolean') merged.own_vehicle = raw.own_vehicle;
+  if (raw.children_count !== undefined) merged.children_count = clamp(Number(raw.children_count) || 0, 0, 10);
+  if (raw.seniors_count !== undefined) merged.seniors_count = clamp(Number(raw.seniors_count) || 0, 0, 10);
+  if (/^\d{2}:\d{2}$/.test(String(raw.preferred_start_time || ''))) merged.preferred_start_time = String(raw.preferred_start_time);
+  if (/^\d{2}:\d{2}$/.test(String(raw.preferred_end_time || ''))) merged.preferred_end_time = String(raw.preferred_end_time);
+  if (raw.origin_country) merged.origin_country = text(raw.origin_country, 60);
+  const budget = number(raw.budget_uzs);
+  if (budget !== null && budget >= 0) merged.budget_uzs = Math.round(budget);
+  return merged;
+}
+
 function fallbackIntent(prompt, explicitDays) {
   const p = prompt.toLocaleLowerCase('uz-UZ');
   const dayMatch = p.match(/\b([1-5])\s*(?:kun|day|days|дн(?:я|ей)?)/i);
@@ -715,7 +737,8 @@ router.post('/plan', asyncHandler(async (req, res) => {
   if (prompt.length < 4) return res.status(400).json({ error: 'Sayohat istagingizni yozing.' });
   const fallback = fallbackIntent(prompt, req.body.days);
   const parsedIntent = await parseIntentWithOpenAI(prompt, fallback);
-  const intent = normalizeIntentProfile(parsedIntent);
+  const explicitIntent = mergeExplicitProfile(parsedIntent, req.body.profile || {});
+  const intent = normalizeIntentProfile(explicitIntent);
   const startLat = number(req.body.start_latitude);
   const startLon = number(req.body.start_longitude);
   const requestedStart = validCoord(startLat, startLon)
