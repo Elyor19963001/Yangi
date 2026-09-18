@@ -799,7 +799,7 @@ async function boot(){
   $('days').addEventListener('change',syncDateRange);
   $('locateBtn').addEventListener('click',locate);
   $('plannerForm').addEventListener('submit',submit);
-  $('startLiveBtn').addEventListener('click',startLive);
+  $('startLiveBtn').addEventListener('click',()=>startLive());
   $('pauseLiveBtn').addEventListener('click',togglePause);
   $('stopLiveBtn').addEventListener('click',()=>{stopLive(true);toast('Live Tour tugatildi')});
   $('centerLiveBtn').addEventListener('click',centerLive);
