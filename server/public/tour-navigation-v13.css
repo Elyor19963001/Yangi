@@ -1,0 +1,26 @@
+/* Live GPS voice navigation v13 */
+.voice-nav-controls{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}
+.voice-nav-controls label{display:block;min-width:0;border:1px solid #d7e4dd;background:#fff;border-radius:11px;padding:7px 8px}
+.voice-nav-controls label>span{display:block;font-size:8px;text-transform:uppercase;letter-spacing:.06em;color:#789087;font-weight:900;margin-bottom:4px}
+.voice-nav-controls select{width:100%;border:0;background:transparent;color:#234f3d;font-size:10px;font-weight:900;outline:none}
+.voice-nav-controls .auto-guide-toggle{grid-column:1/-1;display:flex;align-items:center;gap:7px;background:#f8fbf9}
+.voice-nav-controls .auto-guide-toggle input{width:16px;height:16px;accent-color:#176b4d}
+.voice-nav-controls .auto-guide-toggle span{margin:0;text-transform:none;letter-spacing:0;font-size:9px;color:#426657}
+
+.nav-maneuver-card{display:grid;grid-template-columns:58px 1fr;gap:10px;align-items:center;margin-top:9px;padding:10px;border-radius:14px;background:linear-gradient(135deg,#143f2f,#1a654a);color:#fff;box-shadow:0 8px 20px rgba(20,63,47,.14)}
+.nav-maneuver-icon{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;background:rgba(255,255,255,.12);font-size:30px;font-weight:900}
+.nav-maneuver-copy{min-width:0}.nav-maneuver-copy>span,.nav-maneuver-copy>strong,.nav-maneuver-copy>small{display:block}
+.nav-maneuver-copy>span{font-size:9px;color:#b9d7ca;text-transform:uppercase;letter-spacing:.05em;font-weight:850}
+.nav-maneuver-copy>strong{font-size:15px;line-height:1.2;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-maneuver-copy>small{font-size:8px;color:#c9ded5;margin-top:4px}.nav-maneuver-copy>small b{color:#fff}
+.nav-speaking{box-shadow:0 0 0 3px rgba(61,221,145,.18)!important}
+
+@media(max-width:760px){
+  .live-card{border-radius:16px!important;padding:9px!important}
+  .voice-nav-controls{grid-template-columns:1fr 1fr;gap:5px;margin-top:7px}
+  .voice-nav-controls label{padding:6px 7px;border-radius:10px}.voice-nav-controls label>span{font-size:7px}.voice-nav-controls select{font-size:9px}
+  .voice-nav-controls .auto-guide-toggle{min-height:36px;padding:7px 8px}.voice-nav-controls .auto-guide-toggle span{font-size:8px}
+  .nav-maneuver-card{grid-template-columns:50px 1fr;gap:8px;margin-top:7px;padding:8px;border-radius:13px;position:sticky;top:62px;z-index:980}
+  .nav-maneuver-icon{width:46px;height:46px;border-radius:12px;font-size:26px}
+  .nav-maneuver-copy>span{font-size:7px}.nav-maneuver-copy>strong{font-size:13px}.nav-maneuver-copy>small{font-size:7px}
+}

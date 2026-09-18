@@ -1,7 +1,7 @@
 const state={
   map:null,start:null,result:null,support:null,activeDay:0,routeLayer:null,markers:[],supportMarkers:[],selectedServices:{},
   audioEngine:'unknown',
-  live:{watchId:null,active:false,paused:false,nextIndex:0,marker:null,accuracyCircle:null,trailLayer:null,trailCoords:[],travelledM:0,lastPos:null,liveRouteLayer:null,routeGeometry:null,lastRerouteAt:0,current:null,follow:true,rerouting:false}
+  live:{watchId:null,active:false,paused:false,nextIndex:0,marker:null,accuracyCircle:null,trailLayer:null,trailCoords:[],travelledM:0,lastPos:null,liveRouteLayer:null,routeGeometry:null,lastRerouteAt:0,current:null,follow:true,rerouting:false,navSteps:[],navStepIndex:0,navAnnounced:new Set(),navFallbackAnnounced:new Set(),voiceLang:'uz',guidanceMode:'essential',autoGuide:true,navAudio:null,professionalVoice:false,lastOffrouteSpokenAt:0}
 };
 const guideAudioCache=new Map();
 let guideAudioPlayer=null;
@@ -153,6 +153,176 @@ function handleAudioGuideClick(event){
   if(play){event.preventDefault();event.stopPropagation();playProfessionalGuide(play);return;}
   const stop=event.target.closest('.audio-guide-stop');
   if(stop){event.preventDefault();event.stopPropagation();stopGuideAudio();}
+}
+
+function navLocale(lang){return {uz:'uz-UZ',en:'en-US',ru:'ru-RU'}[lang]||'uz-UZ'}
+function stopNavAudio(){
+  const l=state.live;
+  if(l.navAudio){try{l.navAudio.pause();l.navAudio.currentTime=0}catch{}l.navAudio=null}
+  if('speechSynthesis' in window)window.speechSynthesis.cancel();
+  document.querySelectorAll('.nav-speaking').forEach(x=>x.classList.remove('nav-speaking'));
+}
+function browserSpeakNav(text,lang){
+  if(!text||!('speechSynthesis' in window)||typeof SpeechSynthesisUtterance==='undefined')return;
+  if(guideAudioPlayer)stopGuideAudio();
+  stopNavAudio();
+  const utter=new SpeechSynthesisUtterance(text);
+  utter.lang=navLocale(lang);
+  utter.rate=0.98;
+  utter.pitch=1;
+  const voice=selectGuideVoice(lang);
+  if(voice)utter.voice=voice;
+  window.speechSynthesis.speak(utter);
+}
+async function navPhraseJson(payload){
+  try{
+    const r=await fetch('/api/tourism/live/voice?format=json',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload)});
+    if(!r.ok)return null;
+    return await r.json();
+  }catch{return null}
+}
+async function speakNavEvent(payload,options={}){
+  const l=state.live;
+  if(l.guidanceMode==='mute'&&!options.force)return;
+  const body=Object.assign({},payload,{lang:l.voiceLang});
+  const visual=document.getElementById('navVoiceState');
+  if(visual)visual.textContent=l.professionalVoice?'AI ovoz':'Qurilma ovozi';
+  if(!l.professionalVoice){
+    const meta=await navPhraseJson(body);
+    if(meta&&meta.phrase)browserSpeakNav(meta.phrase,l.voiceLang);
+    return;
+  }
+  try{
+    stopNavAudio();
+    if(guideAudioPlayer)stopGuideAudio();
+    const response=await fetch('/api/tourism/live/voice',{method:'POST',headers:{'Content-Type':'application/json','Accept':'audio/mpeg'},body:JSON.stringify(body)});
+    if(!response.ok)throw new Error('nav audio unavailable');
+    const blob=await response.blob();
+    if(!blob.size)throw new Error('empty nav audio');
+    const url=URL.createObjectURL(blob);
+    l.navAudio=new Audio(url);
+    l.navAudio.onended=()=>{URL.revokeObjectURL(url);l.navAudio=null};
+    l.navAudio.onerror=()=>{URL.revokeObjectURL(url);l.navAudio=null};
+    await l.navAudio.play();
+  }catch{
+    const meta=await navPhraseJson(body);
+    if(meta&&meta.phrase)browserSpeakNav(meta.phrase,l.voiceLang);
+  }
+}
+function maneuverIcon(step){
+  const m=String(step&&step.modifier||'').toLowerCase();
+  if(m==='left'||m==='slight left'||m==='sharp left')return '↰';
+  if(m==='right'||m==='slight right'||m==='sharp right')return '↱';
+  if(m==='uturn')return '↶';
+  return '↑';
+}
+function localTurnText(step){
+  const lang=state.live.voiceLang;
+  const mod=String(step&&step.modifier||'straight').toLowerCase();
+  const dirs={
+    uz:{'straight':'To‘g‘ri davom eting','slight right':'Biroz o‘ngga','right':'O‘ngga buriling','sharp right':'Keskin o‘ngga','uturn':'Ortga qayriling','sharp left':'Keskin chapga','left':'Chapga buriling','slight left':'Biroz chapga'},
+    en:{'straight':'Continue straight','slight right':'Bear right','right':'Turn right','sharp right':'Sharp right','uturn':'Make a U-turn','sharp left':'Sharp left','left':'Turn left','slight left':'Bear left'},
+    ru:{'straight':'Продолжайте прямо','slight right':'Возьмите вправо','right':'Поверните направо','sharp right':'Резко направо','uturn':'Развернитесь','sharp left':'Резко налево','left':'Поверните налево','slight left':'Возьмите влево'}
+  };
+  const set=dirs[lang]||dirs.uz;
+  const base=set[mod]||set.straight;
+  return step&&step.name?base+' · '+step.name:base;
+}
+function setNavigationSteps(steps){
+  const l=state.live;
+  l.navSteps=(Array.isArray(steps)?steps:[]).filter(step=>!['depart','arrive'].includes(String(step&&step.type||''))&&step&&step.maneuver);
+  l.navStepIndex=0;
+  l.navAnnounced=new Set();
+  l.navFallbackAnnounced=new Set();
+  renderNavigationBanner();
+}
+function nextNavigationStep(){return state.live.navSteps[state.live.navStepIndex]||null}
+function renderNavigationBanner(distance){
+  const step=nextNavigationStep();
+  const next=nextLiveStop();
+  const lang=state.live.voiceLang;
+  const labels={uz:{next:'Keyingi manzil',ready:'Marshrut tayyor',waiting:'GPS masofa aniqlanmoqda…',tracking:'Manzilgacha GPS kuzatuvi'},en:{next:'Next stop',ready:'Route ready',waiting:'Waiting for GPS distance…',tracking:'GPS guidance to destination'},ru:{next:'Следующая точка',ready:'Маршрут готов',waiting:'Определяю расстояние по GPS…',tracking:'GPS-навигация до точки'}};
+  const t=labels[lang]||labels.uz;
+  const icon=document.getElementById('navManeuverIcon');
+  const title=document.getElementById('navInstruction');
+  const meta=document.getElementById('navInstructionDistance');
+  if(icon)icon.textContent=step?maneuverIcon(step):'◎';
+  if(title)title.textContent=step?localTurnText(step):(next?t.next+': '+next.name:t.ready);
+  if(meta)meta.textContent=Number.isFinite(Number(distance))?formatDistance(Number(distance)):(step?t.waiting:t.tracking);
+}
+function stepDistanceM(current,step){
+  const lat=Number(step&&step.maneuver&&step.maneuver.latitude),lon=Number(step&&step.maneuver&&step.maneuver.longitude);
+  return Number.isFinite(lat)&&Number.isFinite(lon)?haversine(current.latitude,current.longitude,lat,lon):null;
+}
+function announcementBuckets(){
+  const walking=state.result&&state.result.intent&&state.result.intent.transport==='walking';
+  if(state.live.guidanceMode==='full')return walking?[120,60,20]:[300,120,35];
+  return walking?[60,20]:[120,35];
+}
+function maybeSpeakTurn(current,accuracy){
+  const l=state.live,step=nextNavigationStep();
+  if(!step)return false;
+  const d=stepDistanceM(current,step);
+  if(d===null)return false;
+  renderNavigationBanner(d);
+  const buckets=announcementBuckets();
+  for(const threshold of buckets){
+    const key=String(step.id)+':'+String(threshold);
+    if(d<=threshold&&!l.navAnnounced.has(key)){
+      l.navAnnounced.add(key);
+      speakNavEvent({event:'turn',distance_m:d,modifier:step.modifier,street:step.name||''});
+      break;
+    }
+  }
+  const passRadius=Math.max(20,Math.min(38,Number(accuracy||25)));
+  if(d<=passRadius){l.navStepIndex+=1;renderNavigationBanner()}
+  return true;
+}
+function maybeSpeakFallbackDistance(distance){
+  const l=state.live;
+  if(l.guidanceMode==='mute')return;
+  const thresholds=l.guidanceMode==='full'?[500,250,100]:[250,100];
+  for(const threshold of thresholds){
+    const key=String(l.nextIndex)+':'+String(threshold);
+    if(distance<=threshold&&!l.navFallbackAnnounced.has(key)){
+      l.navFallbackAnnounced.add(key);
+      speakNavEvent({event:'continue',distance_m:distance});
+      break;
+    }
+  }
+}
+async function playAutoGuideForStop(stop){
+  const guide=stop&&stop.audio_guide;
+  if(!state.live.autoGuide||!guide||!guide.id)return;
+  const lang=state.live.voiceLang;
+  const key=guide.id+':'+lang+':short';
+  try{
+    stopNavAudio();
+    let url=guideAudioCache.get(key);
+    if(!url){
+      const response=await fetch('/api/tourism/audio-guide/'+encodeURIComponent(guide.id)+'?lang='+encodeURIComponent(lang)+'&mode=short',{headers:{Accept:'audio/mpeg'}});
+      if(!response.ok)return;
+      const blob=await response.blob();
+      if(!blob.size)return;
+      url=URL.createObjectURL(blob);
+      guideAudioCache.set(key,url);
+    }
+    if(guideAudioPlayer){try{guideAudioPlayer.pause()}catch{}}
+    guideAudioPlayer=new Audio(url);
+    await guideAudioPlayer.play();
+  }catch{}
+}
+function syncNavigatorControls(){
+  const l=state.live;
+  const lang=document.getElementById('navLanguage');
+  const mode=document.getElementById('navGuidance');
+  const auto=document.getElementById('navAutoGuide');
+  if(lang)lang.value=l.voiceLang;
+  if(mode)mode.value=l.guidanceMode;
+  if(auto)auto.checked=l.autoGuide;
+  const badge=document.getElementById('navVoiceState');
+  if(badge)badge.textContent=l.professionalVoice?'AI ovoz':'Qurilma ovozi';
+  renderNavigationBanner();
 }
 function locate(){if(!navigator.geolocation){toast('Brauzer geolokatsiyani qo‘llamaydi');return}const replan=Boolean(state.result);toast('Joylashuv aniqlanmoqda…');navigator.geolocation.getCurrentPosition(pos=>{state.start={latitude:pos.coords.latitude,longitude:pos.coords.longitude,name:'Mening GPS joylashuvim'};$('locationLine').textContent=`Boshlanish: GPS joylashuvim · ±${Math.round(pos.coords.accuracy||0)} m`;if(replan){toast('GPS olindi — marshrut shu joydan qayta optimallashtirilmoqda');setTimeout(()=>$('plannerForm')?.requestSubmit(),250)}else toast('Joylashuv olindi — marshrut shu nuqtadan boshlanadi')},()=>toast('Joylashuvga ruxsat berilmadi'),{enableHighAccuracy:true,timeout:10000,maximumAge:60000})}
 function intentBadges(intent={},support={}){const labels={history:'Tarix',pilgrimage:'Ziyorat',gastronomy:'Gastronomiya',museum:'Muzey',family:'Oilaviy',architecture:'Arxitektura'};const timeWindow=intent.preferred_start_time&&intent.preferred_end_time?`🕘 ${intent.preferred_start_time}–${intent.preferred_end_time}`:intent.preferred_start_time?`🕘 ${intent.preferred_start_time} dan`:null;const rows=[...(intent.interests||[]).map(i=>labels[i]||i),`${intent.days||2} kun`,state.result?.trip_start_date?`📅 ${state.result.trip_start_date}`:null,state.result?.weather_adaptive?'🌦️ Adaptive':null,intent.low_walking?'Kam yurish':null,intent.transport==='taxi'?'Taksi':intent.transport==='walking'?'Piyoda':intent.own_vehicle?'🚗 Shaxsiy avtomobil':'Aralash transport',Number(intent.children_count||0)>0?`👧 ${Number(intent.children_count)} bola`:null,Number(intent.seniors_count||0)>0?`👵 ${Number(intent.seniors_count)} kishi 65+`:null,intent.wheelchair_accessible?'♿ Qulaylik muhim':null,timeWindow,intent.origin_country?`🌍 ${intent.origin_country}`:null,support.party_size?`${support.party_size} sayohatchi`:null,support.budget?.total_uzs?`${money(support.budget.total_uzs)} so‘m budjet`:intent.budget_uzs?`${money(intent.budget_uzs)} so‘m budjet`:null].filter(Boolean);return rows.map(x=>`<span class="badge">${esc(x)}</span>`).join('')}
@@ -329,23 +499,102 @@ function liveDay(){return state.result?.days?.[state.activeDay]||null}
 function liveStops(){const day=liveDay();return day?.navigation_stops?.length?day.navigation_stops:(day?.stops||[])}
 function nextLiveStop(){return liveStops()[state.live.nextIndex]||null}
 function setLiveStatus(text,mode='idle'){$('liveStatus').textContent=text;$('liveDot').className=`live-dot ${mode}`}
-function resetLiveUi(){setLiveStatus('GPS tayyor');$('liveNextName').textContent='—';$('liveNextMeta').textContent='Live Tour boshlanganda masofa va ETA chiqadi.';$('liveAccuracy').textContent='—';$('liveDeviation').textContent='—';$('liveTravelled').textContent='0 m';$('startLiveBtn').disabled=false;$('pauseLiveBtn').disabled=true;$('pauseLiveBtn').textContent='⏸ Pauza';$('stopLiveBtn').disabled=true;$('centerLiveBtn').disabled=true}
+function resetLiveUi(){setLiveStatus('GPS tayyor');$('liveNextName').textContent='—';$('liveNextMeta').textContent='Live Tour boshlanganda masofa va ETA chiqadi.';$('liveAccuracy').textContent='—';$('liveDeviation').textContent='—';$('liveTravelled').textContent='0 m';$('startLiveBtn').disabled=false;$('pauseLiveBtn').disabled=true;$('pauseLiveBtn').textContent='⏸ Pauza';$('stopLiveBtn').disabled=true;$('centerLiveBtn').disabled=true;state.live.navSteps=[];state.live.navStepIndex=0;state.live.navAnnounced=new Set();state.live.navFallbackAnnounced=new Set();stopNavAudio();syncNavigatorControls()}
 function clearLiveLayers(){const l=state.live;if(l.marker){state.map.removeLayer(l.marker);l.marker=null}if(l.accuracyCircle){state.map.removeLayer(l.accuracyCircle);l.accuracyCircle=null}if(l.trailLayer){state.map.removeLayer(l.trailLayer);l.trailLayer=null}if(l.liveRouteLayer){state.map.removeLayer(l.liveRouteLayer);l.liveRouteLayer=null}}
 function stopGpsWatch(){if(state.live.watchId!==null){navigator.geolocation.clearWatch(state.live.watchId);state.live.watchId=null}}
-function stopLive(clear=true){stopGpsWatch();state.live.active=false;state.live.paused=false;state.live.rerouting=false;if(clear){clearLiveLayers();state.live.nextIndex=0;state.live.trailCoords=[];state.live.travelledM=0;state.live.lastPos=null;state.live.current=null;state.live.routeGeometry=null;resetLiveUi()}else{$('startLiveBtn').disabled=false;$('pauseLiveBtn').disabled=true;$('stopLiveBtn').disabled=true;$('centerLiveBtn').disabled=false}}
+function stopLive(clear=true){stopGpsWatch();stopNavAudio();state.live.active=false;state.live.paused=false;state.live.rerouting=false;if(clear){clearLiveLayers();state.live.nextIndex=0;state.live.trailCoords=[];state.live.travelledM=0;state.live.lastPos=null;state.live.current=null;state.live.routeGeometry=null;resetLiveUi()}else{$('startLiveBtn').disabled=false;$('pauseLiveBtn').disabled=true;$('stopLiveBtn').disabled=true;$('centerLiveBtn').disabled=false}}
 function startGpsWatch(){if(!navigator.geolocation){setLiveStatus('GPS mavjud emas','error');toast('Brauzer GPS kuzatuvini qo‘llamaydi');return}stopGpsWatch();state.live.watchId=navigator.geolocation.watchPosition(onLivePosition,onLiveError,{enableHighAccuracy:true,timeout:15000,maximumAge:2500})}
-function startLive(){if(!state.result){toast('Avval marshrut yarating');return}if(!navigator.geolocation){toast('Brauzer geolokatsiyani qo‘llamaydi');return}stopLive(true);state.live.active=true;state.live.follow=true;state.live.routeGeometry=liveDay()?.route?.geometry||null;$('startLiveBtn').disabled=true;$('pauseLiveBtn').disabled=false;$('stopLiveBtn').disabled=false;$('centerLiveBtn').disabled=false;setLiveStatus('GPS ulanmoqda…','active');$('liveNextName').textContent=nextLiveStop()?.name||'—';$('liveNextMeta').textContent='Aniq joylashuv kutilmoqda…';startGpsWatch();toast('Live Tour boshlandi')}
-function togglePause(){if(!state.live.active&&state.live.paused){state.live.active=true;state.live.paused=false;$('pauseLiveBtn').textContent='⏸ Pauza';setLiveStatus('Live GPS faol','active');startGpsWatch();return}if(!state.live.active)return;stopGpsWatch();state.live.active=false;state.live.paused=true;$('pauseLiveBtn').textContent='▶ Davom ettirish';setLiveStatus('Pauza','paused')}
+function startLive(){if(!state.result){toast('Avval marshrut yarating');return}if(!navigator.geolocation){toast('Brauzer geolokatsiyani qo‘llamaydi');return}stopLive(true);state.live.active=true;state.live.follow=true;state.live.routeGeometry=liveDay()?.route?.geometry||null;$('startLiveBtn').disabled=true;$('pauseLiveBtn').disabled=false;$('stopLiveBtn').disabled=false;$('centerLiveBtn').disabled=false;setLiveStatus('GPS ulanmoqda…','active');$('liveNextName').textContent=nextLiveStop()?.name||'—';$('liveNextMeta').textContent='Aniq joylashuv kutilmoqda…';renderNavigationBanner();startGpsWatch();speakNavEvent({event:'start',stop_name:nextLiveStop()?.name||''});toast('Live Tour boshlandi')}
+function togglePause(){if(!state.live.active&&state.live.paused){state.live.active=true;state.live.paused=false;$('pauseLiveBtn').textContent='⏸ Pauza';setLiveStatus('Live GPS faol','active');startGpsWatch();return}if(!state.live.active)return;stopGpsWatch();stopNavAudio();state.live.active=false;state.live.paused=true;$('pauseLiveBtn').textContent='▶ Davom ettirish';setLiveStatus('Pauza','paused')}
 function finishLiveDay(){stopGpsWatch();state.live.active=false;state.live.paused=false;setLiveStatus('Kun marshruti yakunlandi','done');$('liveNextName').textContent='Barcha nuqtalarga yetib keldingiz';$('liveNextMeta').textContent=`Yurilgan GPS yo‘li: ${formatDistance(state.live.travelledM)}`;$('startLiveBtn').disabled=false;$('pauseLiveBtn').disabled=true;$('stopLiveBtn').disabled=true;toast('Bugungi Live Tour yakunlandi')}
 function onLiveError(err){const msg=err.code===1?'GPS ruxsati berilmadi':err.code===2?'Joylashuv aniqlanmadi':'GPS javobi kechikdi';setLiveStatus(msg,'error');$('liveNextMeta').textContent='Brauzer lokatsiya ruxsatini va GPS holatini tekshiring.';toast(msg)}
 function project(lat,lon,refLat){const r=6371000,rad=Math.PI/180;return {x:r*lon*rad*Math.cos(refLat*rad),y:r*lat*rad}}
 function pointSegmentDistanceM(p,a,b){const ref=(p.lat+a.lat+b.lat)/3,P=project(p.lat,p.lon,ref),A=project(a.lat,a.lon,ref),B=project(b.lat,b.lon,ref),dx=B.x-A.x,dy=B.y-A.y;if(dx===0&&dy===0)return Math.hypot(P.x-A.x,P.y-A.y);const t=Math.max(0,Math.min(1,((P.x-A.x)*dx+(P.y-A.y)*dy)/(dx*dx+dy*dy)));return Math.hypot(P.x-(A.x+t*dx),P.y-(A.y+t*dy))}
 function distanceToGeometryM(latitude,longitude,geometry){const coords=geometry?.coordinates;if(geometry?.type!=='LineString'||!Array.isArray(coords)||coords.length<2)return null;let best=Infinity;for(let i=1;i<coords.length;i++){const a={lat:Number(coords[i-1][1]),lon:Number(coords[i-1][0])},b={lat:Number(coords[i][1]),lon:Number(coords[i][0])};if(![a.lat,a.lon,b.lat,b.lon].every(Number.isFinite))continue;best=Math.min(best,pointSegmentDistanceM({lat:latitude,lon:longitude},a,b))}return Number.isFinite(best)?best:null}
 function updateLiveLayers(pos){const l=state.live,lat=pos.coords.latitude,lon=pos.coords.longitude,accuracy=Math.max(1,Number(pos.coords.accuracy)||1);if(!l.marker){const icon=L.divIcon({className:'live-user-marker',html:'●',iconSize:[30,30],iconAnchor:[15,15]});l.marker=L.marker([lat,lon],{icon,zIndexOffset:1200}).addTo(state.map).bindPopup('<strong>Siz shu yerdasiz</strong>')}else l.marker.setLatLng([lat,lon]);if(!l.accuracyCircle)l.accuracyCircle=L.circle([lat,lon],{radius:accuracy,weight:1,fillOpacity:.08}).addTo(state.map);else{l.accuracyCircle.setLatLng([lat,lon]);l.accuracyCircle.setRadius(accuracy)}if(!l.trailLayer)l.trailLayer=L.polyline(l.trailCoords,{weight:4,opacity:.7,dashArray:'7 6'}).addTo(state.map);else l.trailLayer.setLatLngs(l.trailCoords);if(l.follow)state.map.panTo([lat,lon],{animate:true,duration:.5})}
-async function rerouteFromCurrent(current,forced=false){const l=state.live,stops=liveStops().slice(l.nextIndex);if(!stops.length||l.rerouting)return;const now=Date.now();if(!forced&&now-l.lastRerouteAt<30000)return;l.rerouting=true;l.lastRerouteAt=now;setLiveStatus('Yo‘nalish qayta hisoblanmoqda…','reroute');try{const data=await api('/api/tourism/live/route',{method:'POST',body:JSON.stringify({current:{latitude:current.latitude,longitude:current.longitude,name:'Joriy GPS'},stops:stops.map(s=>({latitude:s.latitude,longitude:s.longitude,name:s.name})),transport:state.result?.intent?.transport||'mixed'})});l.routeGeometry=data.route?.geometry||l.routeGeometry;if(l.liveRouteLayer){state.map.removeLayer(l.liveRouteLayer);l.liveRouteLayer=null}if(l.routeGeometry)l.liveRouteLayer=L.geoJSON(l.routeGeometry,{style:{weight:6,opacity:.85,dashArray:'10 5'}}).addTo(state.map);setLiveStatus('Live GPS faol','active');toast(forced?'Joriy joylashuvdan yo‘l hisoblandi':'Marshrutdan chetlandingiz — yo‘l yangilandi')}catch(err){setLiveStatus('Live GPS faol','active');toast(`Yo‘lni yangilash imkoni bo‘lmadi: ${err.message}`)}finally{l.rerouting=false}}
+async function rerouteFromCurrent(current,forced=false){
+  const l=state.live,stops=liveStops().slice(l.nextIndex);
+  if(!stops.length||l.rerouting)return;
+  const now=Date.now();
+  if(!forced&&now-l.lastRerouteAt<30000)return;
+  const hadSteps=l.navSteps.length>0;
+  l.rerouting=true;l.lastRerouteAt=now;
+  setLiveStatus('Yo‘nalish qayta hisoblanmoqda…','reroute');
+  try{
+    const data=await api('/api/tourism/live/route',{method:'POST',body:JSON.stringify({
+      current:{latitude:current.latitude,longitude:current.longitude,name:'Joriy GPS'},
+      stops:stops.map(x=>({latitude:x.latitude,longitude:x.longitude,name:x.name})),
+      transport:state.result?.intent?.transport||'mixed'
+    })});
+    l.routeGeometry=data.route?.geometry||l.routeGeometry;
+    setNavigationSteps(data.route?.steps||[]);
+    if(l.liveRouteLayer){state.map.removeLayer(l.liveRouteLayer);l.liveRouteLayer=null}
+    if(l.routeGeometry)l.liveRouteLayer=L.geoJSON(l.routeGeometry,{style:{weight:6,opacity:.85,dashArray:'10 5'}}).addTo(state.map);
+    setLiveStatus('Live GPS faol','active');
+    if(hadSteps&&!forced)speakNavEvent({event:'reroute'});
+    toast(forced?'Joriy joylashuvdan yo‘l hisoblandi':'Marshrutdan chetlandingiz — yo‘l yangilandi');
+  }catch(err){
+    setLiveStatus('Live GPS faol','active');
+    toast('Yo‘lni yangilash imkoni bo‘lmadi: '+err.message);
+  }finally{l.rerouting=false}
+}
 function liveEtaSeconds(distance,pos){const speed=Number(pos.coords.speed);let mps=Number.isFinite(speed)&&speed>0.6?speed:(state.result?.intent?.transport==='walking'?1.25:5.5);return Math.max(60,Math.round(distance/mps))}
 function formatEta(seconds){const min=Math.max(1,Math.round(seconds/60));return min<60?`~${min} daqiqa`:`~${Math.floor(min/60)} soat ${min%60} daqiqa`}
-async function onLivePosition(pos){if(!state.live.active)return;const l=state.live,current={latitude:pos.coords.latitude,longitude:pos.coords.longitude};l.current=current;const accuracy=Math.round(Number(pos.coords.accuracy)||0);$('liveAccuracy').textContent=accuracy?`±${accuracy} m`:'—';if(l.lastPos){const step=haversine(l.lastPos.latitude,l.lastPos.longitude,current.latitude,current.longitude);if(step>=3&&step<500){l.travelledM+=step;l.trailCoords.push([current.latitude,current.longitude])}}else l.trailCoords.push([current.latitude,current.longitude]);l.lastPos=current;$('liveTravelled').textContent=formatDistance(l.travelledM);updateLiveLayers(pos);const next=nextLiveStop();if(!next){finishLiveDay();return}const distance=haversine(current.latitude,current.longitude,Number(next.latitude),Number(next.longitude));$('liveNextName').textContent=next.name;$('liveNextMeta').textContent=`${formatDistance(distance)} · ${formatEta(liveEtaSeconds(distance,pos))}`;const deviation=distanceToGeometryM(current.latitude,current.longitude,l.routeGeometry||liveDay()?.route?.geometry);$('liveDeviation').textContent=deviation===null?'—':formatDistance(deviation);const arrivalRadius=Math.max(80,Math.min(100,accuracy||80));if(distance<=arrivalRadius&&accuracy<=120){toast(`${next.name}: yetib keldingiz`);l.nextIndex+=1;const following=nextLiveStop();if(!following){finishLiveDay();return}$('liveNextName').textContent=following.name;$('liveNextMeta').textContent='Keyingi nuqta uchun yo‘l yangilanmoqda…';await rerouteFromCurrent(current,true);return}if(!l.liveRouteLayer&&l.trailCoords.length===1){await rerouteFromCurrent(current,true);return}if(deviation!==null&&deviation>120&&accuracy<=100)await rerouteFromCurrent(current,false)}
+async function onLivePosition(pos){
+  if(!state.live.active)return;
+  const l=state.live,current={latitude:pos.coords.latitude,longitude:pos.coords.longitude};
+  l.current=current;
+  const accuracy=Math.round(Number(pos.coords.accuracy)||0);
+  $('liveAccuracy').textContent=accuracy?'±'+accuracy+' m':'—';
+  if(l.lastPos){
+    const moved=haversine(l.lastPos.latitude,l.lastPos.longitude,current.latitude,current.longitude);
+    if(moved>=3&&moved<500){l.travelledM+=moved;l.trailCoords.push([current.latitude,current.longitude])}
+  }else l.trailCoords.push([current.latitude,current.longitude]);
+  l.lastPos=current;
+  $('liveTravelled').textContent=formatDistance(l.travelledM);
+  updateLiveLayers(pos);
+
+  const next=nextLiveStop();
+  if(!next){finishLiveDay();return}
+  const distance=haversine(current.latitude,current.longitude,Number(next.latitude),Number(next.longitude));
+  $('liveNextName').textContent=next.name;
+  $('liveNextMeta').textContent=formatDistance(distance)+' · '+formatEta(liveEtaSeconds(distance,pos));
+  const deviation=distanceToGeometryM(current.latitude,current.longitude,l.routeGeometry||liveDay()?.route?.geometry);
+  $('liveDeviation').textContent=deviation===null?'—':formatDistance(deviation);
+
+  if(l.navSteps.length)maybeSpeakTurn(current,accuracy);
+  else{renderNavigationBanner(distance);maybeSpeakFallbackDistance(distance)}
+
+  const arrivalRadius=Math.max(35,Math.min(70,Math.round((accuracy||35)*1.25)));
+  if(distance<=arrivalRadius&&accuracy<=100){
+    speakNavEvent({event:'arrive',stop_name:next.name});
+    toast(next.name+': yetib keldingiz');
+    const arrived=next;
+    l.nextIndex+=1;
+    l.navSteps=[];l.navStepIndex=0;l.navAnnounced=new Set();l.navFallbackAnnounced=new Set();
+    const following=nextLiveStop();
+    if(!following){
+      setTimeout(()=>playAutoGuideForStop(arrived),1400);
+      finishLiveDay();
+      return;
+    }
+    $('liveNextName').textContent=following.name;
+    $('liveNextMeta').textContent='Keyingi nuqta uchun yo‘l yangilanmoqda…';
+    setTimeout(()=>playAutoGuideForStop(arrived),1500);
+    await rerouteFromCurrent(current,true);
+    if(l.guidanceMode==='full')setTimeout(()=>speakNavEvent({event:'next_stop',stop_name:following.name}),2500);
+    return;
+  }
+
+  if(!l.liveRouteLayer&&l.trailCoords.length===1){await rerouteFromCurrent(current,true);return}
+  if(deviation!==null&&deviation>120&&accuracy<=100){
+    if(Date.now()-l.lastOffrouteSpokenAt>45000){
+      l.lastOffrouteSpokenAt=Date.now();
+      speakNavEvent({event:'offroute'});
+    }
+    await rerouteFromCurrent(current,false);
+  }
+}
 function centerLive(){const c=state.live.current;if(!c)return;state.live.follow=true;state.map.setView([c.latitude,c.longitude],Math.max(state.map.getZoom(),16),{animate:true})}
 
 function renderDetails(){
@@ -452,5 +701,37 @@ async function submit(e){
     $('planBtn').textContent='✨ Marshrut yaratish';
   }
 }
-async function boot(){initMap();syncDateRange();resetLiveUi();document.addEventListener('click',handleAudioGuideClick);$('days').addEventListener('change',syncDateRange);$('locateBtn').addEventListener('click',locate);$('plannerForm').addEventListener('submit',submit);$('startLiveBtn').addEventListener('click',startLive);$('pauseLiveBtn').addEventListener('click',togglePause);$('stopLiveBtn').addEventListener('click',()=>{stopLive(true);toast('Live Tour tugatildi')});$('centerLiveBtn').addEventListener('click',centerLive);state.map.on('dragstart',()=>{if(state.live.active)state.live.follow=false});try{const status=await api('/api/tourism/status');const live=await api('/api/tourism/live/status');state.audioEngine=status.professional_audio_configured?'openai-tts':'browser-fallback';if(status.professional_audio_configured)toast(`AI MP3 audio tayyor · ${status.professional_audio_model} · GPS ${live.version}`);else if(status.openai_configured)toast(`AI planner online · professional audio uchun TTS sozlamasi kutilmoqda`);else if(live.version)toast(`Tour Planner Live GPS ${live.version} tayyor · audio zaxira rejimida`)}catch{}}
+async function boot(){
+  initMap();syncDateRange();resetLiveUi();
+  document.addEventListener('click',handleAudioGuideClick);
+  $('days').addEventListener('change',syncDateRange);
+  $('locateBtn').addEventListener('click',locate);
+  $('plannerForm').addEventListener('submit',submit);
+  $('startLiveBtn').addEventListener('click',startLive);
+  $('pauseLiveBtn').addEventListener('click',togglePause);
+  $('stopLiveBtn').addEventListener('click',()=>{stopLive(true);toast('Live Tour tugatildi')});
+  $('centerLiveBtn').addEventListener('click',centerLive);
+  $('navLanguage')?.addEventListener('change',e=>{
+    state.live.voiceLang=e.target.value;
+    renderNavigationBanner();
+    toast('Navigator tili: '+e.target.options[e.target.selectedIndex].text);
+  });
+  $('navGuidance')?.addEventListener('change',e=>{
+    state.live.guidanceMode=e.target.value;
+    stopNavAudio();
+    toast(e.target.value==='mute'?'Navigator ovozi o‘chirildi':e.target.value==='full'?'To‘liq ovozli ko‘rsatma':'Muhim ovozli ko‘rsatmalar');
+  });
+  $('navAutoGuide')?.addEventListener('change',e=>{state.live.autoGuide=e.target.checked});
+  state.map.on('dragstart',()=>{if(state.live.active)state.live.follow=false});
+  try{
+    const status=await api('/api/tourism/status');
+    const live=await api('/api/tourism/live/status');
+    state.audioEngine=status.professional_audio_configured?'openai-tts':'browser-fallback';
+    state.live.professionalVoice=Boolean(live.professional_voice_configured);
+    syncNavigatorControls();
+    if(state.live.professionalVoice)toast('3 tildagi AI navigator tayyor · GPS '+live.version);
+    else if(status.professional_audio_configured)toast('Audio gid tayyor · navigator qurilma ovozida · GPS '+live.version);
+    else if(live.version)toast('Tour Planner Live GPS '+live.version+' tayyor · ovoz zaxira rejimida');
+  }catch{syncNavigatorControls()}
+}
 boot();

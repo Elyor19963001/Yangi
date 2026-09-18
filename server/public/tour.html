@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="/tour-v2.css" />
   <link rel="stylesheet" href="/tour-mobile-v11.css" />
   <link rel="stylesheet" href="/tour-mobile-v12.css" />
+  <link rel="stylesheet" href="/tour-navigation-v13.css" />
   <script src="/vendor/leaflet/leaflet.js" defer></script>
   <script src="/vendor/maplibre/maplibre-gl.js" defer></script>
   <script src="/tour-app.js" defer></script>
@@ -24,7 +25,7 @@
 <body>
   <header class="topbar">
     <a class="back" href="/">← Bosh sahifa</a>
-    <div class="brand"><span class="mark">AI</span><div><span class="eyebrow">TOURISM FOR EVERYONE · AI TOUR v12</span><h1>AI Tour Planner · mobile-first wizard · AI audio · Live GPS</h1></div></div>
+    <div class="brand"><span class="mark">AI</span><div><span class="eyebrow">TOURISM FOR EVERYONE · AI TOUR v13</span><h1>AI Tour Planner · 3 tildagi ovozli navigator · AI audio · Live GPS</h1></div></div>
     <a class="ghost" href="/map.html">📍 Xizmatlar xaritasi</a>
   </header>
 
@@ -71,6 +72,15 @@
 
         <section class="live-card hidden" id="livePanel">
           <div class="live-head"><div><span class="live-dot" id="liveDot"></span><strong id="liveStatus">GPS tayyor</strong></div><button type="button" class="live-center" id="centerLiveBtn" disabled>◎ Menga qaytish</button></div>
+          <div class="voice-nav-controls">
+            <label><span>Navigator tili</span><select id="navLanguage"><option value="uz">🇺🇿 O‘zbek</option><option value="en">🇬🇧 English</option><option value="ru">🇷🇺 Русский</option></select></label>
+            <label><span>Ovozli ko‘rsatma</span><select id="navGuidance"><option value="full">To‘liq</option><option value="essential" selected>Muhim</option><option value="mute">Ovozsiz</option></select></label>
+            <label class="auto-guide-toggle"><input id="navAutoGuide" type="checkbox" checked><span>🎧 Manzilga yetganda audio gid avtomatik</span></label>
+          </div>
+          <div class="nav-maneuver-card" id="navManeuverCard">
+            <div class="nav-maneuver-icon" id="navManeuverIcon">◎</div>
+            <div class="nav-maneuver-copy"><span id="navInstructionDistance">Manzilgacha GPS kuzatuvi</span><strong id="navInstruction">Marshrut tayyor</strong><small><b id="navVoiceState">Qurilma ovozi</b> · burilishlar va qayta yo‘naltirish avtomatik</small></div>
+          </div>
           <div class="live-next"><span>Keyingi manzil</span><strong id="liveNextName">—</strong><small id="liveNextMeta">Live Tour boshlanganda masofa va ETA chiqadi.</small></div>
           <div class="live-metrics"><div><span>GPS aniqligi</span><strong id="liveAccuracy">—</strong></div><div><span>Marshrutdan og‘ish</span><strong id="liveDeviation">—</strong></div><div><span>Yurilgan</span><strong id="liveTravelled">0 m</strong></div></div>
           <div class="live-actions"><button type="button" class="btn primary" id="startLiveBtn">▶ Sayohatni boshlash</button><button type="button" class="btn secondary" id="pauseLiveBtn" disabled>⏸ Pauza</button><button type="button" class="btn danger" id="stopLiveBtn" disabled>■ Tugatish</button></div>
