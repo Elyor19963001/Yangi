@@ -508,10 +508,89 @@ function project(lat,lon,refLat){const r=6371000,rad=Math.PI/180;return {x:r*lon
 function pointSegmentDistanceM(p,a,b){const ref=(p.lat+a.lat+b.lat)/3,P=project(p.lat,p.lon,ref),A=project(a.lat,a.lon,ref),B=project(b.lat,b.lon,ref),dx=B.x-A.x,dy=B.y-A.y;if(dx===0&&dy===0)return Math.hypot(P.x-A.x,P.y-A.y);const t=Math.max(0,Math.min(1,((P.x-A.x)*dx+(P.y-A.y)*dy)/(dx*dx+dy*dy)));return Math.hypot(P.x-(A.x+t*dx),P.y-(A.y+t*dy))}
 function distanceToGeometryM(latitude,longitude,geometry){const coords=geometry?.coordinates;if(geometry?.type!=='LineString'||!Array.isArray(coords)||coords.length<2)return null;let best=Infinity;for(let i=1;i<coords.length;i++){const a={lat:Number(coords[i-1][1]),lon:Number(coords[i-1][0])},b={lat:Number(coords[i][1]),lon:Number(coords[i][0])};if(![a.lat,a.lon,b.lat,b.lon].every(Number.isFinite))continue;best=Math.min(best,pointSegmentDistanceM({lat:latitude,lon:longitude},a,b))}return Number.isFinite(best)?best:null}
 function updateLiveLayers(pos){const l=state.live,lat=pos.coords.latitude,lon=pos.coords.longitude,accuracy=Math.max(1,Number(pos.coords.accuracy)||1);if(!l.marker){const icon=L.divIcon({className:'live-user-marker',html:'●',iconSize:[30,30],iconAnchor:[15,15]});l.marker=L.marker([lat,lon],{icon,zIndexOffset:1200}).addTo(state.map).bindPopup('<strong>Siz shu yerdasiz</strong>')}else l.marker.setLatLng([lat,lon]);if(!l.accuracyCircle)l.accuracyCircle=L.circle([lat,lon],{radius:accuracy,weight:1,fillOpacity:.08}).addTo(state.map);else{l.accuracyCircle.setLatLng([lat,lon]);l.accuracyCircle.setRadius(accuracy)}if(!l.trailLayer)l.trailLayer=L.polyline(l.trailCoords,{weight:4,opacity:.7,dashArray:'7 6'}).addTo(state.map);else l.trailLayer.setLatLngs(l.trailCoords);if(l.follow)state.map.panTo([lat,lon],{animate:true,duration:.5})}
-async function rerouteFromCurrent(current,forced=false){const l=state.live,stops=liveStops().slice(l.nextIndex);if(!stops.length||l.rerouting)return;const now=Date.now();if(!forced&&now-l.lastRerouteAt<30000)return;l.rerouting=true;l.lastRerouteAt=now;setLiveStatus('Yo‘nalish qayta hisoblanmoqda…','reroute');try{const data=await api('/api/tourism/live/route',{method:'POST',body:JSON.stringify({current:{latitude:current.latitude,longitude:current.longitude,name:'Joriy GPS'},stops:stops.map(s=>({latitude:s.latitude,longitude:s.longitude,name:s.name})),transport:state.result?.intent?.transport||'mixed'})});l.routeGeometry=data.route?.geometry||l.routeGeometry;if(l.liveRouteLayer){state.map.removeLayer(l.liveRouteLayer);l.liveRouteLayer=null}if(l.routeGeometry)l.liveRouteLayer=L.geoJSON(l.routeGeometry,{style:{weight:6,opacity:.85,dashArray:'10 5'}}).addTo(state.map);setLiveStatus('Live GPS faol','active');toast(forced?'Joriy joylashuvdan yo‘l hisoblandi':'Marshrutdan chetlandingiz — yo‘l yangilandi')}catch(err){setLiveStatus('Live GPS faol','active');toast(`Yo‘lni yangilash imkoni bo‘lmadi: ${err.message}`)}finally{l.rerouting=false}}
+async function rerouteFromCurrent(current,forced=false){
+  const l=state.live,stops=liveStops().slice(l.nextIndex);
+  if(!stops.length||l.rerouting)return;
+  const now=Date.now();
+  if(!forced&&now-l.lastRerouteAt<30000)return;
+  const hadSteps=l.navSteps.length>0;
+  l.rerouting=true;l.lastRerouteAt=now;
+  setLiveStatus('Yo‘nalish qayta hisoblanmoqda…','reroute');
+  try{
+    const data=await api('/api/tourism/live/route',{method:'POST',body:JSON.stringify({
+      current:{latitude:current.latitude,longitude:current.longitude,name:'Joriy GPS'},
+      stops:stops.map(x=>({latitude:x.latitude,longitude:x.longitude,name:x.name})),
+      transport:state.result?.intent?.transport||'mixed'
+    })});
+    l.routeGeometry=data.route?.geometry||l.routeGeometry;
+    setNavigationSteps(data.route?.steps||[]);
+    if(l.liveRouteLayer){state.map.removeLayer(l.liveRouteLayer);l.liveRouteLayer=null}
+    if(l.routeGeometry)l.liveRouteLayer=L.geoJSON(l.routeGeometry,{style:{weight:6,opacity:.85,dashArray:'10 5'}}).addTo(state.map);
+    setLiveStatus('Live GPS faol','active');
+    if(hadSteps&&!forced)speakNavEvent({event:'reroute'});
+    toast(forced?'Joriy joylashuvdan yo‘l hisoblandi':'Marshrutdan chetlandingiz — yo‘l yangilandi');
+  }catch(err){
+    setLiveStatus('Live GPS faol','active');
+    toast('Yo‘lni yangilash imkoni bo‘lmadi: '+err.message);
+  }finally{l.rerouting=false}
+}
 function liveEtaSeconds(distance,pos){const speed=Number(pos.coords.speed);let mps=Number.isFinite(speed)&&speed>0.6?speed:(state.result?.intent?.transport==='walking'?1.25:5.5);return Math.max(60,Math.round(distance/mps))}
 function formatEta(seconds){const min=Math.max(1,Math.round(seconds/60));return min<60?`~${min} daqiqa`:`~${Math.floor(min/60)} soat ${min%60} daqiqa`}
-async function onLivePosition(pos){if(!state.live.active)return;const l=state.live,current={latitude:pos.coords.latitude,longitude:pos.coords.longitude};l.current=current;const accuracy=Math.round(Number(pos.coords.accuracy)||0);$('liveAccuracy').textContent=accuracy?`±${accuracy} m`:'—';if(l.lastPos){const step=haversine(l.lastPos.latitude,l.lastPos.longitude,current.latitude,current.longitude);if(step>=3&&step<500){l.travelledM+=step;l.trailCoords.push([current.latitude,current.longitude])}}else l.trailCoords.push([current.latitude,current.longitude]);l.lastPos=current;$('liveTravelled').textContent=formatDistance(l.travelledM);updateLiveLayers(pos);const next=nextLiveStop();if(!next){finishLiveDay();return}const distance=haversine(current.latitude,current.longitude,Number(next.latitude),Number(next.longitude));$('liveNextName').textContent=next.name;$('liveNextMeta').textContent=`${formatDistance(distance)} · ${formatEta(liveEtaSeconds(distance,pos))}`;const deviation=distanceToGeometryM(current.latitude,current.longitude,l.routeGeometry||liveDay()?.route?.geometry);$('liveDeviation').textContent=deviation===null?'—':formatDistance(deviation);const arrivalRadius=Math.max(80,Math.min(100,accuracy||80));if(distance<=arrivalRadius&&accuracy<=120){toast(`${next.name}: yetib keldingiz`);l.nextIndex+=1;const following=nextLiveStop();if(!following){finishLiveDay();return}$('liveNextName').textContent=following.name;$('liveNextMeta').textContent='Keyingi nuqta uchun yo‘l yangilanmoqda…';await rerouteFromCurrent(current,true);return}if(!l.liveRouteLayer&&l.trailCoords.length===1){await rerouteFromCurrent(current,true);return}if(deviation!==null&&deviation>120&&accuracy<=100)await rerouteFromCurrent(current,false)}
+async function onLivePosition(pos){
+  if(!state.live.active)return;
+  const l=state.live,current={latitude:pos.coords.latitude,longitude:pos.coords.longitude};
+  l.current=current;
+  const accuracy=Math.round(Number(pos.coords.accuracy)||0);
+  $('liveAccuracy').textContent=accuracy?'±'+accuracy+' m':'—';
+  if(l.lastPos){
+    const moved=haversine(l.lastPos.latitude,l.lastPos.longitude,current.latitude,current.longitude);
+    if(moved>=3&&moved<500){l.travelledM+=moved;l.trailCoords.push([current.latitude,current.longitude])}
+  }else l.trailCoords.push([current.latitude,current.longitude]);
+  l.lastPos=current;
+  $('liveTravelled').textContent=formatDistance(l.travelledM);
+  updateLiveLayers(pos);
+
+  const next=nextLiveStop();
+  if(!next){finishLiveDay();return}
+  const distance=haversine(current.latitude,current.longitude,Number(next.latitude),Number(next.longitude));
+  $('liveNextName').textContent=next.name;
+  $('liveNextMeta').textContent=formatDistance(distance)+' · '+formatEta(liveEtaSeconds(distance,pos));
+  const deviation=distanceToGeometryM(current.latitude,current.longitude,l.routeGeometry||liveDay()?.route?.geometry);
+  $('liveDeviation').textContent=deviation===null?'—':formatDistance(deviation);
+
+  if(l.navSteps.length)maybeSpeakTurn(current,accuracy);
+  else{renderNavigationBanner(distance);maybeSpeakFallbackDistance(distance)}
+
+  const arrivalRadius=Math.max(70,Math.min(95,accuracy||80));
+  if(distance<=arrivalRadius&&accuracy<=120){
+    speakNavEvent({event:'arrive',stop_name:next.name});
+    toast(next.name+': yetib keldingiz');
+    const arrived=next;
+    l.nextIndex+=1;
+    l.navSteps=[];l.navStepIndex=0;l.navAnnounced=new Set();l.navFallbackAnnounced=new Set();
+    const following=nextLiveStop();
+    if(!following){
+      setTimeout(()=>playAutoGuideForStop(arrived),1400);
+      finishLiveDay();
+      return;
+    }
+    $('liveNextName').textContent=following.name;
+    $('liveNextMeta').textContent='Keyingi nuqta uchun yo‘l yangilanmoqda…';
+    setTimeout(()=>playAutoGuideForStop(arrived),1500);
+    await rerouteFromCurrent(current,true);
+    if(l.guidanceMode==='full')setTimeout(()=>speakNavEvent({event:'next_stop',stop_name:following.name}),2500);
+    return;
+  }
+
+  if(!l.liveRouteLayer&&l.trailCoords.length===1){await rerouteFromCurrent(current,true);return}
+  if(deviation!==null&&deviation>120&&accuracy<=100){
+    if(Date.now()-l.lastOffrouteSpokenAt>45000){
+      l.lastOffrouteSpokenAt=Date.now();
+      speakNavEvent({event:'offroute'});
+    }
+    await rerouteFromCurrent(current,false);
+  }
+}
 function centerLive(){const c=state.live.current;if(!c)return;state.live.follow=true;state.map.setView([c.latitude,c.longitude],Math.max(state.map.getZoom(),16),{animate:true})}
 
 function renderDetails(){
