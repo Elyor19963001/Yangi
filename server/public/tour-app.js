@@ -14,6 +14,66 @@ function addDays(dateText,n){const [y,m,d]=dateText.split('-').map(Number);const
 function syncDateRange(){const today=localDate();const days=Math.max(1,Number($('days').value)||2);$('startDate').min=today;$('startDate').max=addDays(today,Math.max(0,14-(days-1)));if(!$('startDate').value||$('startDate').value<$('startDate').min||$('startDate').value>$('startDate').max)$('startDate').value=today}
 function haversine(lat1,lon1,lat2,lon2){const toRad=v=>v*Math.PI/180,R=6371000,dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1);const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.min(1,Math.sqrt(a)))}
 function formatDistance(m){const n=Math.max(0,Number(m)||0);return n<1000?`${Math.round(n)} m`:`${(n/1000).toFixed(n<10000?1:0)} km`}
+function audioGuideHtml(stop,compact=false){
+  const guide=stop?.audio_guide;
+  if(!guide?.uz&&!guide?.en&&!guide?.ru)return '';
+  const first=guide.uz||guide.en||guide.ru||'';
+  const name=stop?.name||'Turistik obyekt';
+  const button=(lang,label,guideText)=>guideText?`<button type="button" class="audio-guide-play" data-guide-lang="${esc(lang)}" data-guide-name="${esc(name)}" data-guide-text="${esc(guideText)}">🔊 ${esc(label)}</button>`:'';
+  return `<div class="audio-guide ${compact?'compact':''}">
+    <div class="audio-guide-head"><strong>🎧 Audio gid</strong><span>Tilni tanlang</span></div>
+    <p class="audio-guide-text">${esc(first)}</p>
+    <div class="audio-guide-actions">
+      ${button('uz-UZ','O‘zbek',guide.uz)}
+      ${button('en-US','English',guide.en)}
+      ${button('ru-RU','Русский',guide.ru)}
+      <button type="button" class="audio-guide-stop" aria-label="Ovozni to‘xtatish">■</button>
+    </div>
+  </div>`;
+}
+function selectGuideVoice(lang){
+  if(!('speechSynthesis' in window))return null;
+  const voices=window.speechSynthesis.getVoices?.()||[];
+  const target=String(lang||'').toLowerCase();
+  const base=target.split('-')[0];
+  return voices.find(v=>String(v.lang||'').toLowerCase()===target)
+    ||voices.find(v=>String(v.lang||'').toLowerCase().startsWith(base))
+    ||null;
+}
+function speakGuide(button){
+  if(!('speechSynthesis' in window)||typeof SpeechSynthesisUtterance==='undefined'){
+    toast('Bu brauzer ovozli gidni qo‘llamaydi.');
+    return;
+  }
+  const guideText=button.dataset.guideText||'';
+  const lang=button.dataset.guideLang||'uz-UZ';
+  if(!guideText)return;
+  window.speechSynthesis.cancel();
+  document.querySelectorAll('.audio-guide-play.speaking').forEach(x=>x.classList.remove('speaking'));
+  const box=button.closest('.audio-guide');
+  const textNode=box?.querySelector('.audio-guide-text');
+  if(textNode)textNode.textContent=guideText;
+  const utter=new SpeechSynthesisUtterance(guideText);
+  utter.lang=lang;
+  utter.rate=lang.startsWith('ru')?0.92:0.94;
+  utter.pitch=1;
+  const voice=selectGuideVoice(lang);
+  if(voice)utter.voice=voice;
+  button.classList.add('speaking');
+  utter.onend=()=>button.classList.remove('speaking');
+  utter.onerror=()=>{button.classList.remove('speaking');toast('Ovozli ma’lumotni ijro etib bo‘lmadi.');};
+  window.speechSynthesis.speak(utter);
+}
+function handleAudioGuideClick(event){
+  const play=event.target.closest('.audio-guide-play');
+  if(play){event.preventDefault();event.stopPropagation();speakGuide(play);return;}
+  const stop=event.target.closest('.audio-guide-stop');
+  if(stop){
+    event.preventDefault();event.stopPropagation();
+    if('speechSynthesis' in window)window.speechSynthesis.cancel();
+    document.querySelectorAll('.audio-guide-play.speaking').forEach(x=>x.classList.remove('speaking'));
+  }
+}
 function locate(){if(!navigator.geolocation){toast('Brauzer geolokatsiyani qo‘llamaydi');return}const replan=Boolean(state.result);toast('Joylashuv aniqlanmoqda…');navigator.geolocation.getCurrentPosition(pos=>{state.start={latitude:pos.coords.latitude,longitude:pos.coords.longitude,name:'Mening GPS joylashuvim'};$('locationLine').textContent=`Boshlanish: GPS joylashuvim · ±${Math.round(pos.coords.accuracy||0)} m`;if(replan){toast('GPS olindi — marshrut shu joydan qayta optimallashtirilmoqda');setTimeout(()=>$('plannerForm')?.requestSubmit(),250)}else toast('Joylashuv olindi — marshrut shu nuqtadan boshlanadi')},()=>toast('Joylashuvga ruxsat berilmadi'),{enableHighAccuracy:true,timeout:10000,maximumAge:60000})}
 function intentBadges(intent={},support={}){const labels={history:'Tarix',pilgrimage:'Ziyorat',gastronomy:'Gastronomiya',museum:'Muzey',family:'Oilaviy',architecture:'Arxitektura'};const timeWindow=intent.preferred_start_time&&intent.preferred_end_time?`🕘 ${intent.preferred_start_time}–${intent.preferred_end_time}`:intent.preferred_start_time?`🕘 ${intent.preferred_start_time} dan`:null;const rows=[...(intent.interests||[]).map(i=>labels[i]||i),`${intent.days||2} kun`,state.result?.trip_start_date?`📅 ${state.result.trip_start_date}`:null,state.result?.weather_adaptive?'🌦️ Adaptive':null,intent.low_walking?'Kam yurish':null,intent.transport==='taxi'?'Taksi':intent.transport==='walking'?'Piyoda':intent.own_vehicle?'🚗 Shaxsiy avtomobil':'Aralash transport',Number(intent.children_count||0)>0?`👧 ${Number(intent.children_count)} bola`:null,Number(intent.seniors_count||0)>0?`👵 ${Number(intent.seniors_count)} kishi 65+`:null,intent.wheelchair_accessible?'♿ Qulaylik muhim':null,timeWindow,intent.origin_country?`🌍 ${intent.origin_country}`:null,support.party_size?`${support.party_size} sayohatchi`:null,support.budget?.total_uzs?`${money(support.budget.total_uzs)} so‘m budjet`:intent.budget_uzs?`${money(intent.budget_uzs)} so‘m budjet`:null].filter(Boolean);return rows.map(x=>`<span class="badge">${esc(x)}</span>`).join('')}
 function ticketTariffHtml(ticket={}){
@@ -55,6 +115,7 @@ function stopCard(stop){
       <span>${esc(stop.time_start)}–${esc(stop.time_end)} · ${esc(cat)} · ${Number(stop.visit_minutes||0)} daqiqa${shelter}</span>
       <div class="operational-row">${visitStatus}${nowStatus}${ticketStatus}</div>
       ${hoursLine}
+      ${audioGuideHtml(stop,true)}
       ${ticketTariffHtml(ticket)}
       <div class="stop-links">${officialLink}${osm?`<a href="${esc(osm)}" target="_blank" rel="noopener">OSM metadata ↗</a>`:''}${!osm&&!primaryOfficial&&stop.source_url?`<a href="${esc(stop.source_url)}" target="_blank" rel="noopener">${esc(sourceLabel)} ↗</a>`:''}</div>
     </div>
@@ -245,8 +306,9 @@ function renderMap(day,daySupport){
   state.markers.push(startMarker);
   day.stops.forEach(stop=>{
     const icon=L.divIcon({className:'poi-marker',html:String(stop.order),iconSize:[28,28],iconAnchor:[14,14]});
+    const popup=`<div class="tour-poi-popup"><strong>${esc(stop.name)}</strong><span>${esc(stop.time_start)}–${esc(stop.time_end)}</span>${audioGuideHtml(stop,false)}</div>`;
     const m=L.marker([stop.latitude,stop.longitude],{icon}).addTo(state.map)
-      .bindPopup(`<strong>${esc(stop.name)}</strong><br>${esc(stop.time_start)}–${esc(stop.time_end)}`);
+      .bindPopup(popup,{maxWidth:360,minWidth:270});
     state.markers.push(m);
   });
   const seen=new Set();
@@ -309,5 +371,5 @@ async function submit(e){
     $('planBtn').textContent='✨ Marshrut yaratish';
   }
 }
-async function boot(){initMap();syncDateRange();resetLiveUi();$('days').addEventListener('change',syncDateRange);$('locateBtn').addEventListener('click',locate);$('plannerForm').addEventListener('submit',submit);$('startLiveBtn').addEventListener('click',startLive);$('pauseLiveBtn').addEventListener('click',togglePause);$('stopLiveBtn').addEventListener('click',()=>{stopLive(true);toast('Live Tour tugatildi')});$('centerLiveBtn').addEventListener('click',centerLive);state.map.on('dragstart',()=>{if(state.live.active)state.live.follow=false});try{const status=await api('/api/tourism/status');const live=await api('/api/tourism/live/status');if(status.openai_configured)toast(`AI online · ${status.openai_model} · GPS ${live.version}`);else if(live.version)toast(`Tour Planner Live GPS ${live.version} tayyor`)}catch{}}
+async function boot(){initMap();syncDateRange();resetLiveUi();document.addEventListener('click',handleAudioGuideClick);$('days').addEventListener('change',syncDateRange);$('locateBtn').addEventListener('click',locate);$('plannerForm').addEventListener('submit',submit);$('startLiveBtn').addEventListener('click',startLive);$('pauseLiveBtn').addEventListener('click',togglePause);$('stopLiveBtn').addEventListener('click',()=>{stopLive(true);toast('Live Tour tugatildi')});$('centerLiveBtn').addEventListener('click',centerLive);state.map.on('dragstart',()=>{if(state.live.active)state.live.follow=false});try{const status=await api('/api/tourism/status');const live=await api('/api/tourism/live/status');if(status.openai_configured)toast(`AI online · ${status.openai_model} · GPS ${live.version}`);else if(live.version)toast(`Tour Planner Live GPS ${live.version} tayyor`)}catch{}}
 boot();
