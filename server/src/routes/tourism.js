@@ -144,6 +144,7 @@ const OFFICIAL_POI_CATALOG = [
 
 const AUDIO_GUIDES = [
   {
+    id: 'registan',
     match: /registan|registon/i,
     short: {
       uz: 'Registon Samarqandning eng mashhur tarixiy maydonlaridan biridir. Majmua Ulug‘bek, Sherdor va Tillakori madrasalaridan tashkil topgan. U Temuriylar va keyingi davr Markaziy Osiyo me’morchiligining yirik timsolidir.',
@@ -157,6 +158,7 @@ const AUDIO_GUIDES = [
     },
   },
   {
+    id: 'gur-amir',
     match: /go.?ri.?amir|gur.?e.?amir|guri.?amir|amir temur maqbarasi/i,
     short: {
       uz: 'Go‘ri Amir — Amir Temur va Temuriylar sulolasi vakillari dafn etilgan mashhur maqbara. U moviy qovurg‘ali gumbazi va nafis ichki bezaklari bilan ajralib turadi.',
@@ -170,6 +172,7 @@ const AUDIO_GUIDES = [
     },
   },
   {
+    id: 'bibi-khanum',
     match: /bibi.?khan|bibi.?xon|bibixonim/i,
     short: {
       uz: 'Bibixonim masjidi XV asr boshida Amir Temur davrida bunyod etilgan ulkan jome masjididir. U o‘z davrining eng yirik me’moriy loyihalaridan biri bo‘lgan.',
@@ -197,6 +200,7 @@ const AUDIO_GUIDES = [
     },
   },
   {
+    id: 'ulugbek-observatory',
     match: /ulugh.?beg.*observ|ulug.?bek.*rasad|observ.*ulug.?bek/i,
     short: {
       uz: 'Ulug‘bek rasadxonasi XV asrda olim va hukmdor Mirzo Ulug‘bek tashabbusi bilan barpo etilgan. Bu yer Samarqandning ilm-fan tarixidagi alohida o‘rnini ko‘rsatadi.',
@@ -210,6 +214,7 @@ const AUDIO_GUIDES = [
     },
   },
   {
+    id: 'afrosiyob-museum',
     match: /afrasiyab.*museum|museum.*afrasiyab|afrosiyob.*muzey|muzey.*afrosiyob/i,
     short: {
       uz: 'Afrosiyob muzeyi qadimgi Samarqandning arxeologik tarixiga bag‘ishlangan. Muzeyda Afrosiyob shahristonidan topilgan buyumlar va mashhur devoriy suratlar namoyish etiladi.',
@@ -266,9 +271,19 @@ const AUDIO_GUIDES = [
   },
 ];
 
+function normalizePoiName(value) {
+  return String(value || '')
+    .normalize('NFKD')
+    .replace(/[‘’ʼ`´]/g, "'")
+    .replace(/[^a-zA-Z0-9а-яА-ЯёЁ'\s-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function audioGuideFor(poi = {}) {
   const name = String(poi.name || '');
-  const guide = AUDIO_GUIDES.find((row) => row.match.test(name));
+  const normalized = normalizePoiName(name);
+  const guide = AUDIO_GUIDES.find((row) => row.match.test(name) || row.match.test(normalized));
   return guide ? {
     id: guide.id,
     short: { ...guide.short },
