@@ -93,3 +93,26 @@
 @media(prefers-reduced-motion:reduce){
   .simple-avatar.assistant-mascot img{animation:none!important}
 }
+
+/* v19.2 exact approved 3D character: movement only, no redraw */
+.simple-avatar.assistant-mascot img{
+  width:58px!important;
+  height:68px!important;
+  object-fit:contain!important;
+  animation:tfeExactEmojiAlive 3.4s ease-in-out infinite!important;
+  transform-origin:50% 92%!important;
+}
+@keyframes tfeExactEmojiAlive{
+  0%,14%,100%{transform:translateY(0) rotate(0deg) scale(1)}
+  22%{transform:translateY(-3px) rotate(-3deg) scale(1.015)}
+  30%{transform:translateY(-4px) rotate(3deg) scale(1.02)}
+  38%{transform:translateY(-2px) rotate(-2deg) scale(1.01)}
+  50%{transform:translateY(0) rotate(0deg) scale(1)}
+  72%{transform:translateY(-2px) rotate(.7deg) scale(1.01)}
+}
+@media(max-width:760px){
+  .simple-avatar.assistant-mascot img{width:62px!important;height:72px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .simple-avatar.assistant-mascot img{animation:none!important}
+}
