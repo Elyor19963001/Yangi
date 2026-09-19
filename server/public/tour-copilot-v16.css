@@ -680,3 +680,23 @@
   .assistant-mascot .mascot-blink{display:none!important}
   .assistant-mascot .mascot-mouth-pixels{transform:none!important}
 }
+
+/* v20.4 — stable natural mode: original face only */
+.assistant-mascot .mascot-mouth-pixels,
+.assistant-mascot .mascot-blink,
+.assistant-mascot .mascot-expression,
+.assistant-mascot .mascot-eye,
+.assistant-mascot .mascot-lid,
+.assistant-mascot .mascot-mouth,
+.assistant-mascot .mascot-brow{
+  display:none!important;
+}
+.assistant-mascot .mascot-layered>img.mascot-base{
+  transform:none!important;
+  animation:none!important;
+}
+.assistant-mascot .mascot-layered>img.mascot-head,
+.assistant-mascot .mascot-layered>img.mascot-hand{
+  animation:none!important;
+  will-change:transform!important;
+}
