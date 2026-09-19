@@ -1,0 +1,57 @@
+/* AI Tour v19 — photo-rich place card + route rail */
+.tfe-place-popup .leaflet-popup-content{width:520px!important;max-width:min(520px,calc(100vw - 24px))!important}
+.poi-v19-card{padding:14px;color:#153a2b;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.poi-v19-hero{display:grid;grid-template-columns:118px minmax(0,1fr);gap:12px;align-items:center;padding-right:30px}
+.poi-v19-photo{height:88px;border-radius:14px;overflow:hidden;background:linear-gradient(145deg,#e8f4ee,#d7e9df);border:1px solid #d2e2da;position:relative}
+.poi-v19-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.poi-v19-photo.placeholder,.poi-v19-photo.image-error{display:grid;place-items:center}
+.poi-v19-photo.placeholder span,.poi-v19-photo.image-error:after{font-size:30px}.poi-v19-photo.image-error:after{content:"🏛"}
+.poi-v19-heading{min-width:0}.poi-v19-heading>span,.poi-v19-heading>strong,.poi-v19-heading>small{display:block}
+.poi-v19-type{font-size:8px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:#668277}
+.poi-v19-heading strong{font-size:19px;line-height:1.12;color:#133b2c;margin:4px 0 5px}
+.poi-v19-location{font-size:10px;color:#45695a;font-weight:800}.poi-v19-heading small{font-size:8px;color:#819087;margin-top:4px}
+.poi-v19-facts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin:11px 0 9px}
+.poi-v19-fact{min-width:0;padding:9px 10px;border-radius:13px;background:#f8fbf9;border:1px solid #dfe9e4}
+.poi-v19-fact span,.poi-v19-fact strong{display:block}.poi-v19-fact span{font-size:7px;color:#768b80;font-weight:850}.poi-v19-fact strong{font-size:9px;color:#2e5544;margin-top:3px;line-height:1.3}
+.poi-v19-fact.open strong{color:#176b4d}.poi-v19-fact.closed strong{color:#a14036}.poi-v19-fact.ticket strong{color:#735917}
+.poi-v19-card>.audio-guide{margin:0!important;padding:10px!important;border-radius:14px!important;background:linear-gradient(135deg,#f7fbf9,#fff)!important;border:1px solid #d3e4dc!important}
+.poi-v19-card>.audio-guide .audio-guide-head strong{font-size:10px!important}.poi-v19-card>.audio-guide .audio-engine-label{font-size:7px!important;padding:4px 7px!important}
+.poi-v19-card>.audio-guide .audio-guide-text{font-size:9px!important;line-height:1.48!important;max-height:72px;overflow:auto}
+.poi-v19-card>.audio-guide .audio-guide-play,.poi-v19-card>.audio-guide .audio-guide-stop,.poi-v19-card>.audio-guide .audio-guide-mode{min-height:34px!important}
+.poi-v19-primary-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}
+.poi-v19-btn{min-height:43px;border-radius:12px;border:1px solid #cfded6;font-size:9px;font-weight:950;cursor:pointer}
+.poi-v19-btn.nav{background:linear-gradient(135deg,#176b4d,#0e5138);border-color:#176b4d;color:#fff;box-shadow:0 7px 16px rgba(23,107,77,.17)}
+.poi-v19-btn.details{background:#fff;color:#214f3d}.poi-v19-btn.details.active{background:#edf5f1}
+.poi-v19-details{margin-top:8px;padding-top:8px;border-top:1px solid #e2e9e5}
+.poi-v19-details .poi-place-info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.poi-v19-details .poi-photo-credit{display:inline-flex;margin:7px 0 0 9px;color:#57786a!important;font-size:8px!important;text-decoration:none!important}
+.poi-v19-secondary-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;border-top:1px solid #e4ece7;margin-top:9px;padding-top:8px}
+.poi-v19-secondary-actions button{border:0;background:transparent;color:#315c4b;min-height:48px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;font-size:7px;font-weight:850}
+.poi-v19-secondary-actions button:hover{background:#f1f7f4}.poi-v19-secondary-actions button b{font-size:17px;line-height:1}.poi-v19-secondary-actions button.saved b{color:#176b4d}
+
+.map-panel{position:relative}
+.poi-v19-rail{position:absolute;z-index:850;left:10px;right:10px;bottom:10px;display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding:6px;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border:1px solid rgba(214,227,220,.95);border-radius:16px;box-shadow:0 10px 28px rgba(15,48,34,.17)}
+.poi-v19-rail::-webkit-scrollbar{display:none}.poi-v19-rail.hidden{display:none}
+.poi-v19-rail-item{flex:0 0 118px;border:1px solid #dce7e1;background:#fff;border-radius:12px;padding:5px;text-align:left;color:#173d2e;cursor:pointer;transition:.16s ease}
+.poi-v19-rail-item.active{border-color:#53ad84;box-shadow:0 0 0 2px rgba(83,173,132,.13)}
+.poi-v19-rail-photo{display:block;height:56px;border-radius:9px;overflow:hidden;background:#edf5f1;position:relative}
+.poi-v19-rail-photo img{width:100%;height:100%;object-fit:cover;display:block}.poi-v19-rail-photo .fallback{display:grid;place-items:center;height:100%;font-size:22px}
+.poi-v19-rail-photo i{position:absolute;left:5px;top:5px;width:22px;height:22px;border-radius:50%;background:#176b4d;color:#fff;display:grid;place-items:center;font-style:normal;font-size:8px;font-weight:950;border:2px solid #fff}
+.poi-v19-rail-item strong{display:block;font-size:8px;line-height:1.2;margin:5px 2px 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+@media(max-width:760px){
+  .tfe-place-popup .leaflet-popup-content{width:min(360px,calc(100vw - 28px))!important;max-width:calc(100vw - 28px)!important;max-height:58dvh!important}
+  .poi-v19-card{padding:11px}
+  .poi-v19-hero{grid-template-columns:92px minmax(0,1fr);gap:9px}
+  .poi-v19-photo{height:72px;border-radius:12px}
+  .poi-v19-heading strong{font-size:14px;margin:2px 0 3px}.poi-v19-type{font-size:7px}.poi-v19-location{font-size:8px}.poi-v19-heading small{font-size:7px}
+  .poi-v19-facts{grid-template-columns:1fr 1fr;gap:5px;margin:8px 0 6px}
+  .poi-v19-fact{padding:7px 8px;border-radius:11px}.poi-v19-fact.duration{grid-column:1/-1}
+  .poi-v19-fact span{font-size:7px}.poi-v19-fact strong{font-size:8px}
+  .poi-v19-card>.audio-guide{padding:8px!important}.poi-v19-card>.audio-guide .audio-guide-text{font-size:8px!important;max-height:58px}
+  .poi-v19-primary-actions{gap:5px;margin-top:7px}.poi-v19-btn{min-height:40px;font-size:8px}
+  .poi-v19-secondary-actions{margin-top:7px;padding-top:6px}.poi-v19-secondary-actions button{min-height:43px;font-size:6.5px}.poi-v19-secondary-actions button b{font-size:15px}
+  .poi-v19-rail{left:6px;right:6px;bottom:7px;border-radius:14px;padding:5px;gap:5px}
+  .poi-v19-rail-item{flex-basis:98px;padding:4px}.poi-v19-rail-photo{height:45px}.poi-v19-rail-item strong{font-size:7px}
+  .map-v2-tools{bottom:122px!important}.map-gps-pill{bottom:86px!important}
+}
