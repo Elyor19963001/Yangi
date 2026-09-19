@@ -1617,3 +1617,124 @@
     height:42px!important;
   }
 }
+
+
+/* v21.6 — static horse until click; stronger run burst */
+.simple-composer .arava-send{
+  flex:0 0 96px!important;
+  width:96px!important;
+  min-width:96px!important;
+  max-width:96px!important;
+  height:60px!important;
+  min-height:60px!important;
+}
+.arava-cart-icon{
+  width:88px!important;
+  height:46px!important;
+  animation:none!important;
+  transform:translateX(0)!important;
+}
+.arava-send .arava-wheel,
+.arava-send .arava-horse-body,
+.arava-send .arava-leg,
+.arava-send .arava-motion-line,
+.arava-send .arava-dust{
+  animation:none!important;
+}
+.arava-send .arava-leg{
+  transform-box:fill-box;
+  transform-origin:50% 8%;
+}
+.arava-send.horse-running .arava-cart-icon{
+  animation:horseCartRunBurst 1.2s cubic-bezier(.2,.72,.24,1) 1!important;
+}
+.arava-send.horse-running .arava-wheel{
+  animation:horseWheelFast .24s linear 5!important;
+}
+.arava-send.horse-running .leg-front-a,
+.arava-send.horse-running .leg-rear-b{
+  animation:horseLegForward .24s ease-in-out 5 alternate!important;
+}
+.arava-send.horse-running .leg-front-b,
+.arava-send.horse-running .leg-rear-a{
+  animation:horseLegBack .24s ease-in-out 5 alternate!important;
+}
+.arava-send.horse-running .arava-horse-body{
+  animation:horseBodyGallop .24s ease-in-out 5 alternate!important;
+}
+.arava-send.horse-running .arava-motion-line{
+  animation:horseSpeedLine .55s linear 2!important;
+}
+.arava-send.horse-running .dust-one{
+  animation:horseDustOne .8s ease-out 1!important;
+}
+.arava-send.horse-running .dust-two{
+  animation:horseDustTwo .9s .08s ease-out 1!important;
+}
+@keyframes horseCartRunBurst{
+  0%{transform:translateX(-4px) translateY(0) rotate(0)}
+  16%{transform:translateX(0) translateY(-2px) rotate(-.7deg)}
+  34%{transform:translateX(7px) translateY(1px) rotate(.45deg)}
+  56%{transform:translateX(14px) translateY(-2px) rotate(-.35deg)}
+  78%{transform:translateX(19px) translateY(0) rotate(.2deg)}
+  100%{transform:translateX(0) translateY(0) rotate(0)}
+}
+@keyframes horseWheelFast{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+@keyframes horseLegForward{
+  from{transform:rotate(13deg) translateY(0)}
+  to{transform:rotate(-15deg) translateY(-1px)}
+}
+@keyframes horseLegBack{
+  from{transform:rotate(-13deg) translateY(-1px)}
+  to{transform:rotate(15deg) translateY(0)}
+}
+@keyframes horseBodyGallop{
+  from{transform:translateY(0) rotate(0)}
+  to{transform:translateY(-2px) rotate(-.6deg)}
+}
+@keyframes horseSpeedLine{
+  0%{transform:translateX(10px) scaleX(.5);opacity:0}
+  20%{opacity:.9}
+  100%{transform:translateX(-18px) scaleX(1.35);opacity:0}
+}
+@keyframes horseDustOne{
+  0%{transform:translate(18px,2px) scale(.25);opacity:0}
+  25%{opacity:.85}
+  100%{transform:translate(-15px,-8px) scale(1.8);opacity:0}
+}
+@keyframes horseDustTwo{
+  0%{transform:translate(14px,1px) scale(.2);opacity:0}
+  30%{opacity:.75}
+  100%{transform:translate(-18px,-5px) scale(1.5);opacity:0}
+}
+@media(max-width:760px){
+  .simple-composer .arava-send{
+    flex-basis:88px!important;
+    width:88px!important;
+    min-width:88px!important;
+    max-width:88px!important;
+    height:56px!important;
+    min-height:56px!important;
+  }
+  .simple-composer textarea{
+    width:calc(100% - 96px)!important;
+    max-width:calc(100% - 96px)!important;
+  }
+  .arava-cart-icon{
+    width:81px!important;
+    height:43px!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .arava-send.horse-running .arava-cart-icon,
+  .arava-send.horse-running .arava-wheel,
+  .arava-send.horse-running .arava-leg,
+  .arava-send.horse-running .arava-horse-body,
+  .arava-send.horse-running .arava-motion-line,
+  .arava-send.horse-running .arava-dust{
+    animation:none!important;
+  }
+}
