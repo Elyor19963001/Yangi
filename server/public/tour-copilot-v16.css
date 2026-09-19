@@ -1433,3 +1433,147 @@
     animation:none!important;
   }
 }
+
+
+/* v21.3 — natural animated Uzbek two-wheel horse cart */
+.simple-composer .arava-send{
+  flex-basis:82px!important;
+  width:82px!important;
+  min-width:82px!important;
+  max-width:82px!important;
+  min-height:56px!important;
+  height:56px!important;
+  border-radius:18px!important;
+}
+.arava-send-track{
+  isolation:isolate;
+}
+.arava-cart-icon{
+  width:74px!important;
+  height:42px!important;
+  overflow:visible!important;
+  will-change:transform;
+  animation:aravaCruise 1.05s ease-in-out infinite!important;
+}
+.arava-send .arava-wheel{
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:aravaWheelRoll .92s linear infinite;
+}
+.arava-send .arava-horse-body{
+  transform-box:fill-box;
+  transform-origin:center bottom;
+  animation:aravaHorseBob .52s ease-in-out infinite alternate;
+}
+.arava-send .arava-horse-leg{
+  transform-box:fill-box;
+  transform-origin:50% 8%;
+}
+.arava-send .arava-horse-leg-front{
+  animation:aravaLegFront .52s ease-in-out infinite alternate;
+}
+.arava-send .arava-horse-leg-back{
+  animation:aravaLegBack .52s ease-in-out infinite alternate;
+}
+.arava-send .arava-harness{
+  vector-effect:non-scaling-stroke;
+}
+.arava-send .arava-motion-line{
+  opacity:.58;
+  animation:aravaMotionLoop .95s linear infinite;
+}
+.arava-send .arava-motion-line.line-two{
+  animation-delay:.18s;
+}
+.arava-send .arava-dust{
+  animation:aravaDustLoop 1.25s ease-out infinite;
+}
+.arava-send .arava-dust.dust-two{
+  animation-delay:.42s;
+}
+.arava-send.is-riding .arava-cart-icon{
+  animation:aravaSvgRide .82s cubic-bezier(.22,.76,.25,1) 1!important;
+}
+.arava-send.is-riding .arava-wheel{
+  animation:aravaWheelSprint .41s linear 2!important;
+}
+.arava-send.is-riding .arava-horse-leg-front{
+  animation:aravaLegFrontFast .205s ease-in-out 4 alternate!important;
+}
+.arava-send.is-riding .arava-horse-leg-back{
+  animation:aravaLegBackFast .205s ease-in-out 4 alternate!important;
+}
+.arava-send.is-riding .arava-horse-body{
+  animation:aravaHorseBobFast .205s ease-in-out 4 alternate!important;
+}
+@keyframes aravaCruise{
+  0%,100%{transform:translateX(-2px) translateY(0) rotate(0deg)}
+  50%{transform:translateX(2px) translateY(-1px) rotate(-.25deg)}
+}
+@keyframes aravaWheelRoll{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+@keyframes aravaWheelSprint{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+@keyframes aravaHorseBob{
+  from{transform:translateY(0)}
+  to{transform:translateY(-1.2px)}
+}
+@keyframes aravaHorseBobFast{
+  from{transform:translateY(0)}
+  to{transform:translateY(-1.8px)}
+}
+@keyframes aravaLegFront{
+  from{transform:rotate(7deg)}
+  to{transform:rotate(-7deg)}
+}
+@keyframes aravaLegBack{
+  from{transform:rotate(-7deg)}
+  to{transform:rotate(7deg)}
+}
+@keyframes aravaLegFrontFast{
+  from{transform:rotate(10deg)}
+  to{transform:rotate(-10deg)}
+}
+@keyframes aravaLegBackFast{
+  from{transform:rotate(-10deg)}
+  to{transform:rotate(10deg)}
+}
+@keyframes aravaMotionLoop{
+  0%{transform:translateX(8px) scaleX(.75);opacity:0}
+  20%{opacity:.75}
+  100%{transform:translateX(-13px) scaleX(1.15);opacity:0}
+}
+@keyframes aravaDustLoop{
+  0%,55%{transform:translate(9px,1px) scale(.25);opacity:0}
+  65%{opacity:.55}
+  100%{transform:translate(-10px,-5px) scale(1.3);opacity:0}
+}
+@media(max-width:760px){
+  .simple-composer .arava-send{
+    flex-basis:76px!important;
+    width:76px!important;
+    min-width:76px!important;
+    max-width:76px!important;
+    height:54px!important;
+    min-height:54px!important;
+  }
+  .simple-composer textarea{
+    width:calc(100% - 84px)!important;
+    max-width:calc(100% - 84px)!important;
+  }
+  .arava-cart-icon{width:69px!important;height:40px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .arava-cart-icon,
+  .arava-send .arava-wheel,
+  .arava-send .arava-horse-body,
+  .arava-send .arava-horse-leg,
+  .arava-send .arava-motion-line,
+  .arava-send .arava-dust{
+    animation:none!important;
+  }
+}
