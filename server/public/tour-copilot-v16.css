@@ -71,3 +71,25 @@
 }
 
 .simple-avatar.assistant-mascot img{image-rendering:auto;backface-visibility:hidden}
+
+/* Animated emoji mascot v19.1 — static vector asset, CSS/SVG motion, no GIF */
+.simple-avatar.assistant-mascot img{
+  animation:tfeEmojiFloat 2.7s ease-in-out infinite;
+  will-change:transform;
+}
+.simple-msg.assistant:hover .assistant-mascot img{
+  animation:tfeEmojiHello .85s ease-in-out 1, tfeEmojiFloat 2.7s ease-in-out .85s infinite;
+}
+@keyframes tfeEmojiFloat{
+  0%,100%{transform:translateY(0) rotate(0deg)}
+  50%{transform:translateY(-3px) rotate(.8deg)}
+}
+@keyframes tfeEmojiHello{
+  0%,100%{transform:translateY(0) rotate(0deg)}
+  28%{transform:translateY(-2px) rotate(-3deg)}
+  56%{transform:translateY(-3px) rotate(3deg)}
+  78%{transform:translateY(-2px) rotate(-2deg)}
+}
+@media(prefers-reduced-motion:reduce){
+  .simple-avatar.assistant-mascot img{animation:none!important}
+}
