@@ -84,9 +84,12 @@
       </div>
 
       <div class="simple-chat" data-chat>
-        <div class="simple-msg assistant">
-          <span class="simple-avatar assistant-mascot" aria-hidden="true">${mascotMarkup()}</span>
-          <div class="simple-bubble">
+        <div class="assistant-hero-card">
+          <div class="assistant-hero-mascot assistant-mascot" aria-hidden="true">
+            ${mascotMarkup()}
+          </div>
+          <div class="assistant-hero-bubble">
+            <span class="assistant-hero-badge">✨ AI yordamchi</span>
             <strong>Qanday sayohat xohlaysiz?</strong>
             <p>Masalan: “2 kunlik ziyorat turi kerak, ko‘p yurmaylik, milliy taomlar ham bo‘lsin.”</p>
           </div>
