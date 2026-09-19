@@ -98,33 +98,45 @@
 
       <div class="simple-composer">
         <textarea data-ai-input rows="2" maxlength="500" placeholder="Safaringizni yozing…"></textarea>
-        <button type="button" data-ai-send class="arava-send" aria-label="Yuborish">
+        <button type="button" data-ai-send class="arava-send" aria-label="Yuborish — ot arava">
           <span class="arava-send-track" aria-hidden="true">
             <i class="arava-motion-line line-one"></i>
             <i class="arava-motion-line line-two"></i>
             <i class="arava-dust dust-one"></i>
             <i class="arava-dust dust-two"></i>
-            <svg class="arava-cart-icon" viewBox="0 0 120 58" role="presentation" focusable="false">
+            <svg class="arava-cart-icon" viewBox="0 0 136 64" role="presentation" focusable="false">
               <g class="arava-wagon">
-                <path d="M5 15h39v23H7z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
-                <path d="M10 21h29M10 28h29" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
-                <path d="M44 29L69 27M44 35L67 32" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>
+                <path d="M5 18H49L47 37H9L5 18Z" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linejoin="round"/>
+                <path d="M9 23H47M10 29H46" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".95"/>
+                <path d="M49 29L79 31M48 35L79 36" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                <path d="M7 17L4 11M47 17L51 12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
               </g>
               <g class="arava-wheel wheel-one">
-                <circle cx="13" cy="43" r="9" fill="none" stroke="currentColor" stroke-width="3.5"/>
-                <path d="M13 34v18M4 43h18M7 37l12 12M19 37L7 49" stroke="currentColor" stroke-width="1.7"/>
+                <circle cx="16" cy="46" r="10.5" fill="none" stroke="currentColor" stroke-width="3.2"/>
+                <path d="M16 35.5V56.5M5.5 46H26.5M8.5 38.5L23.5 53.5M23.5 38.5L8.5 53.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <circle cx="16" cy="46" r="2.2" fill="currentColor"/>
               </g>
               <g class="arava-wheel wheel-two">
-                <circle cx="35" cy="43" r="9" fill="none" stroke="currentColor" stroke-width="3.5"/>
-                <path d="M35 34v18M26 43h18M29 37l12 12M41 37L29 49" stroke="currentColor" stroke-width="1.7"/>
+                <circle cx="41" cy="46" r="10.5" fill="none" stroke="currentColor" stroke-width="3.2"/>
+                <path d="M41 35.5V56.5M30.5 46H51.5M33.5 38.5L48.5 53.5M48.5 38.5L33.5 53.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <circle cx="41" cy="46" r="2.2" fill="currentColor"/>
               </g>
-              <g class="arava-horse">
-                <path d="M64 22c5-6 17-8 26-4l8 6 3 10-8 5-12-3-6 2-5-6-8-2z" fill="currentColor"/>
-                <path d="M88 20l4-11 8-6 7 2-1 7 8 5 2 8-6 5-8-3-4 9-7-4z" fill="currentColor"/>
-                <path d="M72 34l-2 15h6l4-13M91 36l2 14h6l-1-16" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-                <path d="M98 13l7-4M103 22l7 2" fill="none" stroke="#176b4d" stroke-width="2" stroke-linecap="round"/>
-                <circle cx="103" cy="13" r="1.4" fill="#176b4d"/>
+              <g class="arava-horse-body">
+                <ellipse cx="94" cy="29" rx="17" ry="9.5" fill="currentColor"/>
+                <path d="M104 25C108 21 108 15 112 11L119 9C123 10 125 13 124 17L131 19L129 25L119 26C116 30 112 34 106 36Z" fill="currentColor"/>
+                <path d="M112 11L111 4L116 9M120 10L124 5L123 13" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                <path d="M79 27C73 26 71 22 67 19" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>
+                <path d="M79 31L70 34" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                <circle cx="121.5" cy="15.5" r="1.35" fill="#176b4d"/>
+                <path d="M128 22L132 22.5" fill="none" stroke="#176b4d" stroke-width="1.5" stroke-linecap="round"/>
               </g>
+              <g class="arava-horse-leg arava-horse-leg-back">
+                <path d="M84 35L83 46L78 56M91 36L92 47L96 56" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+              </g>
+              <g class="arava-horse-leg arava-horse-leg-front">
+                <path d="M102 35L104 46L101 57M109 34L111 45L116 55" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+              </g>
+              <path class="arava-harness" d="M77 31L113 22M77 36L108 34" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity=".9"/>
             </svg>
           </span>
         </button>
