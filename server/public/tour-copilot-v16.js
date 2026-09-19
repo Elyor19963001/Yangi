@@ -206,6 +206,26 @@
     return false;
   }
 
+  function applyNaturalOverrides(value){
+    const v=String(value||'').toLowerCase();
+    const day=v.match(/\b([1-5])\s*(?:kun|day|days|дн)/i);
+    if(day)state.answers.days=Number(day[1]);
+    const party=v.match(/\b(\d{1,2})\s*(?:kishi|odam|sayohatchi|person|people|человек)/i);
+    if(party)state.answers.party_size=Math.max(1,Math.min(20,Number(party[1])));
+    if(/taksi|taxi|такси/.test(v))state.answers.transport='taxi';
+    else if(/faqat piyoda|walking only|пешком/.test(v))state.answers.transport='walking';
+    else if(/shaxsiy avtomobil|o.?z avtomobil|own car|личн.*авто/.test(v)){state.answers.transport='own_vehicle';state.answers.own_vehicle=true;}
+    else if(/aralash|mixed/.test(v))state.answers.transport='mixed';
+    const interests=[];
+    if(/tarix|histor|истор/.test(v))interests.push('history');
+    if(/ziyorat|maqbara|masjid|pilgrim|mosque|мавзол|мечет/.test(v))interests.push('pilgrimage');
+    if(/taom|food|restaurant|osh|plov|кухн|еда/.test(v))interests.push('gastronomy');
+    if(/muzey|museum|музей/.test(v))interests.push('museum');
+    if(/arxitekt|architect|архитект/.test(v))interests.push('architecture');
+    if(/oila|bola|family|child|семь|ребен/.test(v))interests.push('family');
+    if(interests.length)state.answers.interests=[...new Set(interests)];
+  }
+
   function submitChat(){
     const input=qs('[data-ai-input]');
     const value=String(input?.value||'').trim();
@@ -222,6 +242,7 @@
     }
 
     const question=state.data?.next_question;
+    applyNaturalOverrides(value);
     if(!parseFreeAnswer(question,value))state.additions.push(value);
     analyze(false);
   }
