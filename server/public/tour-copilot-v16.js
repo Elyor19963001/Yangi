@@ -4,6 +4,11 @@
   const qsa = (s,r=document) => [...r.querySelectorAll(s)];
   const esc = (v) => String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const MASCOT_SRC = window.TFE_MASCOT_DATA_URI || '/uzbek-ai-emoji.svg?v=19.1';
+  const mascotMarkup = () => `<span class="mascot-layered" aria-hidden="true">
+    <img class="mascot-base" src="${MASCOT_SRC}" alt="" />
+    <span class="mascot-hand-cover"></span>
+    <img class="mascot-hand" src="${MASCOT_SRC}" alt="" />
+  </span>`;
   const state = { answers:{}, additions:[], data:null, busy:false, started:false };
 
   function ready(fn){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fn,{once:true});else fn();}
@@ -39,7 +44,7 @@
 
       <div class="simple-chat" data-chat>
         <div class="simple-msg assistant">
-          <span class="simple-avatar assistant-mascot" aria-hidden="true"><img src="${MASCOT_SRC}" alt="" /></span>
+          <span class="simple-avatar assistant-mascot" aria-hidden="true">${mascotMarkup()}</span>
           <div class="simple-bubble">
             <strong>Qanday sayohat xohlaysiz?</strong>
             <p>Masalan: “2 kunlik ziyorat turi kerak, ko‘p yurmaylik, milliy taomlar ham bo‘lsin.”</p>
@@ -67,7 +72,7 @@
     const row=document.createElement('div');
     row.className='simple-msg '+role;
     row.innerHTML=`
-      <span class="simple-avatar ${role==='assistant'?'assistant-mascot':''}">${role==='assistant'?'<img src="'+MASCOT_SRC+'" alt="" aria-hidden="true" />':'Siz'}</span>
+      <span class="simple-avatar ${role==='assistant'?'assistant-mascot':''}">${role==='assistant'?mascotMarkup():'Siz'}</span>
       <div class="simple-bubble">
         ${title?`<strong>${esc(title)}</strong>`:''}
         ${text?`<p>${esc(text)}</p>`:''}
