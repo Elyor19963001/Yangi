@@ -1,111 +1,7 @@
 (() => {
   'use strict';
 
-  // v21.7 — unmistakable horse silhouette: shorter ears, long equine muzzle,
-  // arched neck, mane, deep chest, horse tail and distinct hooves.
-  const HORSE_INNER = `
-    <g class="arava-wagon">
-      <path d="M5 20H58L54 40H10L5 20Z"
-            fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/>
-      <path d="M10 25H54M11 32H53"
-            fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
-      <path d="M9 18L6 11M54 18L59 11"
-            fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-      <path d="M54 31L87 34M54 38L86 41"
-            fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>
-      <path d="M18 29l5-4 5 4-5 4zM33 29l5-4 5 4-5 4z"
-            fill="none" stroke="currentColor" stroke-width="1.2" opacity=".9"/>
-    </g>
-
-    <g class="arava-wheel wheel-one">
-      <circle cx="19" cy="51" r="11.5" fill="none" stroke="currentColor" stroke-width="3.4"/>
-      <circle cx="19" cy="51" r="2.2" fill="currentColor"/>
-      <path d="M19 39.5V62.5M7.5 51H30.5M11 43L27 59M27 43L11 59"
-            fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"/>
-    </g>
-    <g class="arava-wheel wheel-two">
-      <circle cx="47" cy="51" r="11.5" fill="none" stroke="currentColor" stroke-width="3.4"/>
-      <circle cx="47" cy="51" r="2.2" fill="currentColor"/>
-      <path d="M47 39.5V62.5M35.5 51H58.5M39 43L55 59M55 43L39 59"
-            fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"/>
-    </g>
-
-    <g class="arava-horse-body">
-      <!-- body + deep chest -->
-      <path d="
-        M88 31
-        C98 25 112 24 124 27
-        C131 29 136 31 141 34
-        C144 33 147 31 150 28
-        C154 24 156 20 158 16
-        C161 11 165 9 169 10
-        C173 11 175 14 176 17
-        L184 20
-        C188 21 190 24 189 27
-        C188 30 185 32 181 32
-        L173 31
-        C169 34 166 38 164 43
-        C159 46 153 46 147 43
-        C139 39 133 37 126 38
-        C117 40 108 42 99 41
-        C93 40 88 37 86 34
-        C85 33 86 32 88 31Z"
-        fill="currentColor"/>
-
-      <!-- compact horse ears: deliberately shorter than donkey ears -->
-      <path d="M161 12L161 5L165 11Z" fill="currentColor"/>
-      <path d="M168 11L171 5L171 13Z" fill="currentColor"/>
-
-      <!-- flowing mane on the outside of the neck -->
-      <path d="
-        M158 16
-        C153 16 149 18 145 18
-        C149 20 150 22 146 23
-        C150 25 151 27 147 29
-        C151 31 152 33 148 35"
-        fill="none" stroke="#176b4d" stroke-width="2" stroke-linecap="round"/>
-
-      <!-- long flowing horse tail -->
-      <path d="
-        M91 31
-        C83 27 80 21 77 17
-        C77 25 74 30 69 35
-        C75 33 80 34 82 37
-        C78 41 74 44 69 47
-        C79 46 87 42 94 36Z"
-        fill="currentColor"/>
-
-      <!-- eye + nostril -->
-      <circle cx="175" cy="18.2" r="1.25" fill="#176b4d"/>
-      <ellipse cx="185" cy="26.2" rx="1.6" ry="1" fill="#176b4d"/>
-
-      <!-- simple bridle only on head -->
-      <path d="M171 13.5C175 18 176 23 173 31M173 27L185 30"
-            fill="none" stroke="#176b4d" stroke-width="1.25" stroke-linecap="round"/>
-    </g>
-
-    <!-- four unmistakably equine legs: knee, fetlock, hoof -->
-    <g class="arava-horse-legs">
-      <path class="arava-leg leg-rear-a"
-            d="M99 39L97 49L92 56L90 65M90 65L97 65"
-            fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-      <path class="arava-leg leg-rear-b"
-            d="M112 39L113 49L118 56L120 64M120 64L127 64"
-            fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-      <path class="arava-leg leg-front-a"
-            d="M145 42L144 51L139 58L138 66M138 66L145 66"
-            fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-      <path class="arava-leg leg-front-b"
-            d="M158 43L160 52L165 58L168 65M168 65L175 65"
-            fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-    </g>
-
-    <!-- harness goes to chest/shoulder, not the muzzle -->
-    <path class="arava-harness"
-          d="M84 34L151 34M85 41L145 43"
-          fill="none" stroke="currentColor" stroke-width="1.8"
-          stroke-linecap="round" opacity=".95"/>
-  `;
+  const HORSE_SRC = 'data:image/webp;base64,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';
 
   function runHorse(button) {
     if (!button) return;
@@ -113,26 +9,28 @@
     void button.offsetWidth;
     button.classList.add('horse-running');
     if (button.__horseRunTimer) clearTimeout(button.__horseRunTimer);
-    button.__horseRunTimer = setTimeout(() => {
-      button.classList.remove('horse-running');
-    }, 1250);
+    button.__horseRunTimer = setTimeout(() => button.classList.remove('horse-running'), 1150);
   }
 
   function upgradeHorseCart(root = document) {
-    root.querySelectorAll?.('.arava-cart-icon:not([data-horse-v217])').forEach((svg) => {
-      svg.setAttribute('viewBox', '0 0 194 72');
-      svg.setAttribute('data-horse-v217', 'true');
-      svg.removeAttribute('data-horse-v216');
-      svg.removeAttribute('data-horse-v215');
-      svg.removeAttribute('data-horse-v214');
-      svg.innerHTML = HORSE_INNER;
+    root.querySelectorAll?.('.arava-cart-icon:not([data-horse-v218])').forEach((node) => {
+      let img = node;
+      if (node.tagName?.toLowerCase() !== 'img') {
+        img = document.createElement('img');
+        img.className = 'arava-cart-icon arava-real-horse';
+        node.replaceWith(img);
+      }
+      img.src = HORSE_SRC;
+      img.alt = '';
+      img.setAttribute('aria-hidden', 'true');
+      img.setAttribute('data-horse-v218', 'true');
 
-      const button = svg.closest('.arava-send');
+      const button = img.closest('.arava-send');
       if (button) {
         button.setAttribute('aria-label', 'Yuborish — o‘zbek ot aravasi');
         button.setAttribute('title', 'Ot arava — bosilganda yuguradi');
-        if (!button.dataset.horseClickBound) {
-          button.dataset.horseClickBound = 'true';
+        if (!button.dataset.horseClickBound218) {
+          button.dataset.horseClickBound218 = 'true';
           button.addEventListener('click', () => runHorse(button));
         }
       }
@@ -150,11 +48,11 @@
         }
       }
     });
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, {childList:true, subtree:true});
   };
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', start, { once: true });
+    document.addEventListener('DOMContentLoaded', start, {once:true});
   } else {
     start();
   }
