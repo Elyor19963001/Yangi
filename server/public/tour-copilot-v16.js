@@ -11,42 +11,88 @@
     <img class="mascot-base" src="${MASCOT_BODY}" alt="" />
     <img class="mascot-head" src="${MASCOT_HEAD}" alt="" />
     <img class="mascot-hand" src="${MASCOT_HAND}" alt="" />
+    <span class="mascot-expression">
+      <i class="mascot-brow brow-left"></i>
+      <i class="mascot-brow brow-right"></i>
+      <i class="mascot-lid lid-left"></i>
+      <i class="mascot-lid lid-right"></i>
+      <i class="mascot-mouth"></i>
+    </span>
   </span>`;
 
   function animateMascot(root=document){
     root.querySelectorAll?.('.assistant-mascot .mascot-layered').forEach(layer=>{
       if(layer.dataset.motionReady==='1')return;
       layer.dataset.motionReady='1';
+
       const hand=layer.querySelector('.mascot-hand');
       const head=layer.querySelector('.mascot-head');
-      if(hand){
+      const lids=[...layer.querySelectorAll('.mascot-lid')];
+      const mouth=layer.querySelector('.mascot-mouth');
+      const brows=[...layer.querySelectorAll('.mascot-brow')];
+
+      if(hand&&typeof hand.animate==='function'){
         hand.style.transformOrigin='34% 43%';
         hand.style.willChange='transform';
-        if(typeof hand.animate==='function'){
-          hand.animate([
-            {transform:'rotate(0deg)',offset:0},
-            {transform:'rotate(-8deg)',offset:.18},
-            {transform:'rotate(7deg)',offset:.34},
-            {transform:'rotate(-6deg)',offset:.50},
-            {transform:'rotate(5deg)',offset:.64},
-            {transform:'rotate(0deg)',offset:.76},
-            {transform:'rotate(0deg)',offset:1}
-          ],{duration:1750,iterations:Infinity,easing:'ease-in-out'});
-        }
+        hand.animate([
+          {transform:'rotate(0deg)',offset:0},
+          {transform:'rotate(0deg)',offset:.10},
+          {transform:'rotate(-6deg)',offset:.20},
+          {transform:'rotate(5deg)',offset:.31},
+          {transform:'rotate(-4deg)',offset:.42},
+          {transform:'rotate(3deg)',offset:.52},
+          {transform:'rotate(0deg)',offset:.62},
+          {transform:'rotate(0deg)',offset:1}
+        ],{duration:2300,iterations:Infinity,easing:'ease-in-out'});
       }
-      if(head){
+
+      if(head&&typeof head.animate==='function'){
         head.style.transformOrigin='50% 43%';
         head.style.willChange='transform';
-        if(typeof head.animate==='function'){
-          head.animate([
-            {transform:'translateY(0) rotate(0deg)',offset:0},
-            {transform:'translateY(-0.5px) rotate(0.9deg)',offset:.30},
-            {transform:'translateY(0) rotate(-0.8deg)',offset:.55},
-            {transform:'translateY(-0.4px) rotate(0.5deg)',offset:.76},
-            {transform:'translateY(0) rotate(0deg)',offset:1}
-          ],{duration:3800,iterations:Infinity,easing:'ease-in-out'});
-        }
+        head.animate([
+          {transform:'translateY(0) rotate(0deg)',offset:0},
+          {transform:'translateY(-0.35px) rotate(.65deg)',offset:.28},
+          {transform:'translateY(0) rotate(-.55deg)',offset:.52},
+          {transform:'translateY(-0.25px) rotate(.35deg)',offset:.72},
+          {transform:'translateY(0) rotate(0deg)',offset:1}
+        ],{duration:4200,iterations:Infinity,easing:'ease-in-out'});
       }
+
+      lids.forEach((lid,index)=>{
+        if(typeof lid.animate!=='function')return;
+        lid.animate([
+          {opacity:0,transform:'scaleY(.2)',offset:0},
+          {opacity:0,transform:'scaleY(.2)',offset:.70+(index*.006)},
+          {opacity:.94,transform:'scaleY(1)',offset:.735+(index*.006)},
+          {opacity:.98,transform:'scaleY(1.08)',offset:.752+(index*.006)},
+          {opacity:0,transform:'scaleY(.2)',offset:.79+(index*.006)},
+          {opacity:0,transform:'scaleY(.2)',offset:1}
+        ],{duration:4300,iterations:Infinity,easing:'ease-in-out'});
+      });
+
+      if(mouth&&typeof mouth.animate==='function'){
+        mouth.animate([
+          {transform:'translateZ(0) scaleY(.45) scaleX(1)',offset:0},
+          {transform:'translateZ(0) scaleY(.78) scaleX(.98)',offset:.14},
+          {transform:'translateZ(0) scaleY(.5) scaleX(1.02)',offset:.28},
+          {transform:'translateZ(0) scaleY(.9) scaleX(.96)',offset:.42},
+          {transform:'translateZ(0) scaleY(.48) scaleX(1.01)',offset:.56},
+          {transform:'translateZ(0) scaleY(.72) scaleX(.99)',offset:.68},
+          {transform:'translateZ(0) scaleY(.45) scaleX(1)',offset:.80},
+          {transform:'translateZ(0) scaleY(.45) scaleX(1)',offset:1}
+        ],{duration:1450,iterations:Infinity,easing:'ease-in-out'});
+      }
+
+      brows.forEach((brow,index)=>{
+        if(typeof brow.animate!=='function')return;
+        const dir=index===0?-1:1;
+        brow.animate([
+          {transform:`translateY(0) rotate(${dir*5}deg)`,offset:0},
+          {transform:`translateY(-.4px) rotate(${dir*3.5}deg)`,offset:.35},
+          {transform:`translateY(0) rotate(${dir*5}deg)`,offset:.72},
+          {transform:`translateY(0) rotate(${dir*5}deg)`,offset:1}
+        ],{duration:3600,iterations:Infinity,easing:'ease-in-out'});
+      });
     });
   }
 
