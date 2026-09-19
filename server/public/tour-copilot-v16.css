@@ -35,3 +35,4 @@
   .simple-composer{position:sticky;bottom:68px;z-index:1100;padding:8px 9px;background:rgba(251,253,252,.96);backdrop-filter:blur(12px)}.simple-composer textarea{min-height:46px;font-size:10px}.simple-composer button{border-radius:13px}
   .simple-footer{padding:0 10px 9px}
 }
+.feature-grid{display:none!important}
