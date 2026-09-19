@@ -1342,7 +1342,7 @@ function clarifyQuestions(prompt, intent, answers = {}) {
     questions.push({
       key: 'days',
       text: 'Samarqandda necha kun bo‘lasiz?',
-      hint: 'Marshrut hajmi va kunlik obyektlar soni shunga qarab tuziladi.',
+      hint: 'Marshrut hajmi shunga qarab tuziladi.',
       options: [
         { label: '1 kun', value: 1 },
         { label: '2 kun', value: 2 },
@@ -1355,9 +1355,8 @@ function clarifyQuestions(prompt, intent, answers = {}) {
   if (!signal.interests.length) {
     questions.push({
       key: 'interests',
-      text: 'Sizni eng ko‘p nima qiziqtiradi?',
-      hint: 'Bir yoki bir nechta yo‘nalishni tanlashingiz mumkin.',
-      multiple: true,
+      text: 'Safarda siz uchun eng muhim yo‘nalish qaysi?',
+      hint: 'Bittasini tanlang; qolgan istaklarni matndan ham tushunaman.',
       options: [
         { label: '🏛 Tarix', value: 'history' },
         { label: '🕌 Ziyorat', value: 'pilgrimage' },
@@ -1373,7 +1372,7 @@ function clarifyQuestions(prompt, intent, answers = {}) {
     questions.push({
       key: 'party_size',
       text: 'Necha kishi sayohat qiladi?',
-      hint: 'Bu chipta, transport va budjet hisobiga ta’sir qiladi.',
+      hint: 'Chipta va xizmatlar hisobiga kerak.',
       options: [
         { label: '1 kishi', value: 1 },
         { label: '2 kishi', value: 2 },
@@ -1386,20 +1385,29 @@ function clarifyQuestions(prompt, intent, answers = {}) {
   if (!signal.transport_explicit && (intent.low_walking || signal.low_walking_explicit)) {
     questions.push({
       key: 'transport',
-      text: 'Ko‘p yurmaslik uchun qaysi variant sizga qulay?',
-      hint: 'AI obyektlar orasidagi harakatni shunga moslashtiradi.',
+      text: 'Ko‘p yurmaslik uchun qaysi transport qulay?',
+      hint: 'AI obyektlar orasidagi yo‘lni shunga moslashtiradi.',
       options: [
-        { label: '🚕 Taksi ustuvor', value: 'taxi' },
+        { label: '🚕 Taksi', value: 'taxi' },
         { label: '🧭 Aralash', value: 'mixed' },
-        { label: '🚗 Shaxsiy avtomobil', value: 'own_vehicle' },
+        { label: '🚗 O‘z avtomobilim', value: 'own_vehicle' },
       ],
       input: 'choice',
+    });
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(answers.start_date || ''))) {
+    questions.push({
+      key: 'start_date',
+      text: 'Sayohat qaysi sanada boshlanadi?',
+      hint: 'Ob-havo va obyektlarning ish vaqtini shu sana bo‘yicha tekshiraman.',
+      options: [],
+      input: 'date',
     });
   }
   return { signal, questions };
 }
 
-function clarifyFacts(intent, partySize) {
+function clarifyFacts(intent, partySize, startDate = null) {
   const interestLabels = {
     history: 'Tarix',
     pilgrimage: 'Ziyorat',
@@ -1415,6 +1423,7 @@ function clarifyFacts(intent, partySize) {
     { icon: '🚶', label: 'Yurish', value: intent.low_walking ? 'Kam yurish' : intent.pace === 'active' ? 'Faol' : 'Muvozanatli' },
     { icon: '🚕', label: 'Transport', value: transportLabels[intent.transport] || 'Aralash' },
     { icon: '👥', label: 'Guruh', value: partySize ? `${partySize} kishi` : 'Aniqlashtirilmoqda' },
+    startDate ? { icon: '📅', label: 'Boshlanish', value: startDate } : null,
     intent.budget_uzs ? { icon: '💳', label: 'Budjet', value: `${new Intl.NumberFormat('uz-UZ').format(intent.budget_uzs)} so‘m` } : null,
   ].filter(Boolean);
 }
@@ -1444,7 +1453,8 @@ router.post('/clarify', asyncHandler(async (req, res) => {
     engine: intent.engine === 'openai' ? 'openai' : 'smart-rules',
     intent,
     party_size: partySize,
-    facts: clarifyFacts(intent, partySize),
+    start_date: /^\d{4}-\d{2}-\d{2}$/.test(String(answers.start_date || '')) ? String(answers.start_date) : null,
+    facts: clarifyFacts(intent, partySize, answers.start_date || null),
     ready: questions.length === 0,
     next_question: next,
     remaining_questions: questions.length,
@@ -1577,7 +1587,7 @@ router.post('/plan', asyncHandler(async (req, res) => {
   const knownClosedVisits = days.flatMap((day) => day.stops || []).filter((stop) => stop.operational?.planned?.status === 'closed');
   const pricedStops = days.flatMap((day) => day.stops || []).filter((stop) => stop.operational?.ticket?.status !== 'unknown');
   res.json({
-    version: '2.0.0',
+    version: '2.1.0',
     prompt,
     intent,
     start,
@@ -1618,7 +1628,7 @@ async function runStartupSmoke() {
     const selected = selectPois(discovered.rows, intent, CENTER).slice(0, 4);
     const route = selected.length ? (await routeDriving(CENTER, selected) || routeFallback(CENTER, selected, false)) : null;
     const names = selected.map((p) => p.name).join(' | ');
-    console.log(`[tour-smoke] v=2.0 provider=${discovered.provider} pois=${discovered.rows.length} external=${discovered.external_count} sample=${names || 'none'} route=${route?.source || 'none'} geometry=${route?.geometry?.type || 'none'}`);
+    console.log(`[tour-smoke] v=2.1 provider=${discovered.provider} pois=${discovered.rows.length} external=${discovered.external_count} sample=${names || 'none'} route=${route?.source || 'none'} geometry=${route?.geometry?.type || 'none'}`);
   } catch (error) {
     console.warn(`[tour-smoke] failed=${error.response?.status || error.message}`);
   }
