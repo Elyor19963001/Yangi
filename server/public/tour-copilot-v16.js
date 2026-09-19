@@ -20,32 +20,31 @@
       const hand=layer.querySelector('.mascot-hand');
       const head=layer.querySelector('.mascot-head');
       if(hand){
-        hand.style.transformOrigin='52% 58%';
+        hand.style.transformOrigin='34% 43%';
         hand.style.willChange='transform';
         if(typeof hand.animate==='function'){
           hand.animate([
             {transform:'rotate(0deg)',offset:0},
-            {transform:'rotate(-22deg)',offset:.16},
-            {transform:'rotate(18deg)',offset:.30},
-            {transform:'rotate(-16deg)',offset:.44},
-            {transform:'rotate(14deg)',offset:.58},
-            {transform:'rotate(-8deg)',offset:.68},
+            {transform:'rotate(-8deg)',offset:.18},
+            {transform:'rotate(7deg)',offset:.34},
+            {transform:'rotate(-6deg)',offset:.50},
+            {transform:'rotate(5deg)',offset:.64},
             {transform:'rotate(0deg)',offset:.76},
             {transform:'rotate(0deg)',offset:1}
-          ],{duration:1800,iterations:Infinity,easing:'ease-in-out'});
+          ],{duration:1750,iterations:Infinity,easing:'ease-in-out'});
         }
       }
       if(head){
-        head.style.transformOrigin='50% 55%';
+        head.style.transformOrigin='50% 43%';
         head.style.willChange='transform';
         if(typeof head.animate==='function'){
           head.animate([
             {transform:'translateY(0) rotate(0deg)',offset:0},
-            {transform:'translateY(-1px) rotate(2deg)',offset:.28},
-            {transform:'translateY(0) rotate(-1.6deg)',offset:.50},
-            {transform:'translateY(-1px) rotate(1deg)',offset:.70},
+            {transform:'translateY(-0.5px) rotate(0.9deg)',offset:.30},
+            {transform:'translateY(0) rotate(-0.8deg)',offset:.55},
+            {transform:'translateY(-0.4px) rotate(0.5deg)',offset:.76},
             {transform:'translateY(0) rotate(0deg)',offset:1}
-          ],{duration:3600,iterations:Infinity,easing:'ease-in-out'});
+          ],{duration:3800,iterations:Infinity,easing:'ease-in-out'});
         }
       }
     });
