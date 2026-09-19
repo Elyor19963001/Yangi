@@ -116,3 +116,64 @@
 @media(prefers-reduced-motion:reduce){
   .simple-avatar.assistant-mascot img{animation:none!important}
 }
+
+/* v19.3 — exact mascot, only the raised hand moves */
+.simple-avatar.assistant-mascot{
+  position:relative!important;
+}
+.simple-avatar.assistant-mascot .mascot-layered{
+  position:relative;
+  display:block;
+  width:58px;
+  height:68px;
+  overflow:visible;
+}
+.simple-avatar.assistant-mascot .mascot-layered>img{
+  position:absolute!important;
+  inset:0!important;
+  width:58px!important;
+  height:68px!important;
+  object-fit:contain!important;
+  filter:drop-shadow(0 5px 7px rgba(20,63,47,.14));
+  animation:none!important;
+  transform:none!important;
+}
+.simple-avatar.assistant-mascot .mascot-base{
+  z-index:1;
+}
+.simple-avatar.assistant-mascot .mascot-hand-cover{
+  position:absolute;
+  z-index:2;
+  left:4px;
+  top:14px;
+  width:22px;
+  height:25px;
+  border-radius:45% 55% 50% 50%;
+  background:#fff;
+  pointer-events:none;
+}
+.simple-avatar.assistant-mascot .mascot-hand{
+  z-index:3;
+  clip-path:polygon(4% 15%,42% 14%,48% 25%,49% 41%,45% 56%,32% 59%,20% 53%,15% 44%,6% 42%,1% 29%);
+  transform-origin:43% 48%!important;
+  animation:tfeWaveHandOnly 1.55s ease-in-out infinite!important;
+  will-change:transform;
+}
+@keyframes tfeWaveHandOnly{
+  0%,100%{transform:rotate(0deg)!important}
+  18%{transform:rotate(-12deg)!important}
+  38%{transform:rotate(11deg)!important}
+  58%{transform:rotate(-9deg)!important}
+  78%{transform:rotate(8deg)!important}
+}
+.simple-msg.assistant:hover .assistant-mascot .mascot-hand{
+  animation-duration:.92s!important;
+}
+@media(max-width:760px){
+  .simple-avatar.assistant-mascot .mascot-layered{width:62px;height:72px}
+  .simple-avatar.assistant-mascot .mascot-layered>img{width:62px!important;height:72px!important}
+  .simple-avatar.assistant-mascot .mascot-hand-cover{left:4px;top:15px;width:24px;height:27px}
+}
+@media(prefers-reduced-motion:reduce){
+  .simple-avatar.assistant-mascot .mascot-hand{animation:none!important}
+}
