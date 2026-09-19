@@ -104,7 +104,28 @@
             <i class="arava-motion-line line-two"></i>
             <i class="arava-dust dust-one"></i>
             <i class="arava-dust dust-two"></i>
-            <img src="/uzbek-arava-send.png?v=21.1" alt="" />
+            <svg class="arava-cart-icon" viewBox="0 0 120 58" role="presentation" focusable="false">
+              <g class="arava-wagon">
+                <path d="M5 15h39v23H7z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+                <path d="M10 21h29M10 28h29" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+                <path d="M44 29L69 27M44 35L67 32" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>
+              </g>
+              <g class="arava-wheel wheel-one">
+                <circle cx="13" cy="43" r="9" fill="none" stroke="currentColor" stroke-width="3.5"/>
+                <path d="M13 34v18M4 43h18M7 37l12 12M19 37L7 49" stroke="currentColor" stroke-width="1.7"/>
+              </g>
+              <g class="arava-wheel wheel-two">
+                <circle cx="35" cy="43" r="9" fill="none" stroke="currentColor" stroke-width="3.5"/>
+                <path d="M35 34v18M26 43h18M29 37l12 12M41 37L29 49" stroke="currentColor" stroke-width="1.7"/>
+              </g>
+              <g class="arava-horse">
+                <path d="M64 22c5-6 17-8 26-4l8 6 3 10-8 5-12-3-6 2-5-6-8-2z" fill="currentColor"/>
+                <path d="M88 20l4-11 8-6 7 2-1 7 8 5 2 8-6 5-8-3-4 9-7-4z" fill="currentColor"/>
+                <path d="M72 34l-2 15h6l4-13M91 36l2 14h6l-1-16" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                <path d="M98 13l7-4M103 22l7 2" fill="none" stroke="#176b4d" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="103" cy="13" r="1.4" fill="#176b4d"/>
+              </g>
+            </svg>
           </span>
         </button>
       </div>
