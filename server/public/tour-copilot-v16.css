@@ -476,3 +476,76 @@
   .assistant-hero-mascot .mascot-layered{width:64px!important;height:70px!important}
   .assistant-hero-mascot .mascot-layered>img{width:64px!important;height:70px!important}
 }
+
+/* v20 — natural mascot expression: subtle hand/head + blink + mouth + brows */
+.assistant-mascot .mascot-layered{
+  position:relative!important;
+}
+.assistant-mascot .mascot-expression{
+  position:absolute!important;
+  inset:0!important;
+  z-index:5!important;
+  pointer-events:none!important;
+}
+.assistant-mascot .mascot-lid,
+.assistant-mascot .mascot-mouth,
+.assistant-mascot .mascot-brow{
+  position:absolute!important;
+  display:block!important;
+  pointer-events:none!important;
+}
+.assistant-mascot .mascot-lid{
+  top:25.8%;
+  width:6.2%;
+  height:2.6%;
+  border-radius:999px;
+  background:rgba(239,170,124,.94);
+  opacity:0;
+  transform:scaleY(.2);
+  transform-origin:center;
+}
+.assistant-mascot .lid-left{left:43.1%}
+.assistant-mascot .lid-right{left:52.1%}
+.assistant-mascot .mascot-mouth{
+  left:47.1%;
+  top:34.2%;
+  width:8.7%;
+  height:3.3%;
+  border-radius:45% 45% 60% 60%;
+  background:rgba(120,54,46,.82);
+  box-shadow:inset 0 -1px 0 rgba(255,184,177,.42);
+  transform-origin:center;
+}
+.assistant-mascot .mascot-brow{
+  top:22.8%;
+  width:7.4%;
+  height:1.25px;
+  border-radius:999px;
+  background:rgba(47,37,32,.9);
+  transform-origin:center;
+}
+.assistant-mascot .brow-left{left:42.3%;transform:rotate(-5deg)}
+.assistant-mascot .brow-right{left:52.1%;transform:rotate(5deg)}
+
+/* Keep the body absolutely intact; visual motion comes from clipped overlays only. */
+.assistant-mascot .mascot-layered>img.mascot-base{
+  transform:none!important;
+  animation:none!important;
+}
+.assistant-mascot .mascot-layered>img.mascot-head,
+.assistant-mascot .mascot-layered>img.mascot-hand{
+  animation:none!important;
+  will-change:transform!important;
+}
+
+/* The face is intentionally very subtle at small avatar sizes. */
+@media(max-width:760px){
+  .assistant-mascot .mascot-lid{height:2.4%}
+  .assistant-mascot .mascot-mouth{height:3.1%}
+  .assistant-mascot .mascot-brow{height:1px}
+}
+@media(prefers-reduced-motion:reduce){
+  .assistant-mascot .mascot-lid{opacity:0!important}
+  .assistant-mascot .mascot-mouth{transform:none!important}
+  .assistant-mascot .mascot-brow{transform:none!important}
+}
