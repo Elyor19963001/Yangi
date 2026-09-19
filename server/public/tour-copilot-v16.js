@@ -116,10 +116,14 @@
     if(!chat)return null;
     const row=document.createElement('div');
     row.className='simple-msg '+role;
+    const avatar=role==='assistant'
+      ? `<span class="assistant-mini-mascot assistant-mascot" aria-hidden="true">${mascotMarkup()}</span>`
+      : '';
     const label=role==='assistant'
-      ? '<span class="chat-role-label"><i>✦</i> AI yordamchi</span>'
+      ? '<span class="chat-role-label">AI yordamchi</span>'
       : '<span class="chat-role-label user-label">Siz</span>';
     row.innerHTML=`
+      ${avatar}
       <div class="simple-bubble">
         ${label}
         ${title?`<strong>${esc(title)}</strong>`:''}
@@ -127,6 +131,7 @@
         ${extra}
       </div>`;
     chat.appendChild(row);
+    if(role==='assistant')animateMascot(row);
     requestAnimationFrame(()=>{chat.scrollTop=chat.scrollHeight;});
     return row;
   }
@@ -159,10 +164,14 @@
   }
 
   function renderReady(data){
+    const assumptions=(data?.assumptions||[]).length
+      ? `<div class="smart-assumptions"><strong>AI taxmini</strong><span>${(data.assumptions||[]).map(esc).join(' · ')}</span><small>Noto‘g‘ri bo‘lsa “Bir narsani o‘zgartiraman” orqali aytasiz.</small></div>`
+      : '';
     const summary=`
       <div class="ready-summary">
-        <div class="ready-title"><span>✓</span><div><strong>Rejani tushundim</strong><small>Quyidagicha marshrut tuzaman</small></div></div>
+        <div class="ready-title"><span>✓</span><div><strong>Rejani tushundim</strong><small>Qisqa yozuvdan asosiy niyatingizni ajratdim</small></div></div>
         <div class="summary-chips">${factChips(data)}</div>
+        ${assumptions}
         <div class="ready-actions">
           <button type="button" class="ready-create" data-ready-create>Marshrutni yaratish <b>→</b></button>
           <button type="button" class="ready-edit" data-ready-edit>Bir narsani o‘zgartiraman</button>
@@ -210,8 +219,8 @@
   async function analyze(addUser){
     if(state.busy)return;
     const prompt=fullPrompt();
-    if(prompt.length<4){
-      addMessage('assistant','Yana biroz yozing','Masalan: “2 kunlik tarixiy tur kerak.”');
+    if(prompt.length<2){
+      addMessage('assistant','Qisqacha yozing','Masalan: “ziyorat”, “2 kun taom”, “oila bilan”.');
       return;
     }
     state.busy=true;
@@ -265,6 +274,9 @@
     const v=String(value||'').toLowerCase();
     const day=v.match(/\b([1-5])\s*(?:kun|day|days|дн)/i);
     if(day)state.answers.days=Number(day[1]);
+    else if(/\b(?:bir|one)\s*kun\b/i.test(v))state.answers.days=1;
+    else if(/\b(?:ikki|two)\s*kun\b/i.test(v))state.answers.days=2;
+    else if(/\b(?:uch|three)\s*kun\b/i.test(v))state.answers.days=3;
     const party=v.match(/\b(\d{1,2})\s*(?:kishi|odam|sayohatchi|person|people|человек)/i);
     if(party)state.answers.party_size=Math.max(1,Math.min(20,Number(party[1])));
     if(/taksi|taxi|такси/.test(v))state.answers.transport='taxi';
