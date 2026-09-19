@@ -12,6 +12,45 @@
     <img class="mascot-head" src="${MASCOT_HEAD}" alt="" />
     <img class="mascot-hand" src="${MASCOT_HAND}" alt="" />
   </span>`;
+
+  function animateMascot(root=document){
+    root.querySelectorAll?.('.assistant-mascot .mascot-layered').forEach(layer=>{
+      if(layer.dataset.motionReady==='1')return;
+      layer.dataset.motionReady='1';
+      const hand=layer.querySelector('.mascot-hand');
+      const head=layer.querySelector('.mascot-head');
+      if(hand){
+        hand.style.transformOrigin='52% 58%';
+        hand.style.willChange='transform';
+        if(typeof hand.animate==='function'){
+          hand.animate([
+            {transform:'rotate(0deg)',offset:0},
+            {transform:'rotate(-22deg)',offset:.16},
+            {transform:'rotate(18deg)',offset:.30},
+            {transform:'rotate(-16deg)',offset:.44},
+            {transform:'rotate(14deg)',offset:.58},
+            {transform:'rotate(-8deg)',offset:.68},
+            {transform:'rotate(0deg)',offset:.76},
+            {transform:'rotate(0deg)',offset:1}
+          ],{duration:1800,iterations:Infinity,easing:'ease-in-out'});
+        }
+      }
+      if(head){
+        head.style.transformOrigin='50% 55%';
+        head.style.willChange='transform';
+        if(typeof head.animate==='function'){
+          head.animate([
+            {transform:'translateY(0) rotate(0deg)',offset:0},
+            {transform:'translateY(-1px) rotate(2deg)',offset:.28},
+            {transform:'translateY(0) rotate(-1.6deg)',offset:.50},
+            {transform:'translateY(-1px) rotate(1deg)',offset:.70},
+            {transform:'translateY(0) rotate(0deg)',offset:1}
+          ],{duration:3600,iterations:Infinity,easing:'ease-in-out'});
+        }
+      }
+    });
+  }
+
   const state = { answers:{}, additions:[], data:null, busy:false, started:false };
 
   function ready(fn){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fn,{once:true});else fn();}
@@ -64,6 +103,7 @@
         <span data-simple-location>Samarqand markazi</span>
       </div>`;
     hiddenPrompt.insertAdjacentElement('afterend',shell);
+    animateMascot(shell);
     bind(shell);
     checkStatus(shell);
     syncLocation(shell);
@@ -82,6 +122,7 @@
         ${extra}
       </div>`;
     chat.appendChild(row);
+    animateMascot(row);
     requestAnimationFrame(()=>{chat.scrollTop=chat.scrollHeight;});
     return row;
   }

@@ -135,8 +135,6 @@
   height:68px!important;
   object-fit:contain!important;
   filter:drop-shadow(0 5px 7px rgba(20,63,47,.14));
-  animation:none!important;
-  transform:none!important;
 }
 .simple-avatar.assistant-mascot .mascot-base{
   z-index:1;
@@ -262,4 +260,15 @@
 @media(prefers-reduced-motion:reduce){
   .simple-avatar.assistant-mascot .mascot-layered>img.mascot-head,
   .simple-avatar.assistant-mascot .mascot-layered>img.mascot-hand{animation:none!important}
+}
+
+/* v19.6: real layer pivots; motion is driven by Web Animations API */
+.simple-avatar.assistant-mascot .mascot-layered>img.mascot-base{
+  transform:none!important;
+}
+.simple-avatar.assistant-mascot .mascot-layered>img.mascot-head{
+  transform-origin:50% 55%!important;
+}
+.simple-avatar.assistant-mascot .mascot-layered>img.mascot-hand{
+  transform-origin:52% 58%!important;
 }
