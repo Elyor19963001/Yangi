@@ -963,3 +963,90 @@
   .simple-msg .simple-bubble>p{font-size:9px!important}
   .chat-role-label{font-size:7px!important}
 }
+
+/* v20.8 — compact guide mascot + smart short-input assumptions */
+.simple-msg.assistant{
+  gap:7px!important;
+  align-items:flex-end!important;
+}
+.assistant-mini-mascot{
+  position:relative!important;
+  display:block!important;
+  flex:0 0 38px!important;
+  width:38px!important;
+  height:46px!important;
+  overflow:visible!important;
+  margin-bottom:1px!important;
+}
+.assistant-mini-mascot .mascot-layered{
+  position:relative!important;
+  display:block!important;
+  width:38px!important;
+  height:46px!important;
+  overflow:visible!important;
+}
+.assistant-mini-mascot .mascot-layered>img{
+  position:absolute!important;
+  inset:0!important;
+  width:38px!important;
+  height:46px!important;
+  object-fit:contain!important;
+  pointer-events:none!important;
+  animation:none!important;
+}
+.assistant-mini-mascot .mascot-base{
+  z-index:1!important;
+  clip-path:none!important;
+  transform:none!important;
+}
+.assistant-mini-mascot .mascot-head{
+  z-index:2!important;
+  clip-path:polygon(28% 0%,72% 0%,78% 15%,76% 34%,66% 44%,52% 47%,38% 45%,27% 36%,24% 17%)!important;
+  transform-origin:50% 43%!important;
+}
+.assistant-mini-mascot .mascot-hand{
+  z-index:3!important;
+  clip-path:polygon(7% 18%,18% 14%,25% 12%,31% 16%,36% 23%,35% 34%,31% 43%,35% 49%,29% 51%,23% 45%,16% 43%,10% 36%,6% 28%)!important;
+  transform-origin:34% 43%!important;
+}
+.smart-assumptions{
+  margin-top:9px;
+  padding:9px 10px;
+  border-radius:11px;
+  background:#fffaf0;
+  border:1px solid #eadcae;
+}
+.smart-assumptions strong,
+.smart-assumptions span,
+.smart-assumptions small{
+  display:block;
+}
+.smart-assumptions strong{
+  font-size:8px;
+  color:#765b1e;
+  margin-bottom:3px;
+}
+.smart-assumptions span{
+  font-size:8px;
+  line-height:1.45;
+  color:#5f665f;
+}
+.smart-assumptions small{
+  margin-top:4px;
+  font-size:7px;
+  line-height:1.4;
+  color:#8a8171;
+}
+@media(max-width:760px){
+  .simple-msg.assistant{gap:6px!important}
+  .assistant-mini-mascot{
+    flex-basis:34px!important;
+    width:34px!important;
+    height:42px!important;
+  }
+  .assistant-mini-mascot .mascot-layered,
+  .assistant-mini-mascot .mascot-layered>img{
+    width:34px!important;
+    height:42px!important;
+  }
+}
