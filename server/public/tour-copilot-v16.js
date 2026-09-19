@@ -116,15 +116,17 @@
     if(!chat)return null;
     const row=document.createElement('div');
     row.className='simple-msg '+role;
+    const label=role==='assistant'
+      ? '<span class="chat-role-label"><i>✦</i> AI yordamchi</span>'
+      : '<span class="chat-role-label user-label">Siz</span>';
     row.innerHTML=`
-      <span class="simple-avatar ${role==='assistant'?'assistant-mascot':''}">${role==='assistant'?mascotMarkup():'Siz'}</span>
       <div class="simple-bubble">
+        ${label}
         ${title?`<strong>${esc(title)}</strong>`:''}
         ${text?`<p>${esc(text)}</p>`:''}
         ${extra}
       </div>`;
     chat.appendChild(row);
-    animateMascot(row);
     requestAnimationFrame(()=>{chat.scrollTop=chat.scrollHeight;});
     return row;
   }
@@ -317,8 +319,6 @@
     state.data=null;
     state.started=true;
     $('prompt').value=text;
-    qs('[data-chat]').innerHTML='';
-    addMessage('assistant','Tushundim','Istagingizni tahlil qilyapman.');
     addMessage('user','',text);
     qs('[data-starters]')?.classList.add('hidden');
     analyze(false);
