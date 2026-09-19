@@ -177,3 +177,27 @@
 @media(prefers-reduced-motion:reduce){
   .simple-avatar.assistant-mascot .mascot-hand{animation:none!important}
 }
+
+/* v19.4 hotfix: hand animation must override generic image animation rules */
+.simple-avatar.assistant-mascot .mascot-layered>img.mascot-base{
+  animation:none!important;
+  transform:none!important;
+}
+.simple-avatar.assistant-mascot .mascot-layered>img.mascot-hand{
+  animation:tfeWaveHandOnlyFixed 1.15s ease-in-out infinite!important;
+  transform-origin:43% 48%!important;
+  will-change:transform;
+}
+@keyframes tfeWaveHandOnlyFixed{
+  0%,100%{transform:rotate(0deg)}
+  18%{transform:rotate(-16deg)}
+  38%{transform:rotate(13deg)}
+  58%{transform:rotate(-12deg)}
+  78%{transform:rotate(10deg)}
+}
+.simple-msg.assistant:hover .assistant-mascot .mascot-layered>img.mascot-hand{
+  animation-duration:.72s!important;
+}
+@media(prefers-reduced-motion:reduce){
+  .simple-avatar.assistant-mascot .mascot-layered>img.mascot-hand{animation:none!important}
+}
