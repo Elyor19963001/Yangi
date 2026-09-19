@@ -14,6 +14,8 @@
     <span class="mascot-expression">
       <i class="mascot-brow brow-left"></i>
       <i class="mascot-brow brow-right"></i>
+      <i class="mascot-eye eye-left"></i>
+      <i class="mascot-eye eye-right"></i>
       <i class="mascot-lid lid-left"></i>
       <i class="mascot-lid lid-right"></i>
       <i class="mascot-mouth"></i>
@@ -60,14 +62,15 @@
 
       lids.forEach((lid,index)=>{
         if(typeof lid.animate!=='function')return;
+        const lag=index*.004;
         lid.animate([
-          {opacity:0,transform:'scaleY(.2)',offset:0},
-          {opacity:0,transform:'scaleY(.2)',offset:.70+(index*.006)},
-          {opacity:.94,transform:'scaleY(1)',offset:.735+(index*.006)},
-          {opacity:.98,transform:'scaleY(1.08)',offset:.752+(index*.006)},
-          {opacity:0,transform:'scaleY(.2)',offset:.79+(index*.006)},
-          {opacity:0,transform:'scaleY(.2)',offset:1}
-        ],{duration:4300,iterations:Infinity,easing:'ease-in-out'});
+          {opacity:0,transform:'scaleX(.7)',offset:0},
+          {opacity:0,transform:'scaleX(.7)',offset:.865+lag},
+          {opacity:.92,transform:'scaleX(1)',offset:.878+lag},
+          {opacity:.98,transform:'scaleX(1.04)',offset:.886+lag},
+          {opacity:0,transform:'scaleX(.72)',offset:.902+lag},
+          {opacity:0,transform:'scaleX(.72)',offset:1}
+        ],{duration:5600,iterations:Infinity,easing:'ease-in-out'});
       });
 
       if(mouth&&typeof mouth.animate==='function'){
