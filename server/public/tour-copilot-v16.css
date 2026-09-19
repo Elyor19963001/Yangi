@@ -1577,3 +1577,43 @@
     animation:none!important;
   }
 }
+
+
+/* v21.5 — historic Uzbek arava proportions */
+.simple-composer .arava-send{
+  flex:0 0 92px!important;
+  width:92px!important;
+  min-width:92px!important;
+  max-width:92px!important;
+  height:58px!important;
+  min-height:58px!important;
+  border-radius:18px!important;
+}
+.arava-cart-icon{
+  width:84px!important;
+  height:44px!important;
+}
+.arava-send .arava-horse-body{
+  transform-origin:54% 78%!important;
+}
+.arava-send .arava-horse-leg{
+  transform-origin:50% 12%!important;
+}
+@media(max-width:760px){
+  .simple-composer .arava-send{
+    flex-basis:84px!important;
+    width:84px!important;
+    min-width:84px!important;
+    max-width:84px!important;
+    height:55px!important;
+    min-height:55px!important;
+  }
+  .simple-composer textarea{
+    width:calc(100% - 92px)!important;
+    max-width:calc(100% - 92px)!important;
+  }
+  .arava-cart-icon{
+    width:77px!important;
+    height:42px!important;
+  }
+}
