@@ -1,71 +1,127 @@
 (() => {
   'use strict';
 
+  // v21.5 — traditional Uzbek arava + unmistakable horse silhouette.
+  // Large wooden spoked wheels and a simple geometric cart-side motif evoke
+  // the historic Central Asian/Uzbek arava without turning the small UI icon
+  // into a detailed illustration.
   const HORSE_INNER = `
     <g class="arava-wagon">
-      <path d="M4 17H52L49 38H9L4 17Z" fill="none" stroke="currentColor" stroke-width="3.7" stroke-linejoin="round"/>
-      <path d="M9 22H50M10 28H49M11 34H48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      <path d="M8 16L5 10M49 16L53 10" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>
-      <path d="M50 29L82 31M49 35L80 37" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+      <!-- traditional wooden arava bed -->
+      <path d="M5 18H55L52 38H10L5 18Z"
+            fill="currentColor" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M9 16L6 9M52 16L56 9"
+            fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+      <!-- slatted / carved side treatment -->
+      <path d="M12 23H49M13 30H48"
+            fill="none" stroke="#176b4d" stroke-width="2" stroke-linecap="round"/>
+      <path d="M18 26L22 22L26 26L22 30ZM30 26L34 22L38 26L34 30ZM42 26L46 22L50 26L46 30Z"
+            fill="none" stroke="#176b4d" stroke-width="1.45" stroke-linejoin="round"/>
+      <!-- wooden shafts -->
+      <path d="M53 29L86 31M52 36L84 38"
+            fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>
     </g>
 
+    <!-- two large wooden spoked wheels -->
     <g class="arava-wheel wheel-one">
-      <circle cx="17" cy="48" r="10.5" fill="none" stroke="currentColor" stroke-width="3.2"/>
-      <path d="M17 37.5V58.5M6.5 48H27.5M9.5 40.5L24.5 55.5M24.5 40.5L9.5 55.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <circle cx="17" cy="48" r="2.1" fill="currentColor"/>
+      <circle cx="18" cy="49" r="11.2" fill="none" stroke="currentColor" stroke-width="3.4"/>
+      <circle cx="18" cy="49" r="2.2" fill="currentColor"/>
+      <path d="M18 38V60M7 49H29M10 41L26 57M26 41L10 57"
+            fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"/>
     </g>
-
     <g class="arava-wheel wheel-two">
-      <circle cx="43" cy="48" r="10.5" fill="none" stroke="currentColor" stroke-width="3.2"/>
-      <path d="M43 37.5V58.5M32.5 48H53.5M35.5 40.5L50.5 55.5M50.5 40.5L35.5 55.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <circle cx="43" cy="48" r="2.1" fill="currentColor"/>
+      <circle cx="45" cy="49" r="11.2" fill="none" stroke="currentColor" stroke-width="3.4"/>
+      <circle cx="45" cy="49" r="2.2" fill="currentColor"/>
+      <path d="M45 38V60M34 49H56M37 41L53 57M53 41L37 57"
+            fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"/>
     </g>
 
+    <!-- HORSE: deep chest, arched neck, long equine face, mane, tail -->
     <g class="arava-horse-body">
-      <path d="M80 27
-               C86 21 96 19 108 21
-               C113 22 117 24 121 25
-               C123 20 124 15 127 11
-               C130 7 134 6 138 8
-               C141 9 142 12 142 14
-               C146 14 148 16 148 19
-               C148 22 146 24 143 25
-               L137 25
-               C134 29 132 34 130 38
-               C124 39 118 38 113 35
-               C107 33 103 32 99 33
-               C93 35 87 36 82 34
-               C79 33 77 30 80 27Z" fill="currentColor"/>
-      <path d="M128 11L127 3L132 9Z" fill="currentColor"/>
-      <path d="M135 9L138 2L139 12Z" fill="currentColor"/>
-      <path d="M81 29
-               C75 27 72 23 69 19
-               C72 27 72 34 69 41
-               C74 38 78 35 83 33Z" fill="currentColor"/>
-      <circle cx="139.5" cy="15.5" r="1.25" fill="#176b4d"/>
-      <path d="M144 21.5L147 21.7" fill="none" stroke="#176b4d" stroke-width="1.4" stroke-linecap="round"/>
+      <!-- torso + chest + neck + head -->
+      <path d="
+        M84 27
+        C91 21 101 19 112 20
+        C120 21 125 23 130 27
+        C132 22 134 16 138 11
+        C141 7 145 5 149 6
+        C153 7 156 10 157 13
+        L163 14
+        C168 15 171 18 171 21
+        C171 25 168 28 164 29
+        L156 29
+        C152 33 150 39 147 43
+        C141 44 135 42 131 39
+        C126 36 122 34 117 34
+        C110 34 105 37 98 37
+        C91 37 86 35 82 32
+        C80 30 81 28 84 27Z"
+        fill="currentColor"/>
+
+      <!-- distinct horse ears -->
+      <path d="M140 10L139 1L145 8Z" fill="currentColor"/>
+      <path d="M148 7L152 0L152 11Z" fill="currentColor"/>
+
+      <!-- mane, cut as green notches -->
+      <path d="M135 14L139 17L135 19L139 22L134 25L138 28L133 31"
+            fill="none" stroke="#176b4d" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+
+      <!-- long flowing tail -->
+      <path d="
+        M85 27
+        C79 24 75 19 72 14
+        C73 21 71 27 67 33
+        C72 31 75 31 77 34
+        C74 38 71 42 68 45
+        C75 43 81 39 86 34Z"
+        fill="currentColor"/>
+
+      <!-- eye + nostril in background green -->
+      <circle cx="158" cy="17" r="1.35" fill="#176b4d"/>
+      <ellipse cx="166" cy="23" rx="1.7" ry="1.05" fill="#176b4d"/>
+
+      <!-- simple bridle -->
+      <path d="M153 14C156 19 157 24 155 29M155 25L167 26"
+            fill="none" stroke="#176b4d" stroke-width="1.35" stroke-linecap="round"/>
     </g>
 
+    <!-- equine legs with knees, fetlocks and visible hooves -->
     <g class="arava-horse-leg arava-horse-leg-back">
-      <path d="M89 34L87 45L83 58" fill="none" stroke="currentColor" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M98 34L97 46L101 58" fill="none" stroke="currentColor" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M94 34L93 44L89 52L87 60L93 60L96 53L100 45L102 35Z"
+            fill="currentColor"/>
+      <path d="M106 35L107 45L111 52L112 60L118 60L116 51L114 44L114 34Z"
+            fill="currentColor"/>
+      <path d="M86 59H94L93 63H85Z M111 59H119L119 63H111Z"
+            fill="currentColor"/>
     </g>
 
     <g class="arava-horse-leg arava-horse-leg-front">
-      <path d="M117 35L118 46L115 59" fill="none" stroke="currentColor" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M126 36L128 47L133 58" fill="none" stroke="currentColor" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M130 37L130 46L126 53L125 61L131 61L133 54L137 47L138 38Z"
+            fill="currentColor"/>
+      <path d="M142 39L144 48L149 54L151 61L157 61L153 52L151 45L150 40Z"
+            fill="currentColor"/>
+      <path d="M124 60H132L131 64H123Z M150 60H158L158 64H150Z"
+            fill="currentColor"/>
     </g>
 
-    <path class="arava-harness" d="M79 30L128 23M79 37L121 36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity=".95"/>
+    <!-- harness traces from cart to horse -->
+    <path class="arava-harness"
+          d="M82 30L151 24M83 38L132 39"
+          fill="none" stroke="currentColor" stroke-width="1.8"
+          stroke-linecap="round" opacity=".96"/>
   `;
 
   function upgradeHorseCart(root = document) {
-    root.querySelectorAll?.('.arava-cart-icon:not([data-horse-v214])').forEach((svg) => {
-      svg.setAttribute('viewBox', '0 0 148 66');
-      svg.setAttribute('data-horse-v214', 'true');
+    root.querySelectorAll?.('.arava-cart-icon:not([data-horse-v215])').forEach((svg) => {
+      svg.setAttribute('viewBox', '0 0 176 68');
+      svg.setAttribute('data-horse-v215', 'true');
+      svg.removeAttribute('data-horse-v214');
       svg.innerHTML = HORSE_INNER;
       const button = svg.closest('.arava-send');
-      if (button) button.setAttribute('aria-label', 'Yuborish — ot arava');
+      if (button) {
+        button.setAttribute('aria-label', 'Yuborish — an’anaviy o‘zbek ot aravasi');
+        button.setAttribute('title', 'An’anaviy o‘zbek ot aravasi');
+      }
     });
   }
 
