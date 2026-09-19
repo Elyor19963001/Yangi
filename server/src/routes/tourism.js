@@ -494,8 +494,8 @@ function mergeExplicitProfile(intent, raw = {}) {
 
 function fallbackIntent(prompt, explicitDays) {
   const p = prompt.toLocaleLowerCase('uz-UZ');
-  const dayMatch = p.match(/\b([1-5])\s*(?:kun|day|days|дн(?:я|ей)?)/i);
-  const days = clamp(Number(explicitDays || dayMatch?.[1] || 2), 1, 5);
+  const inferredDays = inferredDaysFromPrompt(p);
+  const days = clamp(Number(explicitDays || inferredDays || 2), 1, 5);
   const lowWalking = /(kam yur|ko.?p yur.*xohlam|ko.?p piyoda.*emas|less walk|not much walk|меньше ход|мало ход)/i.test(p);
   const family = /(bola|bolalar|oila|family|kid|child|ребен|семь)/i.test(p);
   const pilgrimage = /(ziyorat|maqbara|masjid|mosque|mausoleum|pilgrim|зиёрат|мечет|мавзол)/i.test(p);
@@ -564,7 +564,7 @@ async function parseIntentWithOpenAI(prompt, fallback) {
     const response = await axios.post('https://api.openai.com/v1/responses', {
       model: process.env.OPENAI_MODEL || 'gpt-5.6-luna',
       input: [
-        { role: 'system', content: 'You extract travel-planning preferences for a Samarqand itinerary. Do not invent places. Return only the requested structured fields. Preserve explicit traveler-profile facts such as children, seniors, mobility needs, vehicle availability, origin country, and preferred daily start/end times. Default interest is history and default trip length is 2 days when unclear.' },
+        { role: 'system', content: 'You extract travel-planning preferences for a Samarqand itinerary. Understand very short, colloquial, typo-prone Uzbek, Russian, and English fragments and infer the likely user intent instead of requiring complete sentences. Examples such as "ziyorat kam yurish", "2 kun taom", "oila bn", or "registon ertaga" are valid requests. Do not invent named places the user did not mention, but use sensible itinerary defaults for missing planning fields. Preserve explicit traveler-profile facts such as children, seniors, mobility needs, vehicle availability, origin country, and preferred daily start/end times. Default interest is history and default trip length is 2 days when unclear.' },
         { role: 'user', content: prompt },
       ],
       text: { format: { type: 'json_schema', name: 'samarkand_tour_intent', strict: true, schema } },
@@ -1308,26 +1308,73 @@ function clarifyAnswerProfile(raw = {}) {
   return out;
 }
 
+function inferredDaysFromPrompt(prompt) {
+  const p = String(prompt || '').toLocaleLowerCase('uz-UZ');
+  const numeric = p.match(/\b([1-5])\s*(?:kun|day|days|дн(?:я|ей)?)/i);
+  if (numeric) return Number(numeric[1]);
+  const wordDays = [
+    [/\b(?:bir|one|один)\s*(?:kun|day|день)\b/i, 1],
+    [/\b(?:ikki|two|два)\s*(?:kun|day|days|дн(?:я|ей)?)\b/i, 2],
+    [/\b(?:uch|three|три)\s*(?:kun|day|days|дн(?:я|ей)?)\b/i, 3],
+    [/\b(?:to.?rt|four|четыре)\s*(?:kun|day|days|дн(?:я|ей)?)\b/i, 4],
+    [/\b(?:besh|five|пять)\s*(?:kun|day|days|дн(?:я|ей)?)\b/i, 5],
+  ];
+  return wordDays.find(([rx]) => rx.test(p))?.[1] || null;
+}
+
+function tashkentDate(offsetDays = 0) {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Tashkent',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(new Date()).filter((part) => part.type !== 'literal').map((part) => [part.type, part.value]),
+  );
+  const d = new Date(Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day)));
+  d.setUTCDate(d.getUTCDate() + offsetDays);
+  return d.toISOString().slice(0, 10);
+}
+
+function inferStartDate(prompt, answers = {}) {
+  const explicit = String(answers.start_date || '');
+  if (/^\d{4}-\d{2}-\d{2}$/.test(explicit)) return explicit;
+  const p = String(prompt || '').toLocaleLowerCase('uz-UZ');
+  const iso = p.match(/\b(20\d{2})[-./](\d{1,2})[-./](\d{1,2})\b/);
+  if (iso) return `${iso[1]}-${String(iso[2]).padStart(2,'0')}-${String(iso[3]).padStart(2,'0')}`;
+  const local = p.match(/\b(\d{1,2})[./-](\d{1,2})[./-](20\d{2})\b/);
+  if (local) return `${local[3]}-${String(local[2]).padStart(2,'0')}-${String(local[1]).padStart(2,'0')}`;
+  if (/\b(?:indin|day after tomorrow|послезавтра)\b/i.test(p)) return tashkentDate(2);
+  if (/\b(?:ertaga|tomorrow|завтра)\b/i.test(p)) return tashkentDate(1);
+  if (/\b(?:bugun|today|сегодня)\b/i.test(p)) return tashkentDate(0);
+  return null;
+}
+
 function promptPartySize(prompt) {
-  const p = String(prompt || '');
+  const p = String(prompt || '').toLocaleLowerCase('uz-UZ');
   const match = p.match(/\b(\d{1,2})\s*(?:kishi|odam|sayohatchi|mehmon|person|people|traveler|traveller|человек|гост)/i);
-  return match ? clamp(Number(match[1]) || 1, 1, 20) : null;
+  if (match) return clamp(Number(match[1]) || 1, 1, 20);
+  if (/\b(?:yolg.?iz|bir\s*o.?zim|solo|alone|один|одна)\b/i.test(p)) return 1;
+  if (/\b(?:ikkovimiz|ikkimiz|er.?xotin|juftlik|couple|two of us|вдвоем|вдвоём)\b/i.test(p)) return 2;
+  if (/\b(?:uchovimiz|uchalamiz|three of us|втроем|втроём)\b/i.test(p)) return 3;
+  if (/\b(?:to.?rtovimiz|to.?rtalamiz|four of us|вчетвером)\b/i.test(p)) return 4;
+  return null;
 }
 
 function explicitClarifySignals(prompt, answers = {}) {
   const p = String(prompt || '').toLocaleLowerCase('uz-UZ');
   const interests = [];
-  if (/(tarix|histor|истор)/i.test(p)) interests.push('history');
-  if (/(ziyorat|maqbara|masjid|mosque|mausoleum|pilgrim|зиёрат|мечет|мавзол)/i.test(p)) interests.push('pilgrimage');
-  if (/(milliy taom|osh|palov|plov|food|gastronom|restaurant|restoran|еда|кухн)/i.test(p)) interests.push('gastronomy');
+  if (/(tarix|tarixiy|histor|истор)/i.test(p)) interests.push('history');
+  if (/(ziyorat|zyorat|ziyarat|ziyoratgoh|maqbara|masjid|mosque|mausoleum|pilgrim|зиёрат|мечет|мавзол)/i.test(p)) interests.push('pilgrimage');
+  if (/(milliy\s*taom|taom|ovqat|osh|palov|plov|somsa|food|gastronom|restaurant|restoran|restaran|еда|кухн)/i.test(p)) interests.push('gastronomy');
   if (/(muzey|museum|музей)/i.test(p)) interests.push('museum');
   if (/(arxitekt|architect|архитект)/i.test(p)) interests.push('architecture');
-  if (/(bola|bolalar|oila|family|kid|child|ребен|семь)/i.test(p)) interests.push('family');
-  const daysMatch = p.match(/\b([1-5])\s*(?:kun|day|days|дн(?:я|ей)?)/i);
+  if (/(bola|bolam|bolalar|oila|oilaviy|family|kid|child|ребен|семь)/i.test(p)) interests.push('family');
+  const inferredDays = inferredDaysFromPrompt(p);
   const transportExplicit = /(faqat piyoda|walking only|пешком|taksi|taxi|такси|shaxsiy avtomobil|o.?z avtomobil|own car|private car|своя машин|личн.*авто)/i.test(p);
-  const lowWalkingExplicit = /(kam yur|ko.?p yur.*xohlam|ko.?p piyoda.*emas|less walk|not much walk|меньше ход|мало ход|wheelchair|aravacha|коляск)/i.test(p);
+  const lowWalkingExplicit = /(kam\s*yur|kamroq\s*yur|yurish\s*kam|ko.?p\s*yur.*(?:xohlam|emas|kerak\s*emas)|charch|less walk|not much walk|меньше ход|мало ход|wheelchair|aravacha|коляск)/i.test(p);
   return {
-    days: answers.days ? clamp(Number(answers.days) || 2, 1, 5) : (daysMatch ? Number(daysMatch[1]) : null),
+    days: answers.days ? clamp(Number(answers.days) || 2, 1, 5) : inferredDays,
     interests: Array.isArray(answers.interests) && answers.interests.length ? answers.interests : [...new Set(interests)],
     party_size: answers.party_size ? clamp(Number(answers.party_size) || 1, 1, 20) : promptPartySize(prompt),
     transport_explicit: Boolean(answers.transport || answers.own_vehicle !== undefined || transportExplicit),
@@ -1337,74 +1384,9 @@ function explicitClarifySignals(prompt, answers = {}) {
 
 function clarifyQuestions(prompt, intent, answers = {}) {
   const signal = explicitClarifySignals(prompt, answers);
-  const questions = [];
-  if (!signal.days) {
-    questions.push({
-      key: 'days',
-      text: 'Samarqandda necha kun bo‘lasiz?',
-      hint: 'Marshrut hajmi shunga qarab tuziladi.',
-      options: [
-        { label: '1 kun', value: 1 },
-        { label: '2 kun', value: 2 },
-        { label: '3 kun', value: 3 },
-        { label: '4 kun', value: 4 },
-      ],
-      input: 'number',
-    });
-  }
-  if (!signal.interests.length) {
-    questions.push({
-      key: 'interests',
-      text: 'Safarda siz uchun eng muhim yo‘nalish qaysi?',
-      hint: 'Bittasini tanlang; qolgan istaklarni matndan ham tushunaman.',
-      options: [
-        { label: '🏛 Tarix', value: 'history' },
-        { label: '🕌 Ziyorat', value: 'pilgrimage' },
-        { label: '🍽 Milliy taom', value: 'gastronomy' },
-        { label: '🏺 Muzey', value: 'museum' },
-        { label: '✨ Arxitektura', value: 'architecture' },
-        { label: '👨‍👩‍👧 Oila', value: 'family' },
-      ],
-      input: 'choice',
-    });
-  }
-  if (!signal.party_size) {
-    questions.push({
-      key: 'party_size',
-      text: 'Necha kishi sayohat qiladi?',
-      hint: 'Chipta va xizmatlar hisobiga kerak.',
-      options: [
-        { label: '1 kishi', value: 1 },
-        { label: '2 kishi', value: 2 },
-        { label: '3 kishi', value: 3 },
-        { label: '4 kishi', value: 4 },
-      ],
-      input: 'number',
-    });
-  }
-  if (!signal.transport_explicit && (intent.low_walking || signal.low_walking_explicit)) {
-    questions.push({
-      key: 'transport',
-      text: 'Ko‘p yurmaslik uchun qaysi transport qulay?',
-      hint: 'AI obyektlar orasidagi yo‘lni shunga moslashtiradi.',
-      options: [
-        { label: '🚕 Taksi', value: 'taxi' },
-        { label: '🧭 Aralash', value: 'mixed' },
-        { label: '🚗 O‘z avtomobilim', value: 'own_vehicle' },
-      ],
-      input: 'choice',
-    });
-  }
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(answers.start_date || ''))) {
-    questions.push({
-      key: 'start_date',
-      text: 'Sayohat qaysi sanada boshlanadi?',
-      hint: 'Ob-havo va obyektlarning ish vaqtini shu sana bo‘yicha tekshiraman.',
-      options: [],
-      input: 'date',
-    });
-  }
-  return { signal, questions };
+  // Conversational planner v20.8: do not force a form-like questionnaire.
+  // Missing fields receive safe, visible defaults and can be changed from the summary.
+  return { signal, questions: [] };
 }
 
 function clarifyFacts(intent, partySize, startDate = null) {
@@ -1430,7 +1412,7 @@ function clarifyFacts(intent, partySize, startDate = null) {
 
 router.post('/clarify', asyncHandler(async (req, res) => {
   const prompt = text(req.body.prompt, 1500);
-  if (prompt.length < 4) return res.status(400).json({ error: 'Sayohat istagingizni yozing.' });
+  if (prompt.length < 2) return res.status(400).json({ error: 'Sayohat istagingizni qisqacha yozing.' });
   const answers = req.body.answers && typeof req.body.answers === 'object' ? req.body.answers : {};
   const signals = explicitClarifySignals(prompt, answers);
   const fallback = fallbackIntent(prompt, answers.days || signals.days || undefined);
@@ -1444,30 +1426,37 @@ router.post('/clarify', asyncHandler(async (req, res) => {
   }
   const merged = mergeExplicitProfile(parsed, explicitProfile);
   const intent = normalizeIntentProfile(merged);
-  const partySize = signals.party_size || null;
+  const explicitStartDate = inferStartDate(prompt, answers);
+  const startDate = explicitStartDate || tashkentDate(0);
+  const partySize = signals.party_size || 1;
   const { questions } = clarifyQuestions(prompt, intent, answers);
   const next = questions[0] || null;
+  const assumptions = [];
+  if (!signals.days) assumptions.push(`Davomiylikni ${intent.days} kun deb oldim`);
+  if (!signals.party_size) assumptions.push('Sayohatchini 1 kishi deb oldim');
+  if (!explicitStartDate) assumptions.push('Boshlanish sanasini bugun deb oldim');
 
   res.json({
-    version: '1.0.0',
+    version: '1.1.0',
     engine: intent.engine === 'openai' ? 'openai' : 'smart-rules',
+    inference_mode: 'short-input-smart-defaults',
     intent,
     party_size: partySize,
-    start_date: /^\d{4}-\d{2}-\d{2}$/.test(String(answers.start_date || '')) ? String(answers.start_date) : null,
-    facts: clarifyFacts(intent, partySize, answers.start_date || null),
+    start_date: startDate,
+    assumptions,
+    facts: clarifyFacts(intent, partySize, startDate),
     ready: questions.length === 0,
     next_question: next,
     remaining_questions: questions.length,
-    message: next
-      ? `Asosiy istaklaringizni tushundim. Marshrutni aniqroq qilish uchun yana ${questions.length} ta savol bor.`
-      : 'Yetarli ma’lumot oldim. Marshrutni yaratishga tayyorman.',
+    message: 'Qisqa yozuvdan niyatingizni tushundim. Yetishmagan joylarni ehtiyotkor standart qiymatlar bilan to‘ldirdim; xohlasangiz keyin o‘zgartirasiz.',
   });
 }));
 
 router.get('/status', (_req, res) => {
   res.json({
-    version: '2.0.0',
+    version: '2.1.0',
     conversational_planner: true,
+    short_input_inference: true,
     clarification_endpoint: '/api/tourism/clarify',
     openai_configured: Boolean(process.env.OPENAI_API_KEY),
     openai_model: process.env.OPENAI_API_KEY ? (process.env.OPENAI_MODEL || 'gpt-5.6-luna') : null,
@@ -1543,7 +1532,7 @@ router.get('/audio-guide/:guideId', asyncHandler(async (req, res) => {
 
 router.post('/plan', asyncHandler(async (req, res) => {
   const prompt = text(req.body.prompt, 1500);
-  if (prompt.length < 4) return res.status(400).json({ error: 'Sayohat istagingizni yozing.' });
+  if (prompt.length < 2) return res.status(400).json({ error: 'Sayohat istagingizni qisqacha yozing.' });
   const fallback = fallbackIntent(prompt, req.body.days);
   const parsedIntent = await parseIntentWithOpenAI(prompt, fallback);
   const explicitIntent = mergeExplicitProfile(parsedIntent, req.body.profile || {});
