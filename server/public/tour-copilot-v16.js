@@ -4,10 +4,13 @@
   const qsa = (s,r=document) => [...r.querySelectorAll(s)];
   const esc = (v) => String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const MASCOT_SRC = window.TFE_MASCOT_DATA_URI || '/uzbek-ai-emoji.svg?v=19.1';
+  const MASCOT_BODY = window.TFE_MASCOT_BODY_URI || MASCOT_SRC;
+  const MASCOT_HEAD = window.TFE_MASCOT_HEAD_URI || MASCOT_SRC;
+  const MASCOT_HAND = window.TFE_MASCOT_HAND_URI || MASCOT_SRC;
   const mascotMarkup = () => `<span class="mascot-layered" aria-hidden="true">
-    <img class="mascot-base" src="${MASCOT_SRC}" alt="" />
-    <span class="mascot-hand-cover"></span>
-    <img class="mascot-hand" src="${MASCOT_SRC}" alt="" />
+    <img class="mascot-base" src="${MASCOT_BODY}" alt="" />
+    <img class="mascot-head" src="${MASCOT_HEAD}" alt="" />
+    <img class="mascot-hand" src="${MASCOT_HAND}" alt="" />
   </span>`;
   const state = { answers:{}, additions:[], data:null, busy:false, started:false };
 
