@@ -439,3 +439,40 @@
     line-height:1.48!important;
   }
 }
+
+/* v19.9 — hero mascot: one visible character, only hand/head overlays move */
+.assistant-hero-mascot .mascot-layered{
+  position:relative!important;
+  display:block!important;
+  width:76px!important;
+  height:82px!important;
+  overflow:visible!important;
+}
+.assistant-hero-mascot .mascot-layered>img{
+  position:absolute!important;
+  inset:0!important;
+  width:76px!important;
+  height:82px!important;
+  object-fit:contain!important;
+  pointer-events:none!important;
+  animation:none!important;
+}
+.assistant-hero-mascot .mascot-layered>img.mascot-base{
+  z-index:1!important;
+  clip-path:none!important;
+  transform:none!important;
+}
+.assistant-hero-mascot .mascot-layered>img.mascot-head{
+  z-index:2!important;
+  clip-path:polygon(28% 0%,72% 0%,78% 15%,76% 34%,66% 44%,52% 47%,38% 45%,27% 36%,24% 17%)!important;
+  transform-origin:50% 43%!important;
+}
+.assistant-hero-mascot .mascot-layered>img.mascot-hand{
+  z-index:3!important;
+  clip-path:polygon(7% 18%,18% 14%,25% 12%,31% 16%,36% 23%,35% 34%,31% 43%,35% 49%,29% 51%,23% 45%,16% 43%,10% 36%,6% 28%)!important;
+  transform-origin:34% 43%!important;
+}
+@media(max-width:760px){
+  .assistant-hero-mascot .mascot-layered{width:64px!important;height:70px!important}
+  .assistant-hero-mascot .mascot-layered>img{width:64px!important;height:70px!important}
+}
