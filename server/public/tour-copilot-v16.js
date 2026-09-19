@@ -3,118 +3,138 @@
   const qs = (s,r=document) => r.querySelector(s);
   const qsa = (s,r=document) => [...r.querySelectorAll(s)];
   const esc = (v) => String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const state = { answers:{}, additions:[], data:null, busy:false, history:[] };
+  const state = { answers:{}, additions:[], data:null, busy:false, started:false };
 
-  function ready(fn){ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fn,{once:true}); else fn(); }
-  function fullPrompt(){ return [String($('prompt')?.value||'').trim(), ...state.additions].filter(Boolean).join('. '); }
-  function formatMoney(n){ return new Intl.NumberFormat('uz-UZ').format(Number(n)||0); }
+  function ready(fn){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fn,{once:true});else fn();}
+  function fullPrompt(){return [String($('prompt')?.value||'').trim(),...state.additions].filter(Boolean).join('. ');}
+  function todayLocal(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10);}
 
   function build(){
-    const form=$('plannerForm'), prompt=$('prompt');
-    if(!form||!prompt||qs('.ai-copilot-v16'))return;
+    const form=$('plannerForm'), hiddenPrompt=$('prompt');
+    if(!form||!hiddenPrompt||qs('.ai-copilot-v17'))return;
+    hiddenPrompt.required=false;
+    hiddenPrompt.value='';
+    $('startDate')?.removeAttribute('required');
+
     const shell=document.createElement('section');
-    shell.className='ai-copilot-v16';
+    shell.className='ai-copilot-v17';
     shell.innerHTML=`
-      <div class="copilot-main">
-        <div class="copilot-head">
-          <div><span class="copilot-kicker">✨ AI SAYOHAT YORDAMCHISI</span><h3>Rejangizni suhbat orqali aniqlashtiramiz</h3><p>Formalarni bittalab tanlash shart emas. Istagingizni yozing — AI tushunganini ko‘rsatadi va faqat yetishmayotgan savollarni beradi.</p></div>
-          <span class="copilot-status" data-copilot-status>AI tayyorlanmoqda…</span>
+      <div class="simple-ai-head">
+        <div>
+          <span class="simple-ai-kicker">✨ AI TUR YORDAMCHISI</span>
+          <h2>Safaringizni oddiy gap bilan ayting</h2>
+          <p>Men tushunmagan narsamni bittadan so‘rayman. Forma to‘ldirish shart emas.</p>
         </div>
-        <div class="copilot-starters">
-          <button type="button" data-copilot-starter="Samarqandga birinchi marta kelyapman. 2 kunlik klassik tur kerak.">✨ Birinchi tashrif</button>
-          <button type="button" data-copilot-starter="Samarqand ziyoratgohlari bo‘yicha 2 kunlik tur kerak. Ko‘p yurishni xohlamayman.">🕌 Ziyorat</button>
-          <button type="button" data-copilot-starter="Oila bilan 2 kunlik qulay tur kerak. Bolalar bilan ko‘p yurmasin.">👨‍👩‍👧 Oila</button>
-          <button type="button" data-copilot-starter="1 kunlik tarixiy va gastronomik tur kerak. Milliy taomlar ham bo‘lsin.">🍽 Tarix + taom</button>
-        </div>
-        <div class="copilot-chat" data-copilot-chat>
-          <div class="copilot-msg assistant"><span class="avatar">AI</span><div><strong>Safaringizni ayting.</strong><p>Men kun, qiziqish, yurish darajasi va boshqa istaklarni matndan tushunishga harakat qilaman.</p></div></div>
-        </div>
-        <div class="copilot-question hidden" data-copilot-question></div>
-        <div class="copilot-composer">
-          <input type="text" data-copilot-reply maxlength="220" placeholder="Javob yozing yoki yuqoridagi variantlardan birini tanlang" />
-          <button type="button" data-copilot-send aria-label="Javob yuborish">➤</button>
+        <span class="simple-ai-status" data-ai-status>AI tayyorlanmoqda…</span>
+      </div>
+
+      <div class="simple-starters" data-starters>
+        <button type="button" data-starter="Samarqandga birinchi marta kelyapman. 2 kunlik klassik tur kerak.">✨ Birinchi tashrif</button>
+        <button type="button" data-starter="Samarqand ziyoratgohlari bo‘yicha 2 kunlik tur kerak. Ko‘p yurishni xohlamayman.">🕌 Ziyorat</button>
+        <button type="button" data-starter="Oila bilan 2 kunlik qulay tur kerak. Bolalar bilan ko‘p yurmasin.">👨‍👩‍👧 Oila</button>
+        <button type="button" data-starter="1 kunlik tarixiy tur kerak. Milliy taomlar ham bo‘lsin.">🍽 Tarix + taom</button>
+      </div>
+
+      <div class="simple-chat" data-chat>
+        <div class="simple-msg assistant">
+          <span class="simple-avatar">AI</span>
+          <div class="simple-bubble">
+            <strong>Qanday sayohat xohlaysiz?</strong>
+            <p>Masalan: “2 kunlik ziyorat turi kerak, ko‘p yurmaylik, milliy taomlar ham bo‘lsin.”</p>
+          </div>
         </div>
       </div>
-      <aside class="copilot-brief">
-        <div class="brief-head"><div><span>AI tushungan reja</span><strong data-brief-title>Hali tahlil qilinmagan</strong></div><span class="brief-ready" data-brief-ready>0%</span></div>
-        <div class="brief-facts" data-brief-facts><div class="brief-empty">So‘rovingizni tahlil qilganimdan keyin asosiy parametrlar shu yerda ko‘rinadi.</div></div>
-        <div class="brief-row">
-          <label><span>📅 Safar sanasi</span><input type="date" data-copilot-date></label>
-          <label><span>👥 Sayohatchi</span><input type="number" min="1" max="20" inputmode="numeric" data-copilot-party placeholder="—"></label>
-        </div>
-        <label class="brief-budget"><span>💳 Budjet <small>(ixtiyoriy)</small></span><input type="number" min="0" step="50000" inputmode="numeric" data-copilot-budget placeholder="Masalan: 2 000 000"></label>
-        <div class="brief-location"><span>◎ Boshlanish</span><strong data-copilot-location>Samarqand markazi</strong><button type="button" data-copilot-location-btn>GPS</button></div>
-        <label class="brief-weather"><input type="checkbox" data-copilot-weather checked><span><strong>🌦 Ob-havoga moslashtirish</strong><small>Yomg‘ir, issiq yoki shamolda marshrut tartibi o‘zgaradi.</small></span></label>
-        <button type="button" class="copilot-analyze" data-copilot-analyze>✨ AI tushunsin</button>
-        <button type="button" class="copilot-create" data-copilot-create disabled>Marshrut yaratish <span>→</span></button>
-        <div class="copilot-note" data-copilot-note>Avval AI so‘rovingizni tahlil qiladi.</div>
-      </aside>`;
-    prompt.insertAdjacentElement('afterend',shell);
-    bind(shell);
-    syncStatic(shell);
-    checkStatus(shell);
-  }
 
-  function syncStatic(shell){
-    const date=qs('[data-copilot-date]',shell), originalDate=$('startDate');
-    if(date&&originalDate){ date.value=originalDate.value; date.min=originalDate.min; date.max=originalDate.max; }
-    const weather=qs('[data-copilot-weather]',shell), originalWeather=$('weatherAdaptive');
-    if(weather&&originalWeather)weather.checked=originalWeather.checked;
-    const budget=qs('[data-copilot-budget]',shell);
-    if(budget&&$('budget'))budget.value=$('budget').value;
+      <div class="simple-composer">
+        <textarea data-ai-input rows="2" maxlength="500" placeholder="Safaringizni yozing…"></textarea>
+        <button type="button" data-ai-send aria-label="Yuborish">➤</button>
+      </div>
+      <div class="simple-footer">
+        <button type="button" class="simple-gps" data-gps-start>◎ GPS boshlanish nuqtasi</button>
+        <span data-simple-location>Samarqand markazi</span>
+      </div>`;
+    hiddenPrompt.insertAdjacentElement('afterend',shell);
+    bind(shell);
+    checkStatus(shell);
     syncLocation(shell);
   }
 
-  function syncLocation(shell=document){
-    const node=qs('[data-copilot-location]',shell);
-    const line=$('locationLine')?.textContent||'Boshlanish: Samarqand markazi';
-    if(node)node.textContent=line.replace(/^Boshlanish:\s*/,'')||'Samarqand markazi';
-  }
-
-  function appendMessage(role,title,text){
-    const chat=qs('[data-copilot-chat]');
-    if(!chat)return;
+  function addMessage(role,title,text,extra=''){
+    const chat=qs('[data-chat]');
+    if(!chat)return null;
     const row=document.createElement('div');
-    row.className='copilot-msg '+role;
-    row.innerHTML=`<span class="avatar">${role==='assistant'?'AI':'Siz'}</span><div>${title?`<strong>${esc(title)}</strong>`:''}<p>${esc(text)}</p></div>`;
+    row.className='simple-msg '+role;
+    row.innerHTML=`
+      <span class="simple-avatar">${role==='assistant'?'AI':'Siz'}</span>
+      <div class="simple-bubble">
+        ${title?`<strong>${esc(title)}</strong>`:''}
+        ${text?`<p>${esc(text)}</p>`:''}
+        ${extra}
+      </div>`;
     chat.appendChild(row);
-    chat.scrollTop=chat.scrollHeight;
+    requestAnimationFrame(()=>{chat.scrollTop=chat.scrollHeight;});
+    return row;
   }
 
-  function renderFacts(data){
-    const box=qs('[data-brief-facts]');
-    if(!box)return;
-    const facts=data?.facts||[];
-    box.innerHTML=facts.length?facts.map(x=>`<div class="brief-fact"><span>${esc(x.icon)} ${esc(x.label)}</span><strong>${esc(x.value)}</strong></div>`).join(''):'<div class="brief-empty">AI hali parametrlarni aniqlamadi.</div>';
-    const title=qs('[data-brief-title]');
-    if(title)title.textContent=data?.ready?'Marshrut tayyorlash mumkin':data?.message||'Aniqlashtirilmoqda';
-    const remaining=Number(data?.remaining_questions||0);
-    const pct=data?.ready?100:Math.max(35,Math.min(90,100-remaining*20));
-    const ready=qs('[data-brief-ready]');
-    if(ready){ready.textContent=pct+'%';ready.classList.toggle('done',Boolean(data?.ready));}
+  function factChips(data){
+    return (data?.facts||[]).map(x=>`<span class="summary-chip">${esc(x.icon)} <b>${esc(x.value)}</b></span>`).join('');
   }
 
   function renderQuestion(question){
-    const box=qs('[data-copilot-question]');
-    if(!box)return;
-    if(!question){box.classList.add('hidden');box.innerHTML='';return;}
-    const options=(question.options||[]).map(o=>`<button type="button" class="copilot-quick" data-q-key="${esc(question.key)}" data-q-value="${esc(typeof o.value==='object'?JSON.stringify(o.value):o.value)}">${esc(o.label)}</button>`).join('');
-    box.innerHTML=`<div class="question-copy"><span>AI savoli</span><strong>${esc(question.text)}</strong><small>${esc(question.hint||'')}</small></div><div class="question-options">${options}</div>`;
-    box.classList.remove('hidden');
-    qsa('.copilot-quick',box).forEach(btn=>btn.addEventListener('click',()=>answerQuick(question,btn.dataset.qValue,btn.textContent.trim())));
+    if(!question)return;
+    let controls='';
+    if(question.input==='date'){
+      const min=todayLocal();
+      controls=`<div class="date-answer"><input type="date" min="${min}" value="${min}" data-date-answer><button type="button" data-date-confirm>Tanlash</button></div>`;
+    }else{
+      controls=`<div class="quick-row">${(question.options||[]).map(o=>`<button type="button" class="quick-answer" data-q-key="${esc(question.key)}" data-q-value="${esc(o.value)}">${esc(o.label)}</button>`).join('')}</div>`;
+    }
+    const row=addMessage('assistant','Bitta savol',question.text,`<small class="question-hint">${esc(question.hint||'')}</small>${controls}`);
+    if(!row)return;
+    qsa('.quick-answer',row).forEach(btn=>btn.addEventListener('click',()=>answerQuick(question,btn.dataset.qValue,btn.textContent.trim())));
+    const confirm=qs('[data-date-confirm]',row);
+    if(confirm)confirm.addEventListener('click',()=>{
+      const value=qs('[data-date-answer]',row)?.value;
+      if(!value)return;
+      state.answers.start_date=value;
+      if($('startDate'))$('startDate').value=value;
+      addMessage('user','',value.split('-').reverse().join('.'));
+      analyze(false);
+    });
+  }
+
+  function renderReady(data){
+    const summary=`
+      <div class="ready-summary">
+        <div class="ready-title"><span>✓</span><div><strong>Rejani tushundim</strong><small>Quyidagicha marshrut tuzaman</small></div></div>
+        <div class="summary-chips">${factChips(data)}</div>
+        <div class="ready-actions">
+          <button type="button" class="ready-create" data-ready-create>Marshrutni yaratish <b>→</b></button>
+          <button type="button" class="ready-edit" data-ready-edit>Bir narsani o‘zgartiraman</button>
+        </div>
+      </div>`;
+    const row=addMessage('assistant','', '',summary);
+    qs('[data-ready-create]',row)?.addEventListener('click',createRoute);
+    qs('[data-ready-edit]',row)?.addEventListener('click',()=>{
+      const input=qs('[data-ai-input]');
+      input.placeholder='Nimani o‘zgartirishni yozing…';
+      input.focus();
+    });
   }
 
   function setAnswer(key,value){
-    if(key==='transport'&&value==='own_vehicle'){state.answers.transport='own_vehicle';state.answers.own_vehicle=true;return;}
-    if(key==='interests'){state.answers.interests=Array.isArray(value)?value:[value];return;}
+    if(key==='days'||key==='party_size')value=Number(value);
+    if(key==='transport'&&value==='own_vehicle'){
+      state.answers.transport='own_vehicle';
+      state.answers.own_vehicle=true;
+      return;
+    }
     state.answers[key]=value;
   }
 
   async function answerQuick(question,value,label){
-    let parsed=value;
-    if(question.key==='days'||question.key==='party_size')parsed=Number(value);
-    setAnswer(question.key,parsed);
-    appendMessage('user','',label);
+    setAnswer(question.key,value);
+    addMessage('user','',label);
     await analyze(false);
   }
 
@@ -125,115 +145,139 @@
       $('days').value=String(data.intent.days);
       $('days').dispatchEvent(new Event('change',{bubbles:true}));
     }
-    const party=Number(data.party_size||state.answers.party_size||0);
-    if(party&&$('partySize'))$('partySize').value=String(party);
+    const party=Number(data.party_size||state.answers.party_size||1);
+    if($('partySize'))$('partySize').value=String(party);
+    const date=data.start_date||state.answers.start_date||todayLocal();
+    if($('startDate'))$('startDate').value=date;
     if(Number(data.intent?.budget_uzs)>0&&$('budget'))$('budget').value=String(data.intent.budget_uzs);
-    const p=qs('[data-copilot-party]');if(p&&party)p.value=String(party);
   }
 
-  async function analyze(addUser=true){
+  async function analyze(addUser){
     if(state.busy)return;
     const prompt=fullPrompt();
-    if(prompt.length<4){appendMessage('assistant','Istagingiz yetarli emas','Kamida bir necha so‘z bilan qanday tur xohlayotganingizni yozing.');return;}
+    if(prompt.length<4){
+      addMessage('assistant','Yana biroz yozing','Masalan: “2 kunlik tarixiy tur kerak.”');
+      return;
+    }
     state.busy=true;
-    const analyzeBtn=qs('[data-copilot-analyze]');
-    if(analyzeBtn){analyzeBtn.disabled=true;analyzeBtn.textContent='AI tahlil qilmoqda…';}
-    if(addUser)appendMessage('user','Safar istagim',String($('prompt').value||'').trim());
+    const send=qs('[data-ai-send]');
+    if(send)send.disabled=true;
     try{
-      const response=await fetch('/api/tourism/clarify',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({prompt,answers:state.answers})});
+      const response=await fetch('/api/tourism/clarify',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Accept':'application/json'},
+        body:JSON.stringify({prompt,answers:state.answers})
+      });
       const data=await response.json();
       if(!response.ok)throw new Error(data?.error||'AI javobi olinmadi');
       state.data=data;
       syncPlanner(data);
-      renderFacts(data);
-      renderQuestion(data.next_question);
-      const create=qs('[data-copilot-create]');
-      if(create)create.disabled=!data.ready;
-      const note=qs('[data-copilot-note]');
-      if(note)note.textContent=data.ready?'Yetarli ma’lumot olindi. Endi marshrutni yaratishingiz mumkin.':data.message;
-      appendMessage('assistant',data.ready?'Tushundim — reja tayyor.':'Yana bir narsani aniqlashtiraylik',data.ready?'Istaklaringizni jamladim. Xohlasangiz hozir marshrutni yarataman.':data.next_question?.text||data.message);
+      if(data.ready)renderReady(data);
+      else renderQuestion(data.next_question);
     }catch(err){
-      appendMessage('assistant','Xatolik',err.message||'AI tahlili bajarilmadi.');
+      addMessage('assistant','Xatolik',err.message||'AI javobi olinmadi.');
     }finally{
       state.busy=false;
-      if(analyzeBtn){analyzeBtn.disabled=false;analyzeBtn.textContent=state.data?'↻ Qayta tahlil qilish':'✨ AI tushunsin';}
+      if(send)send.disabled=false;
     }
   }
 
-  function freeReply(){
-    const input=qs('[data-copilot-reply]');
+  function parseFreeAnswer(question,value){
+    const v=value.toLowerCase();
+    if(!question)return false;
+    if(question.key==='days'||question.key==='party_size'){
+      const n=Number((value.match(/\d+/)||[])[0]);
+      if(Number.isFinite(n)&&n>0){setAnswer(question.key,n);return true;}
+    }
+    if(question.key==='transport'){
+      if(/taksi|taxi|такси/.test(v)){setAnswer('transport','taxi');return true;}
+      if(/piyoda|walk|пеш/.test(v)){setAnswer('transport','walking');return true;}
+      if(/avtomobil|mashina|car|авто|машин/.test(v)){setAnswer('transport','own_vehicle');return true;}
+      if(/aralash|mixed/.test(v)){setAnswer('transport','mixed');return true;}
+    }
+    if(question.key==='start_date'){
+      const iso=value.match(/\b(20\d{2})[-./](\d{1,2})[-./](\d{1,2})\b/);
+      const local=value.match(/\b(\d{1,2})[./-](\d{1,2})[./-](20\d{2})\b/);
+      let date=null;
+      if(iso)date=`${iso[1]}-${String(iso[2]).padStart(2,'0')}-${String(iso[3]).padStart(2,'0')}`;
+      if(local)date=`${local[3]}-${String(local[2]).padStart(2,'0')}-${String(local[1]).padStart(2,'0')}`;
+      if(date){state.answers.start_date=date;return true;}
+    }
+    return false;
+  }
+
+  function submitChat(){
+    const input=qs('[data-ai-input]');
     const value=String(input?.value||'').trim();
     if(!value)return;
-    const q=state.data?.next_question;
-    appendMessage('user','',value);
-    if(q){
-      if(q.key==='days'||q.key==='party_size'){
-        const n=Number((value.match(/\d+/)||[])[0]);
-        if(Number.isFinite(n)&&n>0)setAnswer(q.key,n);
-        else state.additions.push(value);
-      }else if(q.key==='transport'){
-        const v=value.toLowerCase();
-        if(/taksi|taxi|такси/.test(v))setAnswer('transport','taxi');
-        else if(/piyoda|walk|пеш/.test(v))setAnswer('transport','walking');
-        else if(/avtomobil|mashina|car|авто|машин/.test(v))setAnswer('transport','own_vehicle');
-        else state.additions.push(value);
-      }else if(q.key==='interests'){
-        state.additions.push(value);
-      }else state.additions.push(value);
-    }else state.additions.push(value);
     input.value='';
+    addMessage('user','',value);
+
+    if(!state.started){
+      state.started=true;
+      $('prompt').value=value;
+      qs('[data-starters]')?.classList.add('hidden');
+      analyze(false);
+      return;
+    }
+
+    const question=state.data?.next_question;
+    if(!parseFreeAnswer(question,value))state.additions.push(value);
     analyze(false);
   }
 
+  function createRoute(){
+    if(!state.data?.ready)return;
+    syncPlanner(state.data);
+    $('prompt').value=fullPrompt();
+    const form=$('plannerForm');
+    if(!form)return;
+    addMessage('assistant','Marshrut tuzilmoqda','Ob-havo, ish vaqti, yo‘l va xizmatlar birga hisoblanmoqda.');
+    form.requestSubmit();
+    setTimeout(()=>document.getElementById('resultShell')?.scrollIntoView({behavior:'smooth',block:'start'}),500);
+  }
+
+  function resetWithStarter(text){
+    state.answers={};
+    state.additions=[];
+    state.data=null;
+    state.started=true;
+    $('prompt').value=text;
+    qs('[data-chat]').innerHTML='';
+    addMessage('assistant','Tushundim','Istagingizni tahlil qilyapman.');
+    addMessage('user','',text);
+    qs('[data-starters]')?.classList.add('hidden');
+    analyze(false);
+  }
+
+  function syncLocation(shell=document){
+    const target=qs('[data-simple-location]',shell);
+    const line=$('locationLine')?.textContent||'Boshlanish: Samarqand markazi';
+    if(target)target.textContent=line.replace(/^Boshlanish:\s*/,'')||'Samarqand markazi';
+  }
+
   function bind(shell){
-    qs('[data-copilot-analyze]',shell)?.addEventListener('click',()=>analyze(true));
-    qs('[data-copilot-create]',shell)?.addEventListener('click',()=>{
-      if(!state.data?.ready)return;
-      syncPlanner(state.data);
-      $('plannerForm')?.requestSubmit();
+    qs('[data-ai-send]',shell)?.addEventListener('click',submitChat);
+    qs('[data-ai-input]',shell)?.addEventListener('keydown',e=>{
+      if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();submitChat();}
     });
-    qs('[data-copilot-send]',shell)?.addEventListener('click',freeReply);
-    qs('[data-copilot-reply]',shell)?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();freeReply();}});
-    qsa('[data-copilot-starter]',shell).forEach(btn=>btn.addEventListener('click',()=>{
-      $('prompt').value=btn.dataset.copilotStarter||'';
-      state.answers={};state.additions=[];state.data=null;
-      analyze(true);
-    }));
-    qs('[data-copilot-date]',shell)?.addEventListener('change',e=>{
-      if($('startDate')){$('startDate').value=e.target.value;$('startDate').dispatchEvent(new Event('change',{bubbles:true}));}
+    qsa('[data-starter]',shell).forEach(btn=>btn.addEventListener('click',()=>resetWithStarter(btn.dataset.starter||'')));
+    qs('[data-gps-start]',shell)?.addEventListener('click',()=>{
+      $('locateBtn')?.click();
+      setTimeout(()=>syncLocation(shell),800);
     });
-    qs('[data-copilot-party]',shell)?.addEventListener('change',e=>{
-      const n=Math.max(1,Math.min(20,Number(e.target.value)||1));
-      state.answers.party_size=n;if($('partySize'))$('partySize').value=String(n);
-      if(state.data)analyze(false);
-    });
-    qs('[data-copilot-budget]',shell)?.addEventListener('change',e=>{
-      const n=Math.max(0,Number(e.target.value)||0);
-      if($('budget'))$('budget').value=n?String(n):'';
-      if(n){state.answers.budget_uzs=n;window.tfeAiProfile={...(window.tfeAiProfile||{}),budget_uzs:n};}
-      else delete state.answers.budget_uzs;
-    });
-    qs('[data-copilot-weather]',shell)?.addEventListener('change',e=>{if($('weatherAdaptive'))$('weatherAdaptive').checked=e.target.checked;});
-    qs('[data-copilot-location-btn]',shell)?.addEventListener('click',()=>{$('locateBtn')?.click();setTimeout(()=>syncLocation(shell),900);});
     if($('locationLine'))new MutationObserver(()=>syncLocation(shell)).observe($('locationLine'),{childList:true,subtree:true,characterData:true});
-    $('prompt')?.addEventListener('input',()=>{
-      state.answers={};state.additions=[];state.data=null;
-      qs('[data-copilot-create]',shell).disabled=true;
-      qs('[data-copilot-note]',shell).textContent='So‘rov o‘zgardi. AI qayta tahlil qilishi kerak.';
-      qs('[data-brief-title]',shell).textContent='Qayta tahlil kerak';
-      qs('[data-brief-ready]',shell).textContent='0%';
-    });
   }
 
   async function checkStatus(shell){
-    const node=qs('[data-copilot-status]',shell);
+    const node=qs('[data-ai-status]',shell);
     try{
       const r=await fetch('/api/tourism/status',{headers:{Accept:'application/json'}});
       const data=await r.json();
-      node.textContent=data.openai_configured?'AI online · '+(data.openai_model||'OpenAI'):'AI yordamchi · Smart parser';
+      node.textContent=data.openai_configured?'AI online':'AI yordamchi';
       node.classList.toggle('online',Boolean(data.openai_configured));
-    }catch{node.textContent='AI yordamchi tayyor';}
+    }catch{node.textContent='AI yordamchi';}
   }
 
-  ready(()=>setTimeout(build,30));
+  ready(()=>setTimeout(build,40));
 })();
