@@ -10,6 +10,7 @@
   function todayLocal(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10);}
 
   function build(){
+    document.querySelectorAll('.feature-grid').forEach((node)=>node.remove());
     const form=$('plannerForm'), hiddenPrompt=$('prompt');
     if(!form||!hiddenPrompt||qs('.ai-copilot-v17'))return;
     hiddenPrompt.required=false;
