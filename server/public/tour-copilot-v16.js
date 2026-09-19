@@ -98,7 +98,15 @@
 
       <div class="simple-composer">
         <textarea data-ai-input rows="2" maxlength="500" placeholder="Safaringizni yozing…"></textarea>
-        <button type="button" data-ai-send aria-label="Yuborish">➤</button>
+        <button type="button" data-ai-send class="arava-send" aria-label="Yuborish">
+          <span class="arava-send-track" aria-hidden="true">
+            <i class="arava-motion-line line-one"></i>
+            <i class="arava-motion-line line-two"></i>
+            <i class="arava-dust dust-one"></i>
+            <i class="arava-dust dust-two"></i>
+            <img src="/uzbek-arava-send.png?v=21.1" alt="" />
+          </span>
+        </button>
       </div>
       <div class="simple-footer">
         <button type="button" class="simple-gps" data-gps-start>◎ GPS boshlanish nuqtasi</button>
@@ -303,10 +311,20 @@
     if(interests.length)state.answers.interests=[...new Set(interests)];
   }
 
+  function animateSendCart(){
+    const send=qs('[data-ai-send]');
+    if(!send)return;
+    send.classList.remove('is-riding');
+    void send.offsetWidth;
+    send.classList.add('is-riding');
+    window.setTimeout(()=>send.classList.remove('is-riding'),820);
+  }
+
   function submitChat(){
     const input=qs('[data-ai-input]');
     const value=String(input?.value||'').trim();
     if(!value)return;
+    animateSendCart();
     input.value='';
     addMessage('user','',value);
 

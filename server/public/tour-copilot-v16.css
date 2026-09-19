@@ -1247,3 +1247,137 @@
   .assistant-hero-bubble>strong{font-size:16px!important}
   .assistant-hero-bubble>p{font-size:13px!important}
 }
+
+/* v21.1 — Uzbek two-wheel horse-cart send button */
+.simple-composer .arava-send{
+  position:relative!important;
+  flex:0 0 78px!important;
+  width:78px!important;
+  min-width:78px!important;
+  max-width:78px!important;
+  min-height:54px!important;
+  height:54px!important;
+  padding:0!important;
+  border-radius:17px!important;
+  overflow:hidden!important;
+  background:#176b4d!important;
+  border:0!important;
+  box-shadow:0 5px 14px rgba(23,107,77,.16)!important;
+}
+.arava-send-track{
+  position:absolute;
+  inset:0;
+  display:block;
+  overflow:hidden;
+}
+.arava-send img{
+  position:absolute;
+  z-index:3;
+  left:50%;
+  top:50%;
+  width:66px;
+  height:auto;
+  object-fit:contain;
+  transform:translate(-50%,-50%);
+  transform-origin:center bottom;
+  animation:aravaIdle 2.8s ease-in-out infinite;
+  pointer-events:none;
+}
+.arava-motion-line{
+  position:absolute;
+  z-index:1;
+  left:8px;
+  height:2px;
+  border-radius:999px;
+  background:rgba(255,255,255,.65);
+  opacity:.45;
+}
+.arava-motion-line.line-one{top:20px;width:18px}
+.arava-motion-line.line-two{top:29px;width:12px}
+.arava-dust{
+  position:absolute;
+  z-index:2;
+  left:12px;
+  bottom:8px;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:rgba(255,255,255,.72);
+  opacity:0;
+  filter:blur(.2px);
+}
+.arava-dust.dust-two{
+  left:20px;
+  bottom:11px;
+  width:5px;
+  height:5px;
+}
+@keyframes aravaIdle{
+  0%,100%{transform:translate(-50%,-50%) translateY(0) rotate(0deg)}
+  50%{transform:translate(-50%,-50%) translateY(-1px) rotate(-.35deg)}
+}
+.arava-send.is-riding img{
+  animation:aravaRide .82s cubic-bezier(.22,.76,.25,1) 1!important;
+}
+.arava-send.is-riding .arava-motion-line{
+  animation:aravaLine .82s ease-out 1;
+}
+.arava-send.is-riding .dust-one{
+  animation:aravaDustOne .82s ease-out 1;
+}
+.arava-send.is-riding .dust-two{
+  animation:aravaDustTwo .82s .06s ease-out 1;
+}
+@keyframes aravaRide{
+  0%{transform:translate(-50%,-50%) translateX(-4px) translateY(0) rotate(0)}
+  18%{transform:translate(-50%,-50%) translateX(0) translateY(-2px) rotate(-1deg)}
+  42%{transform:translate(-50%,-50%) translateX(8px) translateY(1px) rotate(.6deg)}
+  70%{transform:translate(-50%,-50%) translateX(15px) translateY(-1px) rotate(-.4deg)}
+  100%{transform:translate(-50%,-50%) translateX(20px) translateY(0) rotate(0)}
+}
+@keyframes aravaLine{
+  0%{transform:translateX(8px);opacity:0}
+  25%{opacity:.85}
+  100%{transform:translateX(-12px);opacity:0}
+}
+@keyframes aravaDustOne{
+  0%{transform:translate(16px,0) scale(.3);opacity:0}
+  25%{opacity:.8}
+  100%{transform:translate(-10px,-7px) scale(1.8);opacity:0}
+}
+@keyframes aravaDustTwo{
+  0%{transform:translate(12px,0) scale(.25);opacity:0}
+  30%{opacity:.7}
+  100%{transform:translate(-14px,-4px) scale(1.45);opacity:0}
+}
+.arava-send:hover img{
+  animation-duration:1.9s;
+}
+.arava-send:active{
+  transform:translateY(1px)!important;
+}
+@media(max-width:760px){
+  .simple-composer .arava-send{
+    position:static!important;
+    flex:0 0 72px!important;
+    width:72px!important;
+    min-width:72px!important;
+    max-width:72px!important;
+    height:52px!important;
+    min-height:52px!important;
+  }
+  .simple-composer textarea{
+    flex:1 1 0%!important;
+    width:calc(100% - 80px)!important;
+    max-width:calc(100% - 80px)!important;
+  }
+  .arava-send img{width:61px}
+}
+@media(prefers-reduced-motion:reduce){
+  .arava-send img,
+  .arava-send.is-riding img,
+  .arava-send.is-riding .arava-motion-line,
+  .arava-send.is-riding .arava-dust{
+    animation:none!important;
+  }
+}
