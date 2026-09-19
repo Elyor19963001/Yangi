@@ -81,6 +81,20 @@ app.use(express.json({ limit: '2mb' }));
 app.use(rateLimit({ windowMs: 60_000, limit: 240 }));
 
 const publicDir = path.join(__dirname, '..', 'public');
+app.use((req, res, next) => {
+  if (
+    req.path === '/tour.html'
+    || /^\/tour(?:-|\.).*\.(?:css|js)$/.test(req.path)
+    || req.path === '/map-style-switcher.css'
+    || req.path === '/map-style-switcher.js'
+    || req.path === '/map-3d.js'
+  ) {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+  }
+  next();
+});
 app.use(express.static(publicDir));
 app.use('/vendor/leaflet', express.static(path.join(__dirname, '..', 'node_modules', 'leaflet', 'dist'), {
   maxAge: '30d',
