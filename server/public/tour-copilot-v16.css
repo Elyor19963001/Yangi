@@ -1050,3 +1050,80 @@
     height:42px!important;
   }
 }
+
+/* v20.9 — mascot on every AI reply + explicit route confirmation */
+.simple-msg.assistant{
+  position:relative!important;
+  display:block!important;
+  padding-left:54px!important;
+  min-height:54px!important;
+}
+.simple-msg.assistant>.assistant-mini-mascot{
+  position:absolute!important;
+  left:4px!important;
+  bottom:2px!important;
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  width:46px!important;
+  height:54px!important;
+  z-index:4!important;
+  pointer-events:none!important;
+}
+.simple-msg.assistant>.assistant-mini-mascot .mascot-layered,
+.simple-msg.assistant>.assistant-mini-mascot .mascot-layered>img{
+  width:46px!important;
+  height:54px!important;
+}
+.simple-msg.assistant>.simple-bubble{
+  display:block!important;
+  margin:0!important;
+  max-width:min(660px,92%)!important;
+}
+.route-confirm-copy{
+  margin-top:10px;
+  padding:10px 11px;
+  border:1px solid #cfe1d8;
+  border-radius:12px;
+  background:#ffffff;
+}
+.route-confirm-copy strong,
+.route-confirm-copy span{
+  display:block;
+}
+.route-confirm-copy strong{
+  color:#194e3a;
+  font-size:10px;
+  line-height:1.35;
+  margin-bottom:4px;
+}
+.route-confirm-copy span{
+  color:#64786f;
+  font-size:8px;
+  line-height:1.5;
+}
+.ready-create:disabled{
+  opacity:.55!important;
+  cursor:wait!important;
+}
+@media(max-width:760px){
+  .simple-msg.assistant{
+    padding-left:44px!important;
+    min-height:48px!important;
+  }
+  .simple-msg.assistant>.assistant-mini-mascot{
+    left:1px!important;
+    width:39px!important;
+    height:47px!important;
+  }
+  .simple-msg.assistant>.assistant-mini-mascot .mascot-layered,
+  .simple-msg.assistant>.assistant-mini-mascot .mascot-layered>img{
+    width:39px!important;
+    height:47px!important;
+  }
+  .simple-msg.assistant>.simple-bubble{
+    max-width:94%!important;
+  }
+  .route-confirm-copy strong{font-size:9px}
+  .route-confirm-copy span{font-size:7.5px}
+}

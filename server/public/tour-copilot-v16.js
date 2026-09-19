@@ -165,23 +165,33 @@
 
   function renderReady(data){
     const assumptions=(data?.assumptions||[]).length
-      ? `<div class="smart-assumptions"><strong>AI taxmini</strong><span>${(data.assumptions||[]).map(esc).join(' · ')}</span><small>Noto‘g‘ri bo‘lsa “Bir narsani o‘zgartiraman” orqali aytasiz.</small></div>`
+      ? `<div class="smart-assumptions"><strong>AI taxmini</strong><span>${(data.assumptions||[]).map(esc).join(' · ')}</span><small>Agar biror joyi noto‘g‘ri bo‘lsa, o‘zgartirishni yozishingiz mumkin.</small></div>`
       : '';
     const summary=`
       <div class="ready-summary">
-        <div class="ready-title"><span>✓</span><div><strong>Rejani tushundim</strong><small>Qisqa yozuvdan asosiy niyatingizni ajratdim</small></div></div>
+        <div class="ready-title"><span>✓</span><div><strong>Sizni shunday tushundim</strong><small>Qisqa yozuvdan asosiy istaklaringizni ajratdim</small></div></div>
         <div class="summary-chips">${factChips(data)}</div>
         ${assumptions}
+        <div class="route-confirm-copy">
+          <strong>Shu ma’lumotlar asosida marshrutni tuzib beraymi?</strong>
+          <span>“Ha” desangiz, ob-havo, obyektlarning ish vaqti, yo‘l va yaqin xizmatlarni hisobga olib yakuniy marshrutni tasvirlab beraman.</span>
+        </div>
         <div class="ready-actions">
-          <button type="button" class="ready-create" data-ready-create>Marshrutni yaratish <b>→</b></button>
-          <button type="button" class="ready-edit" data-ready-edit>Bir narsani o‘zgartiraman</button>
+          <button type="button" class="ready-create" data-ready-create>Ha, tuzib bering <b>→</b></button>
+          <button type="button" class="ready-edit" data-ready-edit>Yo‘q, o‘zgartiraman</button>
         </div>
       </div>`;
     const row=addMessage('assistant','', '',summary);
-    qs('[data-ready-create]',row)?.addEventListener('click',createRoute);
+    qs('[data-ready-create]',row)?.addEventListener('click',()=>{
+      const yes=qs('[data-ready-create]',row);
+      if(yes)yes.disabled=true;
+      addMessage('user','', 'Ha, shu ma’lumotlar asosida tuzing.');
+      createRoute();
+    });
     qs('[data-ready-edit]',row)?.addEventListener('click',()=>{
+      addMessage('user','', 'Bir narsani o‘zgartiraman.');
       const input=qs('[data-ai-input]');
-      input.placeholder='Nimani o‘zgartirishni yozing…';
+      input.placeholder='Masalan: 1 kun bo‘lsin, ko‘p yurmaylik…';
       input.focus();
     });
   }
@@ -320,7 +330,7 @@
     $('prompt').value=fullPrompt();
     const form=$('plannerForm');
     if(!form)return;
-    addMessage('assistant','Marshrut tuzilmoqda','Ob-havo, ish vaqti, yo‘l va xizmatlar birga hisoblanmoqda.');
+    addMessage('assistant','Tasdiqlandi — marshrut tuzilmoqda','Ob-havo, ish vaqti, yo‘l va yaqin xizmatlarni birga hisoblab, marshrutni tayyorlayapman.');
     form.requestSubmit();
     setTimeout(()=>document.getElementById('resultShell')?.scrollIntoView({behavior:'smooth',block:'start'}),500);
   }
