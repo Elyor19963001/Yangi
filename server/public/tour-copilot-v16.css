@@ -50,7 +50,7 @@
   align-items:flex-end;
   justify-content:center;
   margin-top:-4px;
-  flex:0 0 52px;
+  flex:0 0 72px;
 }
 .simple-avatar.assistant-mascot img{
   display:block;
@@ -63,9 +63,11 @@
 .simple-msg.assistant:hover .assistant-mascot img{filter:drop-shadow(0 7px 9px rgba(20,63,47,.20))}
 .simple-msg.user .simple-avatar{width:32px;height:32px;flex-basis:32px}
 @media(max-width:760px){
-  .simple-avatar.assistant-mascot{width:46px;height:58px;flex-basis:46px;margin-top:-3px}
-  .simple-avatar.assistant-mascot img{width:43px;height:54px}
+  .simple-avatar.assistant-mascot{width:62px;height:78px;flex-basis:62px;margin-top:-3px}
+  .simple-avatar.assistant-mascot img{width:58px;height:74px}
 }
 @media(prefers-reduced-motion:reduce){
   .simple-avatar.assistant-mascot img{animation:none!important}
 }
+
+.simple-avatar.assistant-mascot img{image-rendering:auto;backface-visibility:hidden}

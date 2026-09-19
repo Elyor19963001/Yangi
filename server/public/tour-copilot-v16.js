@@ -38,7 +38,7 @@
 
       <div class="simple-chat" data-chat>
         <div class="simple-msg assistant">
-          <span class="simple-avatar assistant-mascot" aria-hidden="true"><img src="/uzbek-ai-mascot.gif?v=18" alt="" /></span>
+          <span class="simple-avatar assistant-mascot" aria-hidden="true"><img src="/uzbek-ai-mascot.gif?v=18.1" alt="" /></span>
           <div class="simple-bubble">
             <strong>Qanday sayohat xohlaysiz?</strong>
             <p>Masalan: “2 kunlik ziyorat turi kerak, ko‘p yurmaylik, milliy taomlar ham bo‘lsin.”</p>
@@ -66,7 +66,7 @@
     const row=document.createElement('div');
     row.className='simple-msg '+role;
     row.innerHTML=`
-      <span class="simple-avatar ${role==='assistant'?'assistant-mascot':''}">${role==='assistant'?'<img src="/uzbek-ai-mascot.gif?v=18" alt="" aria-hidden="true" />':'Siz'}</span>
+      <span class="simple-avatar ${role==='assistant'?'assistant-mascot':''}">${role==='assistant'?'<img src="/uzbek-ai-mascot.gif?v=18.1" alt="" aria-hidden="true" />':'Siz'}</span>
       <div class="simple-bubble">
         ${title?`<strong>${esc(title)}</strong>`:''}
         ${text?`<p>${esc(text)}</p>`:''}
