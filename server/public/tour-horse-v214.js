@@ -1,126 +1,131 @@
 (() => {
   'use strict';
 
-  // v21.5 — traditional Uzbek arava + unmistakable horse silhouette.
-  // Large wooden spoked wheels and a simple geometric cart-side motif evoke
-  // the historic Central Asian/Uzbek arava without turning the small UI icon
-  // into a detailed illustration.
+  // v21.6 — clearer horse silhouette + click-to-run animation hook.
   const HORSE_INNER = `
     <g class="arava-wagon">
-      <!-- traditional wooden arava bed -->
-      <path d="M5 18H55L52 38H10L5 18Z"
-            fill="currentColor" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
-      <path d="M9 16L6 9M52 16L56 9"
+      <path d="M5 20H58L54 40H10L5 20Z"
+            fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/>
+      <path d="M10 25H54M11 32H53"
+            fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
+      <path d="M9 18L6 11M54 18L59 11"
             fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-      <!-- slatted / carved side treatment -->
-      <path d="M12 23H49M13 30H48"
-            fill="none" stroke="#176b4d" stroke-width="2" stroke-linecap="round"/>
-      <path d="M18 26L22 22L26 26L22 30ZM30 26L34 22L38 26L34 30ZM42 26L46 22L50 26L46 30Z"
-            fill="none" stroke="#176b4d" stroke-width="1.45" stroke-linejoin="round"/>
-      <!-- wooden shafts -->
-      <path d="M53 29L86 31M52 36L84 38"
+      <path d="M54 31L88 33M54 38L86 40"
             fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>
+      <path d="M18 29l5-4 5 4-5 4zM33 29l5-4 5 4-5 4z"
+            fill="none" stroke="currentColor" stroke-width="1.25" opacity=".9"/>
     </g>
 
-    <!-- two large wooden spoked wheels -->
     <g class="arava-wheel wheel-one">
-      <circle cx="18" cy="49" r="11.2" fill="none" stroke="currentColor" stroke-width="3.4"/>
-      <circle cx="18" cy="49" r="2.2" fill="currentColor"/>
-      <path d="M18 38V60M7 49H29M10 41L26 57M26 41L10 57"
+      <circle cx="19" cy="51" r="11.5" fill="none" stroke="currentColor" stroke-width="3.4"/>
+      <circle cx="19" cy="51" r="2.2" fill="currentColor"/>
+      <path d="M19 39.5V62.5M7.5 51H30.5M11 43L27 59M27 43L11 59"
             fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"/>
     </g>
     <g class="arava-wheel wheel-two">
-      <circle cx="45" cy="49" r="11.2" fill="none" stroke="currentColor" stroke-width="3.4"/>
-      <circle cx="45" cy="49" r="2.2" fill="currentColor"/>
-      <path d="M45 38V60M34 49H56M37 41L53 57M53 41L37 57"
+      <circle cx="47" cy="51" r="11.5" fill="none" stroke="currentColor" stroke-width="3.4"/>
+      <circle cx="47" cy="51" r="2.2" fill="currentColor"/>
+      <path d="M47 39.5V62.5M35.5 51H58.5M39 43L55 59M55 43L39 59"
             fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"/>
     </g>
 
-    <!-- HORSE: deep chest, arched neck, long equine face, mane, tail -->
+    <!-- unmistakable horse body: long muzzle, arched neck, deep chest -->
     <g class="arava-horse-body">
-      <!-- torso + chest + neck + head -->
       <path d="
-        M84 27
-        C91 21 101 19 112 20
-        C120 21 125 23 130 27
-        C132 22 134 16 138 11
-        C141 7 145 5 149 6
-        C153 7 156 10 157 13
-        L163 14
-        C168 15 171 18 171 21
-        C171 25 168 28 164 29
-        L156 29
-        C152 33 150 39 147 43
-        C141 44 135 42 131 39
-        C126 36 122 34 117 34
-        C110 34 105 37 98 37
-        C91 37 86 35 82 32
-        C80 30 81 28 84 27Z"
+        M88 31
+        C97 25 109 23 121 25
+        C128 26 134 29 139 31
+        C141 24 144 17 149 12
+        C153 8 158 7 162 10
+        L171 16
+        C176 18 179 21 178 25
+        C177 29 173 31 168 30
+        L160 28
+        C157 33 155 38 153 43
+        C147 44 141 42 136 39
+        C131 36 126 35 121 36
+        C112 39 102 41 94 39
+        C89 38 85 35 88 31Z"
         fill="currentColor"/>
 
-      <!-- distinct horse ears -->
-      <path d="M140 10L139 1L145 8Z" fill="currentColor"/>
-      <path d="M148 7L152 0L152 11Z" fill="currentColor"/>
+      <!-- horse ears -->
+      <path d="M151 12L150 3L156 10Z" fill="currentColor"/>
+      <path d="M159 10L163 2L164 13Z" fill="currentColor"/>
 
-      <!-- mane, cut as green notches -->
-      <path d="M135 14L139 17L135 19L139 22L134 25L138 28L133 31"
-            fill="none" stroke="#176b4d" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- flowing mane -->
+      <path d="M148 15
+               C144 16 141 18 137 18
+               C141 21 143 22 139 24
+               C143 26 144 28 140 30
+               C144 31 145 33 141 35"
+            fill="none" stroke="#176b4d" stroke-width="2" stroke-linecap="round"/>
 
-      <!-- long flowing tail -->
+      <!-- flowing horse tail -->
       <path d="
-        M85 27
-        C79 24 75 19 72 14
-        C73 21 71 27 67 33
-        C72 31 75 31 77 34
-        C74 38 71 42 68 45
-        C75 43 81 39 86 34Z"
+        M91 31
+        C84 27 80 22 77 17
+        C78 24 75 30 70 35
+        C76 33 80 34 82 37
+        C78 40 74 44 70 47
+        C79 45 86 41 93 36Z"
         fill="currentColor"/>
 
-      <!-- eye + nostril in background green -->
-      <circle cx="158" cy="17" r="1.35" fill="#176b4d"/>
-      <ellipse cx="166" cy="23" rx="1.7" ry="1.05" fill="#176b4d"/>
-
-      <!-- simple bridle -->
-      <path d="M153 14C156 19 157 24 155 29M155 25L167 26"
+      <!-- eye, nostril, simple bridle -->
+      <circle cx="165" cy="17.5" r="1.3" fill="#176b4d"/>
+      <ellipse cx="173" cy="24.5" rx="1.6" ry="1.05" fill="#176b4d"/>
+      <path d="M160 12.5C164 18 164 23 161 29M161 26L173 28"
             fill="none" stroke="#176b4d" stroke-width="1.35" stroke-linecap="round"/>
     </g>
 
-    <!-- equine legs with knees, fetlocks and visible hooves -->
-    <g class="arava-horse-leg arava-horse-leg-back">
-      <path d="M94 34L93 44L89 52L87 60L93 60L96 53L100 45L102 35Z"
-            fill="currentColor"/>
-      <path d="M106 35L107 45L111 52L112 60L118 60L116 51L114 44L114 34Z"
-            fill="currentColor"/>
-      <path d="M86 59H94L93 63H85Z M111 59H119L119 63H111Z"
-            fill="currentColor"/>
+    <!-- articulated horse legs -->
+    <g class="arava-horse-legs">
+      <path class="arava-leg leg-rear-a"
+            d="M99 37L97 48L91 56L89 65M89 65H96"
+            fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path class="arava-leg leg-rear-b"
+            d="M111 37L112 48L117 55L119 64M118 64H125"
+            fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path class="arava-leg leg-front-a"
+            d="M137 39L138 49L133 57L132 65M131 65H138"
+            fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path class="arava-leg leg-front-b"
+            d="M149 41L151 51L157 57L160 64M159 64H166"
+            fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
     </g>
 
-    <g class="arava-horse-leg arava-horse-leg-front">
-      <path d="M130 37L130 46L126 53L125 61L131 61L133 54L137 47L138 38Z"
-            fill="currentColor"/>
-      <path d="M142 39L144 48L149 54L151 61L157 61L153 52L151 45L150 40Z"
-            fill="currentColor"/>
-      <path d="M124 60H132L131 64H123Z M150 60H158L158 64H150Z"
-            fill="currentColor"/>
-    </g>
-
-    <!-- harness traces from cart to horse -->
     <path class="arava-harness"
-          d="M82 30L151 24M83 38L132 39"
+          d="M84 32L160 26M85 40L138 41"
           fill="none" stroke="currentColor" stroke-width="1.8"
-          stroke-linecap="round" opacity=".96"/>
+          stroke-linecap="round" opacity=".95"/>
   `;
 
+  function runHorse(button) {
+    if (!button) return;
+    button.classList.remove('horse-running');
+    void button.offsetWidth;
+    button.classList.add('horse-running');
+    if (button.__horseRunTimer) clearTimeout(button.__horseRunTimer);
+    button.__horseRunTimer = setTimeout(() => {
+      button.classList.remove('horse-running');
+    }, 1250);
+  }
+
   function upgradeHorseCart(root = document) {
-    root.querySelectorAll?.('.arava-cart-icon:not([data-horse-v215])').forEach((svg) => {
-      svg.setAttribute('viewBox', '0 0 176 68');
-      svg.setAttribute('data-horse-v215', 'true');
+    root.querySelectorAll?.('.arava-cart-icon:not([data-horse-v216])').forEach((svg) => {
+      svg.setAttribute('viewBox', '0 0 182 70');
+      svg.setAttribute('data-horse-v216', 'true');
+      svg.removeAttribute('data-horse-v215');
       svg.removeAttribute('data-horse-v214');
       svg.innerHTML = HORSE_INNER;
+
       const button = svg.closest('.arava-send');
       if (button) {
-        button.setAttribute('aria-label', 'Yuborish — an’anaviy o‘zbek ot aravasi');
-        button.setAttribute('title', 'An’anaviy o‘zbek ot aravasi');
+        button.setAttribute('aria-label', 'Yuborish — o‘zbek ot aravasi');
+        button.setAttribute('title', 'Ot arava — bosilganda harakatlanadi');
+        if (!button.dataset.horseClickBound) {
+          button.dataset.horseClickBound = 'true';
+          button.addEventListener('click', () => runHorse(button));
+        }
       }
     });
   }
