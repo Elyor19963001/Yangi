@@ -2066,3 +2066,133 @@
     animation:none!important;
   }
 }
+
+
+/* v22.0 — compact Uzbek ornamental header */
+.simple-ai-head.uzbek-ai-head{
+  min-height:92px!important;
+  padding:14px 18px 22px 44px!important;
+  gap:12px!important;
+  align-items:flex-start!important;
+  border-bottom:1px solid rgba(196,151,56,.24)!important;
+  background:
+    radial-gradient(circle at 84% 30%,rgba(231,198,119,.055),transparent 30%),
+    linear-gradient(180deg,#fffefa 0%,#fcfdfb 100%)!important;
+  box-shadow:none!important;
+}
+.simple-ai-head.uzbek-ai-head::before{
+  inset:5px!important;
+  border-color:rgba(199,153,57,.24)!important;
+  border-radius:14px!important;
+  box-shadow:none!important;
+}
+.uzbek-head-pattern{
+  opacity:.14!important;
+  background-size:38px 66px!important;
+  animation-duration:34s!important;
+}
+.uzbek-head-copy{
+  max-width:720px!important;
+}
+.simple-ai-head.uzbek-ai-head .simple-ai-kicker{
+  font-size:9px!important;
+  letter-spacing:.075em!important;
+}
+.simple-ai-head.uzbek-ai-head h2{
+  margin:4px 0 3px!important;
+  font-size:19px!important;
+  line-height:1.18!important;
+  letter-spacing:-.012em!important;
+}
+.simple-ai-head.uzbek-ai-head p{
+  font-size:11px!important;
+  line-height:1.4!important;
+}
+.simple-ai-head.uzbek-ai-head .simple-ai-status{
+  min-height:27px!important;
+  padding:0 10px!important;
+  font-size:9px!important;
+  margin-top:0!important;
+  box-shadow:none!important;
+}
+.uzbek-ornament{
+  width:48px!important;
+  height:48px!important;
+  opacity:.83!important;
+  filter:none!important;
+}
+.uzbek-ornament-left{
+  left:-3px!important;
+  top:-3px!important;
+}
+.uzbek-ornament-right{
+  display:none!important;
+}
+.uzbek-head-divider{
+  left:54px!important;
+  right:54px!important;
+  bottom:6px!important;
+  gap:7px!important;
+}
+.uzbek-head-divider span{
+  max-width:135px!important;
+  opacity:.48!important;
+}
+.uzbek-head-divider i{
+  width:8px!important;
+  height:8px!important;
+  border-radius:2px!important;
+  box-shadow:none!important;
+}
+.uzbek-head-divider i::after{
+  inset:1.5px!important;
+}
+@keyframes uzbekCompactLeaf{
+  0%,100%{transform:translateY(0) rotate(0deg)}
+  50%{transform:translateY(1.5px) rotate(.7deg)}
+}
+.uzbek-ornament-left{
+  animation:uzbekCompactLeaf 8.5s ease-in-out infinite!important;
+}
+
+@media(max-width:760px){
+  .simple-ai-head.uzbek-ai-head{
+    min-height:84px!important;
+    padding:12px 12px 18px 32px!important;
+  }
+  .simple-ai-head.uzbek-ai-head h2{
+    font-size:16px!important;
+    line-height:1.18!important;
+    max-width:95%!important;
+  }
+  .simple-ai-head.uzbek-ai-head p{
+    font-size:10px!important;
+    line-height:1.35!important;
+    max-width:96%!important;
+  }
+  .simple-ai-head.uzbek-ai-head .simple-ai-kicker{
+    font-size:8px!important;
+  }
+  .simple-ai-head.uzbek-ai-head .simple-ai-status{
+    margin-top:8px!important;
+    min-height:24px!important;
+    padding:0 8px!important;
+    font-size:8px!important;
+  }
+  .uzbek-ornament{
+    width:38px!important;
+    height:38px!important;
+  }
+  .uzbek-ornament-left{
+    left:-6px!important;
+    top:-5px!important;
+  }
+  .uzbek-head-divider{
+    left:36px!important;
+    right:36px!important;
+    bottom:5px!important;
+  }
+  .uzbek-head-divider span{
+    max-width:70px!important;
+  }
+}
