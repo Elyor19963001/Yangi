@@ -604,3 +604,31 @@
   .assistant-hero-mascot .mascot-layered>img{width:72px!important;height:78px!important}
   .assistant-mascot .mascot-eye{min-width:2.8px;min-height:2.8px}
 }
+
+/* v20.2 — keep the original 3D face untouched. No CSS-painted eyes/mouth. */
+.assistant-mascot .mascot-expression,
+.assistant-mascot .mascot-eye,
+.assistant-mascot .mascot-lid,
+.assistant-mascot .mascot-mouth,
+.assistant-mascot .mascot-brow{
+  display:none!important;
+}
+.assistant-hero-card{
+  grid-template-columns:78px minmax(0,1fr)!important;
+}
+.assistant-hero-mascot{
+  width:78px!important;
+  min-width:78px!important;
+  height:88px!important;
+}
+.assistant-hero-mascot .mascot-layered,
+.assistant-hero-mascot .mascot-layered>img{
+  width:76px!important;
+  height:82px!important;
+}
+@media(max-width:760px){
+  .assistant-hero-card{grid-template-columns:64px minmax(0,1fr)!important}
+  .assistant-hero-mascot{width:64px!important;min-width:64px!important;height:75px!important}
+  .assistant-hero-mascot .mascot-layered,
+  .assistant-hero-mascot .mascot-layered>img{width:64px!important;height:70px!important}
+}
