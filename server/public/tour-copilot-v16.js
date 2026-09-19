@@ -67,13 +67,47 @@
     const shell=document.createElement('section');
     shell.className='ai-copilot-v17';
     shell.innerHTML=`
-      <div class="simple-ai-head">
-        <div>
-          <span class="simple-ai-kicker">✨ AI TUR YORDAMCHISI</span>
+      <div class="simple-ai-head uzbek-ai-head">
+        <div class="uzbek-head-pattern" aria-hidden="true"></div>
+
+        <span class="uzbek-ornament uzbek-ornament-left" aria-hidden="true">
+          <svg viewBox="0 0 120 120" focusable="false">
+            <path class="uzbek-vine" d="M7 102C23 86 17 63 36 49C51 38 68 42 76 26C80 18 86 12 101 8"/>
+            <path class="uzbek-leaf leaf-a" d="M24 79C9 77 7 64 11 55C24 55 34 64 24 79Z"/>
+            <path class="uzbek-leaf leaf-b" d="M43 51C31 39 37 27 47 23C57 32 57 44 43 51Z"/>
+            <path class="uzbek-leaf leaf-c" d="M69 37C65 22 75 14 86 14C91 27 84 37 69 37Z"/>
+            <g class="uzbek-rosette">
+              <path d="M28 91C23 82 27 73 36 70C45 73 49 82 44 91C49 100 45 109 36 112C27 109 23 100 28 91Z"/>
+              <path d="M36 83C45 78 54 82 57 91C54 100 45 104 36 99C27 104 18 100 15 91C18 82 27 78 36 83Z"/>
+              <circle cx="36" cy="91" r="6"/>
+            </g>
+          </svg>
+        </span>
+
+        <span class="uzbek-ornament uzbek-ornament-right" aria-hidden="true">
+          <svg viewBox="0 0 120 120" focusable="false">
+            <path class="uzbek-vine" d="M7 102C23 86 17 63 36 49C51 38 68 42 76 26C80 18 86 12 101 8"/>
+            <path class="uzbek-leaf leaf-a" d="M24 79C9 77 7 64 11 55C24 55 34 64 24 79Z"/>
+            <path class="uzbek-leaf leaf-b" d="M43 51C31 39 37 27 47 23C57 32 57 44 43 51Z"/>
+            <path class="uzbek-leaf leaf-c" d="M69 37C65 22 75 14 86 14C91 27 84 37 69 37Z"/>
+            <g class="uzbek-rosette">
+              <path d="M28 91C23 82 27 73 36 70C45 73 49 82 44 91C49 100 45 109 36 112C27 109 23 100 28 91Z"/>
+              <path d="M36 83C45 78 54 82 57 91C54 100 45 104 36 99C27 104 18 100 15 91C18 82 27 78 36 83Z"/>
+              <circle cx="36" cy="91" r="6"/>
+            </g>
+          </svg>
+        </span>
+
+        <div class="uzbek-head-copy">
+          <span class="simple-ai-kicker">✦ AI TUR YORDAMCHISI</span>
           <h2>Safaringizni oddiy gap bilan ayting</h2>
           <p>Men tushunmagan narsamni bittadan so‘rayman. Forma to‘ldirish shart emas.</p>
         </div>
         <span class="simple-ai-status" data-ai-status>AI tayyorlanmoqda…</span>
+
+        <div class="uzbek-head-divider" aria-hidden="true">
+          <span></span><i></i><span></span>
+        </div>
       </div>
 
       <div class="simple-starters" data-starters>
