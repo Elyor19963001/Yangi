@@ -36,3 +36,36 @@
   .simple-footer{padding:0 10px 9px}
 }
 .feature-grid{display:none!important}
+
+/* Uzbek AI guide mascot v18 */
+.simple-msg.assistant{align-items:flex-start}
+.simple-avatar.assistant-mascot{
+  width:52px;
+  height:64px;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  overflow:visible;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  margin-top:-4px;
+  flex:0 0 52px;
+}
+.simple-avatar.assistant-mascot img{
+  display:block;
+  width:48px;
+  height:60px;
+  object-fit:contain;
+  filter:drop-shadow(0 5px 7px rgba(20,63,47,.14));
+  transform-origin:50% 100%;
+}
+.simple-msg.assistant:hover .assistant-mascot img{filter:drop-shadow(0 7px 9px rgba(20,63,47,.20))}
+.simple-msg.user .simple-avatar{width:32px;height:32px;flex-basis:32px}
+@media(max-width:760px){
+  .simple-avatar.assistant-mascot{width:46px;height:58px;flex-basis:46px;margin-top:-3px}
+  .simple-avatar.assistant-mascot img{width:43px;height:54px}
+}
+@media(prefers-reduced-motion:reduce){
+  .simple-avatar.assistant-mascot img{animation:none!important}
+}
