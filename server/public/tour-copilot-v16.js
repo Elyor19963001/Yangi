@@ -11,28 +11,34 @@
     <img class="mascot-base" src="${MASCOT_BODY}" alt="" />
     <img class="mascot-head" src="${MASCOT_HEAD}" alt="" />
     <img class="mascot-hand" src="${MASCOT_HAND}" alt="" />
+    <img class="mascot-mouth-pixels" src="${MASCOT_SRC}" alt="" />
+    <span class="mascot-blink blink-left"></span>
+    <span class="mascot-blink blink-right"></span>
   </span>`;
 
   function animateMascot(root=document){
     root.querySelectorAll?.('.assistant-mascot .mascot-layered').forEach(layer=>{
       if(layer.dataset.motionReady==='1')return;
       layer.dataset.motionReady='1';
+
       const hand=layer.querySelector('.mascot-hand');
       const head=layer.querySelector('.mascot-head');
+      const mouth=layer.querySelector('.mascot-mouth-pixels');
+      const blinks=[...layer.querySelectorAll('.mascot-blink')];
 
       if(hand&&typeof hand.animate==='function'){
         hand.style.transformOrigin='34% 43%';
         hand.style.willChange='transform';
         hand.animate([
           {transform:'rotate(0deg)',offset:0},
-          {transform:'rotate(0deg)',offset:.16},
-          {transform:'rotate(-5deg)',offset:.25},
-          {transform:'rotate(4deg)',offset:.34},
-          {transform:'rotate(-3deg)',offset:.43},
-          {transform:'rotate(2deg)',offset:.51},
-          {transform:'rotate(0deg)',offset:.59},
+          {transform:'rotate(0deg)',offset:.18},
+          {transform:'rotate(-4.5deg)',offset:.27},
+          {transform:'rotate(3.5deg)',offset:.36},
+          {transform:'rotate(-3deg)',offset:.45},
+          {transform:'rotate(2deg)',offset:.53},
+          {transform:'rotate(0deg)',offset:.61},
           {transform:'rotate(0deg)',offset:1}
-        ],{duration:2500,iterations:Infinity,easing:'ease-in-out'});
+        ],{duration:2900,iterations:Infinity,easing:'ease-in-out'});
       }
 
       if(head&&typeof head.animate==='function'){
@@ -40,11 +46,38 @@
         head.style.willChange='transform';
         head.animate([
           {transform:'translateY(0) rotate(0deg)',offset:0},
-          {transform:'translateY(-0.25px) rotate(.45deg)',offset:.32},
-          {transform:'translateY(0) rotate(-.35deg)',offset:.58},
-          {transform:'translateY(-0.2px) rotate(.2deg)',offset:.77},
+          {transform:'translateY(-.18px) rotate(.32deg)',offset:.30},
+          {transform:'translateY(0) rotate(-.26deg)',offset:.57},
+          {transform:'translateY(-.14px) rotate(.16deg)',offset:.76},
           {transform:'translateY(0) rotate(0deg)',offset:1}
-        ],{duration:4800,iterations:Infinity,easing:'ease-in-out'});
+        ],{duration:5200,iterations:Infinity,easing:'ease-in-out'});
+      }
+
+      blinks.forEach((lid,index)=>{
+        if(typeof lid.animate!=='function')return;
+        const lag=index*.003;
+        lid.animate([
+          {opacity:0,transform:'scaleY(.15)',offset:0},
+          {opacity:0,transform:'scaleY(.15)',offset:.902+lag},
+          {opacity:.96,transform:'scaleY(1)',offset:.916+lag},
+          {opacity:.98,transform:'scaleY(1)',offset:.927+lag},
+          {opacity:0,transform:'scaleY(.15)',offset:.943+lag},
+          {opacity:0,transform:'scaleY(.15)',offset:1}
+        ],{duration:5100,iterations:Infinity,easing:'ease-in-out'});
+      });
+
+      if(mouth&&typeof mouth.animate==='function'){
+        mouth.style.transformOrigin='51% 35%';
+        mouth.style.willChange='transform,opacity';
+        mouth.animate([
+          {transform:'translateY(0) scaleY(1)',opacity:1,offset:0},
+          {transform:'translateY(0) scaleY(1)',opacity:1,offset:.18},
+          {transform:'translateY(.22px) scaleY(1.06)',opacity:.96,offset:.26},
+          {transform:'translateY(0) scaleY(.98)',opacity:.98,offset:.34},
+          {transform:'translateY(.18px) scaleY(1.04)',opacity:.96,offset:.42},
+          {transform:'translateY(0) scaleY(1)',opacity:1,offset:.50},
+          {transform:'translateY(0) scaleY(1)',opacity:1,offset:1}
+        ],{duration:2400,iterations:Infinity,easing:'ease-in-out'});
       }
     });
   }

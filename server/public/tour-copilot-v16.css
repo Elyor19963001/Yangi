@@ -632,3 +632,51 @@
   .assistant-hero-mascot .mascot-layered,
   .assistant-hero-mascot .mascot-layered>img{width:64px!important;height:70px!important}
 }
+
+/* v20.3 — microexpressions using original face pixels; no fake eyes/pupils */
+.assistant-mascot .mascot-mouth-pixels{
+  position:absolute!important;
+  inset:0!important;
+  z-index:5!important;
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  pointer-events:none!important;
+  clip-path:polygon(43% 31%,59% 31%,59% 39%,43% 39%)!important;
+  transform-origin:51% 35%!important;
+  animation:none!important;
+}
+.assistant-mascot .mascot-blink{
+  position:absolute!important;
+  z-index:6!important;
+  top:26.0%;
+  width:5.0%;
+  height:3.1%;
+  min-width:2.7px;
+  min-height:1.7px;
+  border-radius:55% 55% 45% 45%;
+  background:linear-gradient(180deg,rgba(247,191,151,.96),rgba(231,151,112,.97));
+  border-bottom:.65px solid rgba(72,48,38,.72);
+  box-shadow:0 .35px .4px rgba(80,49,38,.10);
+  opacity:0;
+  transform:scaleY(.15);
+  transform-origin:center;
+  pointer-events:none!important;
+}
+.assistant-mascot .blink-left{left:42.7%}
+.assistant-mascot .blink-right{left:51.9%}
+
+/* Old synthetic face layers stay disabled if a phone cached older DOM. */
+.assistant-mascot .mascot-expression,
+.assistant-mascot .mascot-eye,
+.assistant-mascot .mascot-lid,
+.assistant-mascot .mascot-mouth,
+.assistant-mascot .mascot-brow{display:none!important}
+
+@media(max-width:760px){
+  .assistant-mascot .mascot-blink{min-width:2.4px;min-height:1.5px}
+}
+@media(prefers-reduced-motion:reduce){
+  .assistant-mascot .mascot-blink{display:none!important}
+  .assistant-mascot .mascot-mouth-pixels{transform:none!important}
+}
