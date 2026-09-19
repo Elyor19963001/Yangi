@@ -549,3 +549,58 @@
   .assistant-mascot .mascot-mouth{transform:none!important}
   .assistant-mascot .mascot-brow{transform:none!important}
 }
+
+/* v20.1 — eyes stay visible; blink is a thin eyelid line, not a skin patch */
+.assistant-mascot .mascot-eye{
+  position:absolute!important;
+  z-index:6!important;
+  top:26.0%;
+  width:4.3%;
+  height:4.0%;
+  min-width:2.6px;
+  min-height:2.6px;
+  border-radius:50%;
+  background:radial-gradient(circle at 62% 32%,#fff 0 18%,#30231d 22% 100%);
+  box-shadow:0 0 0 .35px rgba(45,32,27,.3);
+  pointer-events:none!important;
+}
+.assistant-mascot .eye-left{left:42.9%}
+.assistant-mascot .eye-right{left:52.1%}
+
+.assistant-mascot .mascot-lid{
+  top:26.0%!important;
+  width:5.5%!important;
+  height:0!important;
+  min-height:0!important;
+  border:0!important;
+  border-top:1.4px solid rgba(46,34,29,.92)!important;
+  border-radius:999px!important;
+  background:transparent!important;
+  opacity:0;
+  transform-origin:center;
+  z-index:7!important;
+}
+.assistant-mascot .lid-left{left:42.4%!important}
+.assistant-mascot .lid-right{left:51.7%!important}
+
+/* Slightly larger hero mascot so facial details remain readable on phones. */
+.assistant-hero-mascot{
+  width:88px!important;
+  min-width:88px!important;
+  height:98px!important;
+}
+.assistant-hero-card{
+  grid-template-columns:88px minmax(0,1fr)!important;
+}
+.assistant-hero-mascot .mascot-layered,
+.assistant-hero-mascot .mascot-layered>img{
+  width:86px!important;
+  height:93px!important;
+}
+@media(max-width:760px){
+  .assistant-hero-card{grid-template-columns:72px minmax(0,1fr)!important}
+  .assistant-hero-mascot{width:72px!important;min-width:72px!important;height:82px!important}
+  .assistant-hero-mascot .mascot-layered,
+  .assistant-hero-mascot .mascot-layered>img{width:72px!important;height:78px!important}
+  .assistant-mascot .mascot-eye{min-width:2.8px;min-height:2.8px}
+}
