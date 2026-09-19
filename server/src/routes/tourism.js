@@ -1284,9 +1284,181 @@ function localizedSummary(intent, count, adaptedDays) {
   return `Samarqand bo‘yicha ${intent.days} kunlik marshrut: ${count} ta tarixiy/turistik nuqta.${adaptedDays ? ` ${adaptedDays} kun ob-havoga moslashtirildi.` : ''}`;
 }
 
+
+function clarifyAnswerProfile(raw = {}) {
+  const out = {};
+  const interests = Array.isArray(raw.interests)
+    ? raw.interests
+    : typeof raw.interests === 'string'
+      ? raw.interests.split(',').map((x) => x.trim()).filter(Boolean)
+      : [];
+  if (interests.length) out.interests = interests;
+  if (['relaxed','normal','active'].includes(raw.pace)) out.pace = raw.pace;
+  if (['walking','taxi','mixed'].includes(raw.transport)) out.transport = raw.transport;
+  if (raw.low_walking !== undefined) out.low_walking = raw.low_walking === true || raw.low_walking === 'true';
+  if (raw.wheelchair_accessible !== undefined) out.wheelchair_accessible = raw.wheelchair_accessible === true || raw.wheelchair_accessible === 'true';
+  if (raw.own_vehicle !== undefined) out.own_vehicle = raw.own_vehicle === true || raw.own_vehicle === 'true';
+  if (raw.children_count !== undefined) out.children_count = clamp(Number(raw.children_count) || 0, 0, 10);
+  if (raw.seniors_count !== undefined) out.seniors_count = clamp(Number(raw.seniors_count) || 0, 0, 10);
+  if (/^\d{2}:\d{2}$/.test(String(raw.preferred_start_time || ''))) out.preferred_start_time = String(raw.preferred_start_time);
+  if (/^\d{2}:\d{2}$/.test(String(raw.preferred_end_time || ''))) out.preferred_end_time = String(raw.preferred_end_time);
+  if (raw.origin_country) out.origin_country = text(raw.origin_country, 60);
+  const budget = number(raw.budget_uzs);
+  if (budget !== null && budget >= 0) out.budget_uzs = Math.round(budget);
+  return out;
+}
+
+function promptPartySize(prompt) {
+  const p = String(prompt || '');
+  const match = p.match(/\b(\d{1,2})\s*(?:kishi|odam|sayohatchi|mehmon|person|people|traveler|traveller|человек|гост)/i);
+  return match ? clamp(Number(match[1]) || 1, 1, 20) : null;
+}
+
+function explicitClarifySignals(prompt, answers = {}) {
+  const p = String(prompt || '').toLocaleLowerCase('uz-UZ');
+  const interests = [];
+  if (/(tarix|histor|истор)/i.test(p)) interests.push('history');
+  if (/(ziyorat|maqbara|masjid|mosque|mausoleum|pilgrim|зиёрат|мечет|мавзол)/i.test(p)) interests.push('pilgrimage');
+  if (/(milliy taom|osh|palov|plov|food|gastronom|restaurant|restoran|еда|кухн)/i.test(p)) interests.push('gastronomy');
+  if (/(muzey|museum|музей)/i.test(p)) interests.push('museum');
+  if (/(arxitekt|architect|архитект)/i.test(p)) interests.push('architecture');
+  if (/(bola|bolalar|oila|family|kid|child|ребен|семь)/i.test(p)) interests.push('family');
+  const daysMatch = p.match(/\b([1-5])\s*(?:kun|day|days|дн(?:я|ей)?)/i);
+  const transportExplicit = /(faqat piyoda|walking only|пешком|taksi|taxi|такси|shaxsiy avtomobil|o.?z avtomobil|own car|private car|своя машин|личн.*авто)/i.test(p);
+  const lowWalkingExplicit = /(kam yur|ko.?p yur.*xohlam|ko.?p piyoda.*emas|less walk|not much walk|меньше ход|мало ход|wheelchair|aravacha|коляск)/i.test(p);
+  return {
+    days: answers.days ? clamp(Number(answers.days) || 2, 1, 5) : (daysMatch ? Number(daysMatch[1]) : null),
+    interests: Array.isArray(answers.interests) && answers.interests.length ? answers.interests : [...new Set(interests)],
+    party_size: answers.party_size ? clamp(Number(answers.party_size) || 1, 1, 20) : promptPartySize(prompt),
+    transport_explicit: Boolean(answers.transport || answers.own_vehicle !== undefined || transportExplicit),
+    low_walking_explicit: Boolean(answers.low_walking !== undefined || lowWalkingExplicit),
+  };
+}
+
+function clarifyQuestions(prompt, intent, answers = {}) {
+  const signal = explicitClarifySignals(prompt, answers);
+  const questions = [];
+  if (!signal.days) {
+    questions.push({
+      key: 'days',
+      text: 'Samarqandda necha kun bo‘lasiz?',
+      hint: 'Marshrut hajmi va kunlik obyektlar soni shunga qarab tuziladi.',
+      options: [
+        { label: '1 kun', value: 1 },
+        { label: '2 kun', value: 2 },
+        { label: '3 kun', value: 3 },
+        { label: '4 kun', value: 4 },
+      ],
+      input: 'number',
+    });
+  }
+  if (!signal.interests.length) {
+    questions.push({
+      key: 'interests',
+      text: 'Sizni eng ko‘p nima qiziqtiradi?',
+      hint: 'Bir yoki bir nechta yo‘nalishni tanlashingiz mumkin.',
+      multiple: true,
+      options: [
+        { label: '🏛 Tarix', value: 'history' },
+        { label: '🕌 Ziyorat', value: 'pilgrimage' },
+        { label: '🍽 Milliy taom', value: 'gastronomy' },
+        { label: '🏺 Muzey', value: 'museum' },
+        { label: '✨ Arxitektura', value: 'architecture' },
+        { label: '👨‍👩‍👧 Oila', value: 'family' },
+      ],
+      input: 'choice',
+    });
+  }
+  if (!signal.party_size) {
+    questions.push({
+      key: 'party_size',
+      text: 'Necha kishi sayohat qiladi?',
+      hint: 'Bu chipta, transport va budjet hisobiga ta’sir qiladi.',
+      options: [
+        { label: '1 kishi', value: 1 },
+        { label: '2 kishi', value: 2 },
+        { label: '3 kishi', value: 3 },
+        { label: '4 kishi', value: 4 },
+      ],
+      input: 'number',
+    });
+  }
+  if (!signal.transport_explicit && (intent.low_walking || signal.low_walking_explicit)) {
+    questions.push({
+      key: 'transport',
+      text: 'Ko‘p yurmaslik uchun qaysi variant sizga qulay?',
+      hint: 'AI obyektlar orasidagi harakatni shunga moslashtiradi.',
+      options: [
+        { label: '🚕 Taksi ustuvor', value: 'taxi' },
+        { label: '🧭 Aralash', value: 'mixed' },
+        { label: '🚗 Shaxsiy avtomobil', value: 'own_vehicle' },
+      ],
+      input: 'choice',
+    });
+  }
+  return { signal, questions };
+}
+
+function clarifyFacts(intent, partySize) {
+  const interestLabels = {
+    history: 'Tarix',
+    pilgrimage: 'Ziyorat',
+    gastronomy: 'Milliy taom',
+    museum: 'Muzey',
+    family: 'Oila',
+    architecture: 'Arxitektura',
+  };
+  const transportLabels = { walking: 'Piyoda', taxi: 'Taksi', mixed: intent.own_vehicle ? 'Shaxsiy avtomobil' : 'Aralash' };
+  return [
+    { icon: '📅', label: 'Davomiylik', value: `${intent.days} kun` },
+    { icon: '✨', label: 'Qiziqish', value: (intent.interests || []).map((x) => interestLabels[x] || x).join(' · ') || 'Aniqlashtirilmoqda' },
+    { icon: '🚶', label: 'Yurish', value: intent.low_walking ? 'Kam yurish' : intent.pace === 'active' ? 'Faol' : 'Muvozanatli' },
+    { icon: '🚕', label: 'Transport', value: transportLabels[intent.transport] || 'Aralash' },
+    { icon: '👥', label: 'Guruh', value: partySize ? `${partySize} kishi` : 'Aniqlashtirilmoqda' },
+    intent.budget_uzs ? { icon: '💳', label: 'Budjet', value: `${new Intl.NumberFormat('uz-UZ').format(intent.budget_uzs)} so‘m` } : null,
+  ].filter(Boolean);
+}
+
+router.post('/clarify', asyncHandler(async (req, res) => {
+  const prompt = text(req.body.prompt, 1500);
+  if (prompt.length < 4) return res.status(400).json({ error: 'Sayohat istagingizni yozing.' });
+  const answers = req.body.answers && typeof req.body.answers === 'object' ? req.body.answers : {};
+  const signals = explicitClarifySignals(prompt, answers);
+  const fallback = fallbackIntent(prompt, answers.days || signals.days || undefined);
+  const parsed = await parseIntentWithOpenAI(prompt, fallback);
+
+  const explicitProfile = clarifyAnswerProfile(answers);
+  if (signals.interests.length) explicitProfile.interests = signals.interests;
+  if (answers.transport === 'own_vehicle') {
+    explicitProfile.own_vehicle = true;
+    explicitProfile.transport = 'mixed';
+  }
+  const merged = mergeExplicitProfile(parsed, explicitProfile);
+  const intent = normalizeIntentProfile(merged);
+  const partySize = signals.party_size || null;
+  const { questions } = clarifyQuestions(prompt, intent, answers);
+  const next = questions[0] || null;
+
+  res.json({
+    version: '1.0.0',
+    engine: intent.engine === 'openai' ? 'openai' : 'smart-rules',
+    intent,
+    party_size: partySize,
+    facts: clarifyFacts(intent, partySize),
+    ready: questions.length === 0,
+    next_question: next,
+    remaining_questions: questions.length,
+    message: next
+      ? `Asosiy istaklaringizni tushundim. Marshrutni aniqroq qilish uchun yana ${questions.length} ta savol bor.`
+      : 'Yetarli ma’lumot oldim. Marshrutni yaratishga tayyorman.',
+  });
+}));
+
 router.get('/status', (_req, res) => {
   res.json({
-    version: '1.9.0',
+    version: '2.0.0',
+    conversational_planner: true,
+    clarification_endpoint: '/api/tourism/clarify',
     openai_configured: Boolean(process.env.OPENAI_API_KEY),
     openai_model: process.env.OPENAI_API_KEY ? (process.env.OPENAI_MODEL || 'gpt-5.6-luna') : null,
     poi_source: 'Verified curated Samarkand anchors + OpenStreetMap/Overpass enrichment',
@@ -1405,7 +1577,7 @@ router.post('/plan', asyncHandler(async (req, res) => {
   const knownClosedVisits = days.flatMap((day) => day.stops || []).filter((stop) => stop.operational?.planned?.status === 'closed');
   const pricedStops = days.flatMap((day) => day.stops || []).filter((stop) => stop.operational?.ticket?.status !== 'unknown');
   res.json({
-    version: '1.9.0',
+    version: '2.0.0',
     prompt,
     intent,
     start,
@@ -1446,7 +1618,7 @@ async function runStartupSmoke() {
     const selected = selectPois(discovered.rows, intent, CENTER).slice(0, 4);
     const route = selected.length ? (await routeDriving(CENTER, selected) || routeFallback(CENTER, selected, false)) : null;
     const names = selected.map((p) => p.name).join(' | ');
-    console.log(`[tour-smoke] v=1.9 provider=${discovered.provider} pois=${discovered.rows.length} external=${discovered.external_count} sample=${names || 'none'} route=${route?.source || 'none'} geometry=${route?.geometry?.type || 'none'}`);
+    console.log(`[tour-smoke] v=2.0 provider=${discovered.provider} pois=${discovered.rows.length} external=${discovered.external_count} sample=${names || 'none'} route=${route?.source || 'none'} geometry=${route?.geometry?.type || 'none'}`);
   } catch (error) {
     console.warn(`[tour-smoke] failed=${error.response?.status || error.message}`);
   }
