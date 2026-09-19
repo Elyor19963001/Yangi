@@ -1381,3 +1381,55 @@
     animation:none!important;
   }
 }
+
+/* v21.2 — bold vector arava: readable at small button sizes */
+.arava-send-track{
+  display:grid!important;
+  place-items:center!important;
+}
+.arava-cart-icon{
+  position:relative;
+  z-index:3;
+  display:block;
+  width:70px;
+  height:40px;
+  color:#fff;
+  overflow:visible;
+  transform-origin:center bottom;
+  animation:aravaSvgIdle 2.8s ease-in-out infinite;
+}
+.arava-send .arava-wheel{
+  transform-box:fill-box;
+  transform-origin:center;
+}
+.arava-send.is-riding .arava-cart-icon{
+  animation:aravaSvgRide .82s cubic-bezier(.22,.76,.25,1) 1!important;
+}
+.arava-send.is-riding .arava-wheel{
+  animation:aravaWheelSpin .82s linear 1!important;
+}
+@keyframes aravaSvgIdle{
+  0%,100%{transform:translateY(0) rotate(0deg)}
+  50%{transform:translateY(-1px) rotate(-.25deg)}
+}
+@keyframes aravaSvgRide{
+  0%{transform:translateX(-4px) translateY(0) rotate(0)}
+  18%{transform:translateX(0) translateY(-1px) rotate(-.5deg)}
+  42%{transform:translateX(7px) translateY(1px) rotate(.35deg)}
+  70%{transform:translateX(13px) translateY(-1px) rotate(-.25deg)}
+  100%{transform:translateX(18px) translateY(0) rotate(0)}
+}
+@keyframes aravaWheelSpin{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(420deg)}
+}
+@media(max-width:760px){
+  .arava-cart-icon{width:64px;height:38px}
+}
+@media(prefers-reduced-motion:reduce){
+  .arava-cart-icon,
+  .arava-send.is-riding .arava-cart-icon,
+  .arava-send.is-riding .arava-wheel{
+    animation:none!important;
+  }
+}
