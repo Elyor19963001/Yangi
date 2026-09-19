@@ -201,3 +201,65 @@
 @media(prefers-reduced-motion:reduce){
   .simple-avatar.assistant-mascot .mascot-layered>img.mascot-hand{animation:none!important}
 }
+
+/* v19.5 — real separated layers: body still, head nods, hand waves */
+.simple-avatar.assistant-mascot .mascot-layered{
+  position:relative!important;
+  display:block!important;
+  width:64px!important;
+  height:65px!important;
+  overflow:visible!important;
+}
+.simple-avatar.assistant-mascot .mascot-layered>img{
+  position:absolute!important;
+  inset:0!important;
+  width:64px!important;
+  height:65px!important;
+  object-fit:contain!important;
+  filter:drop-shadow(0 5px 7px rgba(20,63,47,.14))!important;
+}
+.simple-avatar.assistant-mascot .mascot-layered>img.mascot-base{
+  z-index:1!important;
+  animation:none!important;
+  transform:none!important;
+}
+.simple-avatar.assistant-mascot .mascot-hand-cover{display:none!important}
+.simple-avatar.assistant-mascot .mascot-layered>img.mascot-head{
+  z-index:2!important;
+  transform-origin:52% 49%!important;
+  animation:tfeHeadAlive 3.8s ease-in-out infinite!important;
+  will-change:transform;
+}
+.simple-avatar.assistant-mascot .mascot-layered>img.mascot-hand{
+  z-index:3!important;
+  transform-origin:47% 50%!important;
+  animation:tfeRealHandWave 2.15s ease-in-out infinite!important;
+  will-change:transform;
+}
+@keyframes tfeRealHandWave{
+  0%,8%,70%,100%{transform:rotate(0deg)}
+  18%{transform:rotate(-18deg)}
+  28%{transform:rotate(14deg)}
+  38%{transform:rotate(-13deg)}
+  48%{transform:rotate(11deg)}
+  58%{transform:rotate(-7deg)}
+  66%{transform:rotate(0deg)}
+}
+@keyframes tfeHeadAlive{
+  0%,18%,100%{transform:translateY(0) rotate(0deg)}
+  34%{transform:translateY(-1px) rotate(1.4deg)}
+  52%{transform:translateY(0) rotate(-1.1deg)}
+  68%{transform:translateY(-1px) rotate(.6deg)}
+  82%{transform:translateY(0) rotate(0deg)}
+}
+.simple-msg.assistant:hover .assistant-mascot .mascot-layered>img.mascot-hand{
+  animation-duration:1.15s!important;
+}
+@media(max-width:760px){
+  .simple-avatar.assistant-mascot .mascot-layered{width:68px!important;height:69px!important}
+  .simple-avatar.assistant-mascot .mascot-layered>img{width:68px!important;height:69px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .simple-avatar.assistant-mascot .mascot-layered>img.mascot-head,
+  .simple-avatar.assistant-mascot .mascot-layered>img.mascot-hand{animation:none!important}
+}
