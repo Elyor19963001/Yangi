@@ -2196,3 +2196,194 @@
     max-width:70px!important;
   }
 }
+
+
+/* v22.1 — AI guide speaks through a real speech bubble */
+.assistant-hero-card{
+  position:relative;
+  display:grid!important;
+  grid-template-columns:82px minmax(0,1fr);
+  gap:12px;
+  align-items:end;
+  margin:10px 0 16px;
+  padding:0 2px;
+}
+.assistant-hero-mascot{
+  position:relative;
+  display:flex!important;
+  align-items:flex-end;
+  justify-content:center;
+  min-width:0;
+  width:82px;
+  height:86px;
+  z-index:3;
+}
+.assistant-hero-mascot .mascot-layered{
+  width:78px!important;
+  height:82px!important;
+}
+.assistant-hero-mascot .mascot-layered>img{
+  width:78px!important;
+  height:82px!important;
+}
+.assistant-hero-bubble{
+  position:relative;
+  min-width:0;
+  padding:15px 18px 14px;
+  border:1px solid #d8e4de;
+  border-radius:22px 22px 22px 8px;
+  background:linear-gradient(180deg,#ffffff 0%,#f7faf8 100%);
+  color:#183f31;
+  box-shadow:0 8px 24px rgba(28,72,55,.08);
+}
+.assistant-hero-bubble::before{
+  content:"";
+  position:absolute;
+  left:-12px;
+  bottom:16px;
+  width:22px;
+  height:22px;
+  background:#f8faf9;
+  border-left:1px solid #d8e4de;
+  border-bottom:1px solid #d8e4de;
+  transform:rotate(45deg);
+  border-bottom-left-radius:5px;
+  z-index:-1;
+}
+.assistant-hero-badge{
+  display:inline-flex!important;
+  align-items:center;
+  min-height:23px;
+  padding:0 9px;
+  margin:0 0 7px!important;
+  border:1px solid #cfe6db;
+  border-radius:999px;
+  background:#eaf7f1;
+  color:#176b4d!important;
+  font-size:8px!important;
+  line-height:1;
+  font-weight:950!important;
+  letter-spacing:.035em;
+}
+.assistant-hero-bubble>strong{
+  display:block;
+  margin:0 0 5px;
+  color:#123f31;
+  font-size:16px;
+  line-height:1.25;
+  font-weight:900;
+  letter-spacing:-.01em;
+}
+.assistant-hero-bubble>p{
+  margin:0!important;
+  color:#557267!important;
+  font-size:12px!important;
+  line-height:1.52!important;
+}
+.assistant-hero-bubble>p::first-letter{color:inherit}
+.assistant-hero-card::after{
+  content:"";
+  position:absolute;
+  left:70px;
+  bottom:8px;
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:rgba(23,107,77,.08);
+  box-shadow:11px 4px 0 rgba(23,107,77,.04);
+  pointer-events:none;
+}
+
+/* Keep follow-up assistant answers visually consistent with the speaking guide */
+.simple-msg.assistant{
+  display:grid!important;
+  grid-template-columns:46px minmax(0,1fr)!important;
+  gap:9px!important;
+  align-items:end!important;
+}
+.simple-msg.assistant .assistant-mini-mascot{
+  width:46px!important;
+  height:52px!important;
+  display:flex!important;
+  align-items:flex-end!important;
+  justify-content:center!important;
+}
+.simple-msg.assistant .assistant-mini-mascot .mascot-layered,
+.simple-msg.assistant .assistant-mini-mascot .mascot-layered>img{
+  width:46px!important;
+  height:52px!important;
+}
+.simple-msg.assistant>.simple-bubble{
+  position:relative!important;
+  border-radius:17px 17px 17px 7px!important;
+  border:1px solid #dbe6e1!important;
+  background:#fff!important;
+  box-shadow:0 5px 16px rgba(28,72,55,.06)!important;
+}
+.simple-msg.assistant>.simple-bubble::before{
+  content:"";
+  position:absolute;
+  left:-8px;
+  bottom:11px;
+  width:14px;
+  height:14px;
+  background:#fff;
+  border-left:1px solid #dbe6e1;
+  border-bottom:1px solid #dbe6e1;
+  transform:rotate(45deg);
+  z-index:-1;
+}
+
+@media(max-width:760px){
+  .assistant-hero-card{
+    grid-template-columns:64px minmax(0,1fr);
+    gap:8px;
+    align-items:end;
+    margin:8px 0 14px;
+  }
+  .assistant-hero-mascot{
+    width:64px;
+    height:72px;
+  }
+  .assistant-hero-mascot .mascot-layered,
+  .assistant-hero-mascot .mascot-layered>img{
+    width:64px!important;
+    height:70px!important;
+  }
+  .assistant-hero-bubble{
+    padding:12px 13px;
+    border-radius:18px 18px 18px 7px;
+  }
+  .assistant-hero-bubble::before{
+    left:-9px;
+    bottom:13px;
+    width:17px;
+    height:17px;
+  }
+  .assistant-hero-badge{
+    min-height:21px;
+    padding:0 8px;
+    margin-bottom:6px!important;
+    font-size:7px!important;
+  }
+  .assistant-hero-bubble>strong{
+    font-size:14px;
+    line-height:1.22;
+    margin-bottom:4px;
+  }
+  .assistant-hero-bubble>p{
+    font-size:11px!important;
+    line-height:1.45!important;
+  }
+  .assistant-hero-card::after{display:none}
+  .simple-msg.assistant{
+    grid-template-columns:38px minmax(0,1fr)!important;
+    gap:7px!important;
+  }
+  .simple-msg.assistant .assistant-mini-mascot,
+  .simple-msg.assistant .assistant-mini-mascot .mascot-layered,
+  .simple-msg.assistant .assistant-mini-mascot .mascot-layered>img{
+    width:38px!important;
+    height:44px!important;
+  }
+}
