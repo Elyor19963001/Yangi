@@ -1,5 +1,7 @@
 require('dotenv').config();
 const http = require('http');
+const https = require('https');
+const { HttpsProxyAgent } = require('https-proxy-agent');
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
@@ -37,7 +39,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'"],
+      scriptSrc: ["'self'", "'wasm-unsafe-eval'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: [
         "'self'",
@@ -84,7 +86,57 @@ app.use(cors({
 app.use(express.json({ limit: '2mb' }));
 app.use(rateLimit({ windowMs: 60_000, limit: 240 }));
 
+// Only these published heritage scans may be streamed; no caller supplied URL.
+const heritageFiles = Object.freeze({
+  registan: 'https://zenodo.org/records/21490200/files/af54f5280eb249beb6501eab4769c351_normalized-0.100.glb?download=1',
+  'gur-amir': 'https://zenodo.org/records/21570554/files/fd795227e0bc4f61bc1e4e453d29a74b_normalized-0.100.glb?download=1',
+  'bibi-khanum': 'https://zenodo.org/records/21529722/files/dc8ec865fd0d480c8ae06196fd18d296_normalized-0.100.glb?download=1',
+});
+
+app.get('/heritage/:id.glb', (req, res) => {
+  const source = heritageFiles[req.params.id];
+  if (!source) return res.status(404).end();
+  res.set('Content-Type', 'model/gltf-binary');
+  res.set('Cache-Control', 'public, max-age=86400');
+  function stream(url, redirects = 0) {
+    if (redirects > 4 || !['zenodo.org', 'www.zenodo.org'].includes(new URL(url).hostname)) {
+      return res.status(502).end();
+    }
+    const proxy = process.env.HTTPS_PROXY || process.env.https_proxy;
+    const agent = proxy ? new HttpsProxyAgent(proxy) : undefined;
+    const request = https.get(url, {
+      timeout: 20000, agent,
+      headers: { 'User-Agent': 'curl/8.5.0', Accept: 'model/gltf-binary, */*' },
+    }, (upstream) => {
+      if ([301, 302, 303, 307, 308].includes(upstream.statusCode) && upstream.headers.location) {
+        upstream.resume();
+        return stream(new URL(upstream.headers.location, url).href, redirects + 1);
+      }
+      if (upstream.statusCode !== 200) {
+        console.warn('Heritage scan HTTP status:', upstream.statusCode);
+        upstream.resume();
+        return res.status(502).end();
+      }
+      if (upstream.headers['content-length']) res.set('Content-Length', upstream.headers['content-length']);
+      upstream.pipe(res);
+      res.on('close', () => upstream.destroy());
+    });
+    request.on('timeout', () => request.destroy(new Error('Heritage model timeout')));
+    request.on('error', (error) => {
+      console.warn('Heritage scan unavailable:', error.message);
+      if (!res.headersSent) res.status(502).end();
+      else res.destroy();
+    });
+  }
+  stream(source);
+});
+
 const publicDir = path.join(__dirname, '..', 'public');
+app.get('/heritage-three.bundle.js', (_req, res) => {
+  res.sendFile(path.join(publicDir, 'heritage-three.bundle.js.gz'), {
+    headers: { 'Content-Type': 'application/javascript; charset=utf-8', 'Content-Encoding': 'gzip', 'Cache-Control': 'public, max-age=86400' },
+  });
+});
 app.use((req, res, next) => {
   if (
     req.path === '/tour.html'
@@ -109,6 +161,9 @@ app.use('/vendor/leaflet', express.static(path.join(__dirname, '..', 'node_modul
 app.use('/vendor/maplibre', express.static(path.join(__dirname, '..', 'node_modules', 'maplibre-gl', 'dist'), {
   maxAge: '30d',
   immutable: true,
+}));
+app.use('/vendor/three/draco', express.static(path.join(__dirname, '..', 'node_modules', 'three', 'examples', 'jsm', 'libs', 'draco', 'gltf'), {
+  maxAge: '30d', immutable: true,
 }));
 app.use('/vendor/maplibre-leaflet', express.static(path.join(__dirname, '..', 'node_modules', '@maplibre', 'maplibre-gl-leaflet', 'dist'), {
   maxAge: '30d',

@@ -172,7 +172,7 @@
       + '<div class="poi-v19-primary-actions">'
         + '<button type="button" class="poi-v19-btn nav" data-popup-gps data-stop-lat="' + esc(stop.latitude) + '" data-stop-lon="' + esc(stop.longitude) + '" data-stop-name="' + esc(stop.name || '') + '">➤ Navigator</button>'
         + '<button type="button" class="poi-v19-btn details" data-popup-details>ⓘ Batafsil ma’lumot</button>'
-        + (model ? '<button type="button" class="poi-v19-btn heritage-open" data-poi-3d data-model-id="' + model.id + '">🏛 Obidani 3D ko‘rish <span>→</span></button>' : '')
+        + (model ? '<button type="button" class="poi-v19-btn heritage-open" data-poi-3d data-model-id="' + model.id + '" data-model-lat="' + esc(stop.latitude) + '" data-model-lon="' + esc(stop.longitude) + '">🏛 Xaritada 3D ko‘rish <span>→</span></button>' : '')
       + '</div>'
 
       + '<div class="poi-place-details poi-v19-details hidden">'
@@ -250,7 +250,12 @@
     const modelButton = event.target.closest('[data-poi-3d]');
     if (modelButton) {
       const model = Object.values(HERITAGE_3D).find(item => item.id === modelButton.dataset.modelId);
-      showHeritageModel(model);
+      if (model) {
+        const opened = window.QRP3D?.openLandmark?.(model.id, {
+          lat: Number(modelButton.dataset.modelLat), lon: Number(modelButton.dataset.modelLon),
+        });
+        if (opened === false) showHeritageModel(model);
+      }
       return;
     }
     const railButton = event.target.closest('.poi-v19-rail-item');

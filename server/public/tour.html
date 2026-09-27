@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="/tour-poi-v15.css?v=19.1.1" />
   <link rel="stylesheet" href="/tour-copilot-v16.css?v=22.2" />
   <link rel="stylesheet" href="/tour-poi-v19.css?v=19.3" />
+  <link rel="stylesheet" href="/tour-dashboard-v23.css?v=23.1" />
   <script src="/vendor/leaflet/leaflet.js" defer></script>
   <script src="/vendor/maplibre/maplibre-gl.js" defer></script>
   <script src="/vendor/maplibre-leaflet/leaflet-maplibre-gl.js" defer></script>
@@ -30,20 +31,23 @@
   <script src="/tour-copilot-v16.js?v=22.1" defer></script>
   <script src="/tour-horse-v214.js?v=22.1" defer></script>
   <script src="/tour-poi-v19.js?v=19.3" defer></script>
+  <script src="/heritage-three.bundle.js?v=23.1" defer></script>
+  <script src="/tour-dashboard-v23.js?v=23.1" defer></script>
 </head>
 <body>
   <header class="topbar">
-    <a class="back" href="/">← Bosh sahifa</a>
-    <div class="brand"><span class="mark">AI</span><div><span class="eyebrow">TOURISM FOR EVERYONE · AI TOUR v22.1</span><h1>AI Tour · foto-karta · audio gid · 3 tildagi navigator · Live GPS</h1></div></div>
-    <a class="ghost" href="/map.html">📍 Xizmatlar xaritasi</a>
+    <a class="back" href="/" data-i18n="home">← Bosh sahifa</a>
+    <div class="brand"><span class="mark">AI</span><div><span class="eyebrow">SAMARKAND · INTERACTIVE GUIDE</span><h1 data-i18n="brand">Samarqand · sayohat xaritasi</h1></div></div>
+    <label class="dashboard-language"><span data-i18n="language">Til</span><select id="dashboardLanguage" aria-label="Interface language"><option value="uz">O‘zbek</option><option value="en">English</option><option value="ru">Русский</option></select></label>
+    <a class="ghost" href="/map.html" data-i18n="services">📍 Xizmatlar xaritasi</a>
   </header>
 
   <main class="shell">
     <section class="planner-card">
       <div class="planner-copy">
-        <span class="eyebrow">TABIIY TILDA SO‘ROV</span>
-        <h2>Samarqand safaringizni oddiy tilda ayting</h2>
-        <p>Masalan: “2 kunlik tarixiy tur kerak, ko‘p yurmaylik, milliy taomlar ham bo‘lsin.” AI matndan istaklaringizni tushunadi, yetishmayotgan joylarni savol bilan aniqlashtiradi va keyin marshrutni tuzadi.</p>
+        <span class="eyebrow" data-i18n="planEyebrow">SAYOHATNI REJALASH</span>
+        <h2 data-i18n="planTitle">Samarqandni qanday ko‘rmoqchisiz?</h2>
+        <p data-i18n="planHelp">Safaringizni yozing: masalan, “2 kunlik tarixiy tur, kamroq piyoda yurish”. Sana va kishi sonini tanlang, so‘ng xaritadan marshrutni ko‘ring.</p>
       </div>
       <form id="plannerForm">
         <textarea id="prompt" rows="4" maxlength="1500"></textarea>
@@ -52,8 +56,8 @@
           <label>Kun<select id="days"><option value="1">1 kun</option><option value="2" selected>2 kun</option><option value="3">3 kun</option><option value="4">4 kun</option><option value="5">5 kun</option></select></label>
           <label>Sayohatchi<input id="partySize" type="number" min="1" max="20" value="1" inputmode="numeric" /></label>
           <label>Umumiy budjet, so‘m<input id="budget" type="number" min="0" step="50000" placeholder="Masalan: 2000000" inputmode="numeric" /></label>
-          <button class="btn secondary" id="locateBtn" type="button">⌖ Joylashuvimdan boshlash</button>
-          <button class="btn primary" id="planBtn" type="submit">✨ Marshrut yaratish</button>
+          <button class="btn secondary" id="locateBtn" type="button" data-i18n="locate">⌖ Joylashuvimdan boshlash</button>
+          <button class="btn primary" id="planBtn" type="submit" data-i18n="create">✨ Marshrut yaratish</button>
         </div>
         <label class="adaptive-check"><input id="weatherAdaptive" type="checkbox" checked /><span><strong>Ob-havoga avtomatik moslashtirish</strong><small>Yomg‘ir, kuchli shamol, issiq yoki sovuq bo‘lsa tashrif tartibi o‘zgaradi.</small></span></label>
         <details class="budget-detail">
@@ -71,15 +75,17 @@
     </section>
 
     <section class="result-shell hidden" id="resultShell">
+      <div class="dashboard-heading"><div><span data-i18n="dashboardEyebrow">INTERAKTIV SAYOHAT XARITASI</span><h2 data-i18n="dashboardTitle">Marshrut va obidalar</h2><p data-i18n="dashboardHelp">Kunni tanlang, xaritadagi manzilni bosing va 3D obidani oching.</p></div><div class="dashboard-steps"><span data-i18n="stepOne">1 · Kunni tanlang</span><span data-i18n="stepTwo">2 · Joyni bosing</span><span data-i18n="stepThree">3 · 3D ni ko‘ring</span></div></div>
       <aside class="itinerary-panel">
         <div class="summary-head">
-          <span class="eyebrow">AI ITINERARY + LIVE GPS</span>
+          <span class="eyebrow" data-i18n="itinerary">SAYOHAT REJASI</span>
           <h2 id="summaryTitle">Marshrut tayyor</h2>
           <p id="summaryText"></p>
           <div class="badges" id="intentBadges"></div>
         </div>
 
-        <section class="live-card hidden" id="livePanel">
+        <button class="dashboard-gps-toggle" id="dashboardGpsToggle" type="button" aria-controls="livePanel" aria-expanded="false" data-i18n="gpsToggle">◎ GPS navigatsiya sozlamalari</button>
+        <section class="live-card hidden dashboard-live-collapsed" id="livePanel">
           <div class="live-head"><div><span class="live-dot" id="liveDot"></span><strong id="liveStatus">GPS tayyor</strong></div><button type="button" class="live-center" id="centerLiveBtn" disabled>◎ Menga qaytish</button></div>
           <div class="voice-nav-controls">
             <label><span>Navigator tili</span><select id="navLanguage"><option value="uz">🇺🇿 O‘zbek</option><option value="en">🇬🇧 English</option><option value="ru">🇷🇺 Русский</option></select></label>
@@ -103,6 +109,7 @@
 
       <section class="map-panel">
         <div id="map"></div>
+        <div class="dashboard-map-caption"><strong data-i18n="mapCaption">Xaritadan foydalanish</strong><span data-i18n="mapInstructions">Joy belgisini bosing · 3D tugmasi obida modelini xaritaning ichida ochadi</span></div>
         <div class="map-float">
           <strong id="mapDayTitle">1-kun</strong>
           <span id="mapDayMeta">Marshrut yuklanmoqda…</span>

@@ -5,6 +5,18 @@
   let glMap = null;
   let syncTimer = null;
   let leafletMap = null;
+  let activeLandmark = null;
+  let landmarkLayer = null;
+  const LANDMARKS = {
+    registan: { name: 'Registon', aliases: /registon|registan/i, center: [66.975868, 39.654694] },
+    'gur-amir': { name: 'Go‘ri Amir', aliases: /go.ri amir|gur.?amir|gur.?emir/i, center: [66.968, 39.649] },
+    'bibi-khanum': { name: 'Bibixonim', aliases: /bibi.?xonim|bibi.?khanym|bibi.?khanum/i, center: [66.9805, 39.6609] },
+  };
+  const MODEL_IDS = {
+    af54f5280eb249beb6501eab4769c351: 'registan',
+    fd795227e0bc4f61bc1e4e453d29a74b: 'gur-amir',
+    dc8ec865fd0d480c8ae06196fd18d296: 'bibi-khanum',
+  };
 
   const finite = (v) => Number.isFinite(Number(v));
   const coord = (lat, lon) => finite(lat) && finite(lon) ? [Number(lon), Number(lat)] : null;
@@ -117,17 +129,18 @@
     shell.className = 'qrp-3d-shell hidden';
     shell.innerHTML = `
       <div class="qrp-3d-toolbar">
-        <div><strong>🏙 3D Buildings</strong><span>OpenStreetMap bino geometriyasi · MapLibre</span></div>
+        <div><strong data-3d-title>3D xarita</strong><span data-3d-subtitle>Obidani tanlang yoki xaritani aylantiring</span></div>
         <div class="qrp-3d-actions">
+          <label class="qrp-3d-select-label"><span>Obida</span><select data-3d-landmark aria-label="3D obidani tanlash"><option value="">Bino xaritasi</option><option value="registan">Registon</option><option value="gur-amir">Go‘ri Amir</option><option value="bibi-khanum">Bibixonim</option></select></label>
           <button type="button" data-3d-pitch="0">2D ↑</button>
           <button type="button" data-3d-pitch="55">3D ◢</button>
           <button type="button" data-3d-rotate="-20">↺</button>
           <button type="button" data-3d-rotate="20">↻</button>
-          <button type="button" data-3d-close>✕ 2D xaritaga qaytish</button>
+          <button type="button" data-3d-close>✕ 2D</button>
         </div>
       </div>
       <div class="qrp-3d-map" id="qrp3dMap"></div>
-      <div class="qrp-3d-note"><strong>3D bino modeli</strong><span>Balandlik OSMda mavjud bo‘lsa ishlatiladi; aks holda bino konturi 8 m standart balandlikda ko‘rsatiladi. Bu geovizualizatsiya, aniq arxitektura o‘lchovi emas.</span></div>
+      <div class="qrp-3d-note" role="status"><strong data-3d-status>3D xarita</strong><span data-3d-description>Obidani tanlang. Boshqa binolar OpenStreetMap konturlari bo‘yicha ko‘rsatiladi.</span><a data-3d-source href="#" target="_blank" rel="noopener noreferrer" hidden>Asl 3D model ↗</a></div>
     `;
     parent.appendChild(shell);
 
@@ -142,7 +155,127 @@
       if (!glMap) return;
       glMap.easeTo({ bearing: glMap.getBearing() + Number(button.dataset['3dRotate'] || 0), duration: 450 });
     }));
+    shell.querySelector('[data-3d-landmark]').addEventListener('change', (event) => {
+      if (event.target.value) openLandmark(event.target.value);
+      else clearLandmark();
+    });
     return shell;
+  }
+
+  function setLandmarkStatus(title, description) {
+    const node = ensureShell();
+    if (!node) return;
+    node.querySelector('[data-3d-title]').textContent = title;
+    node.querySelector('[data-3d-status]').textContent = title;
+    node.querySelector('[data-3d-description]').textContent = description;
+  }
+
+  function landmarkCenter(id, clicked) {
+    if (finite(clicked?.lat) && finite(clicked?.lon) && Math.abs(clicked.lat) > 1 && Math.abs(clicked.lon) > 1) {
+      return [Number(clicked.lon), Number(clicked.lat)];
+    }
+    const stop = poiRows().find((row) => LANDMARKS[id].aliases.test(row.name));
+    return stop ? [stop.longitude, stop.latitude] : LANDMARKS[id].center;
+  }
+
+  function clearLandmark() {
+    activeLandmark = null;
+    if (landmarkLayer && glMap?.getLayer(landmarkLayer.id)) glMap.removeLayer(landmarkLayer.id);
+    landmarkLayer = null;
+    if (glMap?.getLayer('qrp-3d-buildings')) glMap.setLayoutProperty('qrp-3d-buildings', 'visibility', 'visible');
+    if (shell) shell.querySelector('[data-3d-landmark]').value = '';
+    if (shell) shell.querySelector('[data-3d-source]').hidden = true;
+    setLandmarkStatus('3D xarita', 'Obidani tanlang. Boshqa binolar OpenStreetMap konturlari bo‘yicha ko‘rsatiladi.');
+  }
+
+  function attachLandmark() {
+    if (!glMap?.isStyleLoaded() || !activeLandmark || !window.QRPThreeMap || landmarkLayer) return;
+    const { THREE, GLTFLoader, DRACOLoader } = window.QRPThreeMap;
+    const selected = activeLandmark;
+    const origin = maplibregl.MercatorCoordinate.fromLngLat(selected.center, 0);
+    const scale = origin.meterInMercatorCoordinateUnits();
+    const layer = {
+      id: 'qrp-heritage-model', type: 'custom', renderingMode: '3d',
+      onAdd(map, gl) {
+        this.camera = new THREE.Camera();
+        this.scene = new THREE.Scene();
+        this.scene.add(new THREE.AmbientLight(0xffffff, 2));
+        const sun = new THREE.DirectionalLight(0xffffff, 2);
+        sun.position.set(50, 100, 70);
+        this.scene.add(sun);
+        this.renderer = new THREE.WebGLRenderer({ canvas: map.getCanvas(), context: gl, antialias: true });
+        this.renderer.autoClear = false;
+        const draco = new DRACOLoader().setDecoderPath('/vendor/three/draco/');
+        const loader = new GLTFLoader().setDRACOLoader(draco);
+        loader.load('/heritage/' + selected.id + '.glb', (gltf) => {
+          draco.dispose();
+          if (activeLandmark !== selected) return;
+          // The scan has a local origin and includes surrounding terrain. Center its
+          // bounds on the POI, with the lowest point on the map's ground plane.
+          const box = new THREE.Box3().setFromObject(gltf.scene);
+          const center = box.getCenter(new THREE.Vector3());
+          gltf.scene.position.x -= center.x;
+          gltf.scene.position.z -= center.z;
+          gltf.scene.position.y -= box.min.y;
+          this.scene.add(gltf.scene);
+          setLandmarkStatus(selected.name + ' · 3D', 'Haqiqiy fotogrammetriya skani xaritadagi nuqtaga taxminan joylashtirildi. Barmoq yoki sichqoncha bilan aylantiring.');
+          map.triggerRepaint();
+        }, (progress) => {
+          if (progress.total && activeLandmark === selected) {
+            const percent = Math.min(99, Math.round(progress.loaded / progress.total * 100));
+            setLandmarkStatus(selected.name + ' · yuklanmoqda', '3D model ' + percent + '% yuklandi…');
+          }
+        }, (error) => {
+          draco.dispose();
+          console.warn('Heritage model:', error);
+          if (activeLandmark === selected) setLandmarkStatus('Model yuklanmadi', 'Internet aloqasini tekshiring yoki boshqa obidani tanlang.');
+        });
+      },
+      render(_gl, args) {
+        if (activeLandmark !== selected) return;
+        const projection = args.defaultProjectionData?.mainMatrix || args;
+        const modelMatrix = new THREE.Matrix4().makeTranslation(origin.x, origin.y, origin.z)
+          .scale(new THREE.Vector3(scale, -scale, scale))
+          .multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2));
+        this.camera.projectionMatrix = new THREE.Matrix4().fromArray(projection).multiply(modelMatrix);
+        this.renderer.resetState();
+        this.renderer.render(this.scene, this.camera);
+      },
+      onRemove() {
+        this.scene?.traverse((object) => {
+          object.geometry?.dispose?.();
+          const materials = Array.isArray(object.material) ? object.material : [object.material];
+          materials.forEach((material) => { material?.map?.dispose?.(); material?.dispose?.(); });
+        });
+        this.renderer?.dispose();
+      },
+    };
+    try {
+      if (glMap.getLayer('qrp-3d-buildings')) glMap.setLayoutProperty('qrp-3d-buildings', 'visibility', 'none');
+      glMap.addLayer(layer);
+      landmarkLayer = layer;
+    } catch (error) {
+      console.warn('3D overlay:', error);
+      setLandmarkStatus('3D rejim xatosi', 'Ushbu qurilmada 3D modelni ko‘rsatib bo‘lmadi.');
+    }
+  }
+
+  function openLandmark(modelId, clicked) {
+    const id = MODEL_IDS[modelId] || modelId;
+    if (!LANDMARKS[id] || !window.QRPThreeMap) return false;
+    const center = landmarkCenter(id, clicked);
+    if (!open(leafletMap)) return false;
+    clearLandmark();
+    activeLandmark = { id, center, name: LANDMARKS[id].name };
+    shell.querySelector('[data-3d-landmark]').value = id;
+    const source = shell.querySelector('[data-3d-source]');
+    source.href = 'https://sketchfab.com/models/' + Object.keys(MODEL_IDS).find((key) => MODEL_IDS[key] === id);
+    source.hidden = false;
+    setLandmarkStatus(LANDMARKS[id].name + ' · yuklanmoqda', 'Obidaning 3D skani xaritada yuklanmoqda…');
+    glMap.flyTo({ center, zoom: id === 'registan' ? 16.7 : 17.5, pitch: 65, bearing: -25, duration: 1100 });
+    if (glMap.isStyleLoaded()) attachLandmark();
+    else glMap.once('load', attachLandmark);
+    return true;
   }
 
   function addLayers() {
@@ -273,6 +406,7 @@
         glMap.on('load', () => {
           addLayers();
           syncSources();
+          attachLandmark();
         });
         glMap.on('error', (event) => console.warn('3D map:', event.error?.message || event.error || 'unknown error'));
       } catch (error) {
@@ -291,7 +425,7 @@
     clearInterval(syncTimer);
     syncTimer = setInterval(syncSources, 1000);
     setTimeout(() => glMap?.resize(), 80);
-    if (typeof toast === 'function') toast('3D Buildings rejimi yoqildi');
+    if (typeof toast === 'function') toast('3D xarita ochildi');
     return true;
   }
 
@@ -302,5 +436,5 @@
     if (typeof toast === 'function') toast('2D xaritaga qaytildi');
   }
 
-  window.QRP3D = { open, close, sync: syncSources };
+  window.QRP3D = { open, close, openLandmark, clearLandmark, sync: syncSources };
 })();
