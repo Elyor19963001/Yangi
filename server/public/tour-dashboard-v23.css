@@ -54,6 +54,10 @@ body.dashboard-international .planner-actions label span{display:block;font-size
 .poi-v19-btn{font-size:12px}.poi-v19-card>.audio-guide .audio-guide-text{font-size:12px!important}.poi-v19-secondary-actions button{font-size:10px}
 .poi-v19-rail-item{flex-basis:142px}.poi-v19-rail-item strong{font-size:11px}
 .day-tab,.stop strong{font-size:13px}.stop span,.stop small{font-size:11px}
+.itinerary-panel .stop strong{font-size:14px!important}
+.itinerary-panel .stop>.stop-number{font-size:14px}
+.itinerary-panel .stop .operational-row span,.itinerary-panel .stop .visit-status,.itinerary-panel .stop .ticket-status{font-size:11px!important;line-height:1.4!important}
+.itinerary-panel .stop .audio-guide-text{font-size:11px!important;line-height:1.5!important;max-height:120px!important}
 @media(max-width:1050px){.result-shell{grid-template-columns:310px minmax(0,1fr)}.dashboard-steps{max-width:280px}}
 @media(max-width:1000px){body.dashboard-international .planner-card{grid-template-columns:1fr!important}}
 @media(max-width:760px){
