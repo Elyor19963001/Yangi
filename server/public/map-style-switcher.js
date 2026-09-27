@@ -1,5 +1,5 @@
 (() => {
-  const STORAGE_KEY = 'qrp_map_style_v4';
+  const STORAGE_KEY = 'qrp_map_style_v5';
   const MODES = ['3d', 'hybrid', 'satellite', 'street', 'standard'];
 
   function install(map) {
