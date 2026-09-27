@@ -55,7 +55,7 @@ app.use(helmet({
         'https://upload.wikimedia.org',
         'https://thumb.wikimedia.org',
       ],
-      connectSrc: ["'self'", 'ws:', 'wss:', 'https://tiles.openfreemap.org'],
+      connectSrc: ["'self'", 'ws:', 'wss:', 'https://tiles.openfreemap.org', 'https://server.arcgisonline.com'],
       workerSrc: ["'self'", 'blob:'],
       fontSrc: ["'self'", 'data:', 'https://tiles.openfreemap.org'],
       objectSrc: ["'none'"],

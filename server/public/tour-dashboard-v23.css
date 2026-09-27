@@ -44,6 +44,7 @@ body.dashboard-international .planner-actions label span{display:block;font-size
 .qrp-3d-toolbar strong{font-size:15px!important}.qrp-3d-toolbar span{font-size:11px!important}
 .qrp-3d-actions{flex-wrap:wrap;gap:5px!important}
 .qrp-3d-actions button,.qrp-3d-select-label select{min-height:38px!important;font-size:12px!important}
+.qrp-3d-actions button[aria-pressed="true"]{background:#173f2d!important;color:#fff!important;border-color:#173f2d!important}
 .qrp-3d-select-label{display:flex;align-items:center;gap:5px;color:#18452f;font-weight:700}
 .qrp-3d-select-label select{border:1px solid #c9d9d0;border-radius:8px;padding:5px;background:white;color:#173f2d}
 .qrp-3d-map{min-height:0!important;flex:1!important}

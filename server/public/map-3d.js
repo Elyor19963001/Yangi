@@ -7,6 +7,7 @@
   let leafletMap = null;
   let activeLandmark = null;
   let landmarkLayer = null;
+  let photoMap = false;
   const LANDMARKS = {
     registan: { name: 'Registon', aliases: /registon|registan/i, center: [66.975868, 39.654694] },
     'gur-amir': { name: 'Go‘ri Amir', aliases: /go.ri amir|gur.?amir|gur.?emir/i, center: [66.968, 39.649] },
@@ -132,6 +133,7 @@
         <div><strong data-3d-title>3D xarita</strong><span data-3d-subtitle>Obidani tanlang yoki xaritani aylantiring</span></div>
         <div class="qrp-3d-actions">
           <label class="qrp-3d-select-label"><span>Obida</span><select data-3d-landmark aria-label="3D obidani tanlash"><option value="">Bino xaritasi</option><option value="registan">Registon</option><option value="gur-amir">Go‘ri Amir</option><option value="bibi-khanum">Bibixonim</option></select></label>
+          <button type="button" data-3d-photo aria-pressed="false" title="Sun’iy yo‘ldosh suratlari">📷 Foto xarita</button>
           <button type="button" data-3d-pitch="0">2D ↑</button>
           <button type="button" data-3d-pitch="55">3D ◢</button>
           <button type="button" data-3d-rotate="-20">↺</button>
@@ -159,7 +161,20 @@
       if (event.target.value) openLandmark(event.target.value);
       else clearLandmark();
     });
+    shell.querySelector('[data-3d-photo]').addEventListener('click', () => setPhotoMap(!photoMap));
     return shell;
+  }
+
+  function setPhotoMap(enabled) {
+    photoMap = enabled;
+    const button = shell?.querySelector('[data-3d-photo]');
+    if (button) {
+      button.setAttribute('aria-pressed', String(enabled));
+      button.textContent = enabled ? '🗺️ Ko‘cha xaritasi' : '📷 Foto xarita';
+    }
+    if (glMap?.getLayer('qrp-photo-imagery')) {
+      glMap.setLayoutProperty('qrp-photo-imagery', 'visibility', enabled ? 'visible' : 'none');
+    }
   }
 
   function setLandmarkStatus(title, description) {
@@ -199,12 +214,15 @@
       onAdd(map, gl) {
         this.camera = new THREE.Camera();
         this.scene = new THREE.Scene();
-        this.scene.add(new THREE.AmbientLight(0xffffff, 2));
-        const sun = new THREE.DirectionalLight(0xffffff, 2);
+        this.scene.add(new THREE.HemisphereLight(0xffffff, 0xc5bba8, 1.35));
+        const sun = new THREE.DirectionalLight(0xfff2dc, 1.15);
         sun.position.set(50, 100, 70);
         this.scene.add(sun);
         this.renderer = new THREE.WebGLRenderer({ canvas: map.getCanvas(), context: gl, antialias: true });
         this.renderer.autoClear = false;
+        this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 1.35;
         const draco = new DRACOLoader().setDecoderPath('/vendor/three/draco/');
         const loader = new GLTFLoader().setDRACOLoader(draco);
         loader.load('/heritage/' + selected.id + '.glb', (gltf) => {
@@ -217,8 +235,16 @@
           gltf.scene.position.x -= center.x;
           gltf.scene.position.z -= center.z;
           gltf.scene.position.y -= box.min.y;
+          // GLTFLoader preserves the scan's photographic base-color textures.
+          // Improve the grazing-angle detail without changing the original colors.
+          gltf.scene.traverse((part) => {
+            const materials = Array.isArray(part.material) ? part.material : [part.material];
+            for (const material of materials) {
+              if (material?.map) material.map.anisotropy = Math.min(8, this.renderer.capabilities.getMaxAnisotropy());
+            }
+          });
           this.scene.add(gltf.scene);
-          setLandmarkStatus(selected.name + ' · 3D', 'Haqiqiy fotogrammetriya skani xaritadagi nuqtaga taxminan joylashtirildi. Barmoq yoki sichqoncha bilan aylantiring.');
+          setLandmarkStatus(selected.name + ' · rangli 3D', 'Asl foto teksturali 3D skan taxminiy joyga qo‘yildi. Xaritani aylantirib ko‘ring.');
           map.triggerRepaint();
         }, (progress) => {
           if (progress.total && activeLandmark === selected) {
@@ -267,6 +293,7 @@
     if (!open(leafletMap)) return false;
     clearLandmark();
     activeLandmark = { id, center, name: LANDMARKS[id].name };
+    setPhotoMap(true);
     shell.querySelector('[data-3d-landmark]').value = id;
     const source = shell.querySelector('[data-3d-source]');
     source.href = 'https://sketchfab.com/models/' + Object.keys(MODEL_IDS).find((key) => MODEL_IDS[key] === id);
@@ -280,6 +307,20 @@
 
   function addLayers() {
     if (!glMap || !glMap.isStyleLoaded()) return;
+    if (!glMap.getSource('qrp-photo-imagery')) {
+      glMap.addSource('qrp-photo-imagery', {
+        type: 'raster',
+        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+        tileSize: 256,
+        maxzoom: 19,
+        attribution: 'Imagery © Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+      });
+    }
+    if (!glMap.getLayer('qrp-photo-imagery')) {
+      const firstLabel = (glMap.getStyle().layers || []).find((layer) => layer.type === 'symbol');
+      glMap.addLayer({ id: 'qrp-photo-imagery', type: 'raster', source: 'qrp-photo-imagery',
+        layout: { visibility: photoMap ? 'visible' : 'none' }, paint: { 'raster-opacity': 1 } }, firstLabel?.id);
+    }
     if (!glMap.getSource('qrp-openfreemap')) {
       glMap.addSource('qrp-openfreemap', { type: 'vector', url: VECTOR_URL });
     }
