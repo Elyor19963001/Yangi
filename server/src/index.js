@@ -51,6 +51,7 @@ app.use(helmet({
         'https://tiles.openfreemap.org',
         'https://commons.wikimedia.org',
         'https://upload.wikimedia.org',
+        'https://thumb.wikimedia.org',
       ],
       connectSrc: ["'self'", 'ws:', 'wss:', 'https://tiles.openfreemap.org'],
       workerSrc: ["'self'", 'blob:'],
