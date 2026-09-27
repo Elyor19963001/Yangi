@@ -49,6 +49,8 @@ app.use(helmet({
         'https://services.arcgisonline.com',
         'https://*.arcgisonline.com',
         'https://tiles.openfreemap.org',
+        'https://commons.wikimedia.org',
+        'https://upload.wikimedia.org',
       ],
       connectSrc: ["'self'", 'ws:', 'wss:', 'https://tiles.openfreemap.org'],
       workerSrc: ["'self'", 'blob:'],

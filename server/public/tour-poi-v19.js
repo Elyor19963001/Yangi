@@ -1,8 +1,8 @@
 (() => {
   const PHOTO_CATALOG = {
     'registan': {
-      file: 'Registan-Samarkand.jpg',
-      page: 'https://commons.wikimedia.org/wiki/File:Registan-Samarkand.jpg'
+      file: 'Registan Samarkand.jpg',
+      page: 'https://commons.wikimedia.org/wiki/File:Registan_Samarkand.jpg'
     },
     'gur-amir': {
       file: 'Gur-e Amir in Samarkand.jpg',
@@ -65,15 +65,18 @@
     panel.setAttribute('aria-label', model.name + ' 3D modeli');
     const link = 'https://sketchfab.com/models/' + model.id;
     panel.innerHTML = '<div class="heritage-3d-panel">'
-      + '<header><div><strong>' + esc(model.name) + ' · 3D</strong><small>Modelni sichqoncha yoki barmoq bilan aylantiring va yaqinlashtiring.</small></div>'
+      + '<header><div><strong>' + esc(model.name) + '</strong><small>Haqiqiy obidaning 3D skani</small></div>'
       + '<button type="button" class="heritage-3d-close" aria-label="3D oynani yopish">✕</button></header>'
+      + '<div class="heritage-3d-guide"><span><b>1</b> Markazdagi ▶ ni bosing</span><span><b>2</b> Barmoq yoki sichqoncha bilan aylantiring</span><span><b>3</b> Ikki barmoq yoki g‘ildirak bilan yaqinlashtiring</span></div>'
+      + '<div class="heritage-3d-loading" role="status">3D ko‘rinish yuklanmoqda… <small>Model katta bo‘lsa, bir necha soniya kuting.</small></div>'
       + '<iframe title="' + esc(model.name) + ' interaktiv 3D modeli" src="' + link + '/embed" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>'
-      + '<footer><span>3D skan: Global Digital Heritage / Sketchfab. Internet va WebGL talab qilinadi.</span>'
-      + '<a href="' + link + '" target="_blank" rel="noopener noreferrer">Modelni manbada ochish ↗</a></footer></div>';
+      + '<footer><span>Manba: Global Digital Heritage. Skan yuzasida ayrim notekisliklar bo‘lishi mumkin.</span>'
+      + '<a href="' + link + '" target="_blank" rel="noopener noreferrer">3D ishlamasa, alohida oching ↗</a></footer></div>';
     const priorFocus = document.activeElement;
     const oldOverflow = document.body.style.overflow;
     document.body.appendChild(panel);
     document.body.style.overflow = 'hidden';
+    panel.querySelector('iframe').addEventListener('load', () => panel.querySelector('.heritage-3d-loading')?.remove());
     const close = () => {
       panel.remove();
       document.body.style.overflow = oldOverflow;
@@ -123,7 +126,7 @@
     const p = photoMeta(stop);
     const meta = poiCategoryMeta(stop);
     if (!p) return '<div class="' + cls + ' placeholder"><span>' + meta.icon + '</span></div>';
-    return '<div class="' + cls + '"><img src="' + esc(p.thumb) + '" alt="' + esc(stop.name || 'Turistik obyekt') + '" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest(\'.' + cls + '\').classList.add(\'image-error\');this.remove()"></div>';
+    return '<div class="' + cls + '"><img src="' + esc(p.thumb) + '" alt="' + esc(stop.name || 'Turistik obyekt') + '" loading="lazy" referrerpolicy="no-referrer"></div>';
   }
 
   function v19PoiPopupHtml(stop = {}) {
@@ -169,6 +172,7 @@
       + '<div class="poi-v19-primary-actions">'
         + '<button type="button" class="poi-v19-btn nav" data-popup-gps data-stop-lat="' + esc(stop.latitude) + '" data-stop-lon="' + esc(stop.longitude) + '" data-stop-name="' + esc(stop.name || '') + '">➤ Navigator</button>'
         + '<button type="button" class="poi-v19-btn details" data-popup-details>ⓘ Batafsil ma’lumot</button>'
+        + (model ? '<button type="button" class="poi-v19-btn heritage-open" data-poi-3d data-model-id="' + model.id + '">🏛 Obidani 3D ko‘rish <span>→</span></button>' : '')
       + '</div>'
 
       + '<div class="poi-place-details poi-v19-details hidden">'
@@ -179,8 +183,7 @@
         + (photo ? '<a class="poi-photo-credit" href="' + esc(photo.page) + '" target="_blank" rel="noopener">Foto: Wikimedia Commons ↗</a>' : '')
       + '</div>'
 
-      + '<div class="poi-v19-secondary-actions' + (model ? ' has-3d' : '') + '">'
-        + (model ? '<button type="button" data-poi-3d data-model-id="' + model.id + '"><b>◈</b><span>3D ko‘rish</span></button>' : '')
+      + '<div class="poi-v19-secondary-actions">'
         + '<button type="button" data-poi-photo data-photo-url="' + esc(photo?.page || '') + '"><b>▧</b><span>Rasmlar</span></button>'
         + '<button type="button" data-poi-focus data-stop-lat="' + esc(stop.latitude) + '" data-stop-lon="' + esc(stop.longitude) + '"><b>⌖</b><span>Xaritada ko‘rish</span></button>'
         + '<button type="button" data-poi-share data-share-name="' + esc(stop.name || '') + '" data-stop-lat="' + esc(stop.latitude) + '" data-stop-lon="' + esc(stop.longitude) + '"><b>⌯</b><span>Ulashish</span></button>'
@@ -190,6 +193,15 @@
   }
 
   try { poiPopupHtml = v19PoiPopupHtml; } catch {}
+
+  document.addEventListener('error', event => {
+    const img = event.target;
+    if (!(img instanceof HTMLImageElement)) return;
+    const wrapper = img.closest('.poi-v19-photo, .poi-v19-rail-photo');
+    if (!wrapper) return;
+    wrapper.classList.add('image-error');
+    img.remove();
+  }, true);
 
   function ensureRail() {
     const panel = document.querySelector('.map-panel');
