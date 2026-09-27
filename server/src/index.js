@@ -84,6 +84,8 @@ const publicDir = path.join(__dirname, '..', 'public');
 app.use((req, res, next) => {
   if (
     req.path === '/tour.html'
+    || req.path === '/map.html'
+    || req.path === '/map.js'
     || /^\/tour(?:-|\.).*\.(?:css|js)$/.test(req.path)
     || req.path === '/map-style-switcher.css'
     || req.path === '/map-style-switcher.js'
@@ -101,6 +103,10 @@ app.use('/vendor/leaflet', express.static(path.join(__dirname, '..', 'node_modul
   immutable: true,
 }));
 app.use('/vendor/maplibre', express.static(path.join(__dirname, '..', 'node_modules', 'maplibre-gl', 'dist'), {
+  maxAge: '30d',
+  immutable: true,
+}));
+app.use('/vendor/maplibre-leaflet', express.static(path.join(__dirname, '..', 'node_modules', '@maplibre', 'maplibre-gl-leaflet', 'dist'), {
   maxAge: '30d',
   immutable: true,
 }));

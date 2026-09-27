@@ -15,6 +15,11 @@ const state = {
   activeKey: null,
   suggestLat: null,
   suggestLon: null,
+  gpsWatchId: null,
+  lastGpsPoint: null,
+  lastPlacesAt: 0,
+  lastWeatherAt: 0,
+  refreshing: false,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -135,6 +140,7 @@ async function loadWeather(lat = state.lat, lon = state.lon, label = 'Joriy hudu
   try {
     const weather = await api(`/api/weather/coords?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&label=${encodeURIComponent(label)}`);
     renderWeather(weather);
+    state.lastWeatherAt = Date.now();
   } catch (error) {
     $('weatherLocation').textContent = 'Ob-havo olinmadi';
     $('agroAdvice').textContent = error.message;
@@ -182,11 +188,18 @@ async function loadPlaces() {
   ]);
   const localRows = localResult.status === 'fulfilled' ? localResult.value : [];
   const osmRows = osmResult.status === 'fulfilled' ? (osmResult.value.places || []) : [];
+  if (localResult.status === 'rejected' && osmResult.status === 'rejected') {
+    $('sourceStatus').textContent = 'Ulanish uzildi · oldingi natijalar';
+    renderPlaceList();
+    toast('Yaqin xizmatlarni yangilab bo‘lmadi.');
+    return;
+  }
   state.places = mergePlaces(localRows, osmRows);
-  $('sourceStatus').textContent = osmRows.length ? 'OSM + platforma' : localRows.length ? 'platforma' : 'natija yo‘q';
+  state.lastPlacesAt = Date.now();
+  const source = osmRows.length ? 'OSM + platforma' : localRows.length ? 'platforma' : 'natija yo‘q';
+  $('sourceStatus').textContent = `${source} · ${new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })}`;
   applySearch();
   renderMarkers();
-  if (localResult.status === 'rejected' && osmResult.status === 'rejected') toast('Yaqin xizmatlarni yuklab bo‘lmadi.');
 }
 
 function applySearch() {
@@ -252,21 +265,47 @@ function focusPlace(key) {
   });
 }
 
+function distanceMeters(a, b) {
+  if (!a || !b) return Infinity;
+  const lat = (a.lat + b.lat) / 2 * Math.PI / 180;
+  return Math.hypot((a.lat - b.lat) * 111195, (a.lon - b.lon) * 111195 * Math.cos(lat));
+}
+
 async function locateUser() {
   if (!navigator.geolocation) return toast('Brauzer geolokatsiyani qo‘llamaydi.');
-  $('locateBtn').textContent = '⌖ Aniqlanmoqda…';
-  navigator.geolocation.getCurrentPosition(async (position) => {
+  if (state.gpsWatchId !== null) {
+    navigator.geolocation.clearWatch(state.gpsWatchId);
+    state.gpsWatchId = null;
+    state.lastGpsPoint = null;
+    $('locateBtn').textContent = '⌖ Mening joylashuvim';
+    toast('Jonli GPS kuzatuvi to‘xtatildi.');
+    return;
+  }
+  $('locateBtn').textContent = '⌖ GPS ulanmoqda…';
+  state.gpsWatchId = navigator.geolocation.watchPosition(async (position) => {
+    const previous = state.lastGpsPoint;
     state.lat = position.coords.latitude;
     state.lon = position.coords.longitude;
-    state.map.setView([state.lat, state.lon], 14);
+    if (!previous) state.map.setView([state.lat, state.lon], 14);
     userLocationMarker(state.lat, state.lon);
-    $('mapCenterLabel').textContent = 'Mening joylashuvim';
-    $('locateBtn').textContent = '✓ Joylashuv aniqlandi';
-    await Promise.all([loadWeather(state.lat, state.lon, 'Mening joylashuvim'), loadPlaces()]);
+    $('mapCenterLabel').textContent = `GPS · ±${Math.round(position.coords.accuracy || 0)} m`;
+    $('locateBtn').textContent = '● Jonli GPS · to‘xtatish';
+    const moved = distanceMeters(previous, { lat: state.lat, lon: state.lon }) > 250;
+    if (!previous || (moved && Date.now() - state.lastPlacesAt > 90000)) {
+      state.lastGpsPoint = { lat: state.lat, lon: state.lon };
+      await loadPlaces();
+    }
+    if (!previous || Date.now() - state.lastWeatherAt > 300000) {
+      await loadWeather(state.lat, state.lon, 'Mening joylashuvim');
+    }
   }, (error) => {
     $('locateBtn').textContent = '⌖ Mening joylashuvim';
     toast(error.code === 1 ? 'Joylashuvga ruxsat berilmadi.' : 'Joylashuvni aniqlab bo‘lmadi.');
-  }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 120000 });
+    if (error.code === 1 && state.gpsWatchId !== null) {
+      navigator.geolocation.clearWatch(state.gpsWatchId);
+      state.gpsWatchId = null;
+    }
+  }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000 });
 }
 
 function openSuggest() {
@@ -332,6 +371,9 @@ function bindEvents() {
   });
   $('suggestForm').addEventListener('submit', submitSuggestion);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSuggest(); });
+  window.addEventListener('beforeunload', () => {
+    if (state.gpsWatchId !== null) navigator.geolocation.clearWatch(state.gpsWatchId);
+  });
 }
 
 async function boot() {
@@ -346,6 +388,16 @@ async function boot() {
     const centered = await loadProfileContext();
     if (!centered) await loadWeather(state.lat, state.lon, 'Samarqand');
     await loadPlaces();
+    setInterval(async () => {
+      if (document.hidden || !state.token || state.refreshing) return;
+      state.refreshing = true;
+      try {
+        await loadPlaces();
+        if (Date.now() - state.lastWeatherAt > 300000) {
+          await loadWeather(state.lat, state.lon, state.gpsWatchId !== null ? 'Mening joylashuvim' : 'Joriy hudud');
+        }
+      } finally { state.refreshing = false; }
+    }, 120000);
   } catch (error) {
     console.error(error);
     toast(error.message);

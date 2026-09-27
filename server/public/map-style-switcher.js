@@ -1,5 +1,5 @@
 (() => {
-  const STORAGE_KEY = 'qrp_map_style';
+  const STORAGE_KEY = 'qrp_map_style_v4';
   const MODES = ['3d', 'hybrid', 'satellite', 'street', 'standard'];
 
   function install(map) {
@@ -23,10 +23,10 @@
       attribution: '&copy; OpenStreetMap contributors',
     });
 
-    const street = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 20,
-      attribution: 'Tiles &copy; Esri',
-    });
+    // OpenFreeMap renders current OSM vector data; keep OSM raster as a safe fallback.
+    const street = typeof L.maplibreGL === 'function'
+      ? L.maplibreGL({ style: 'https://tiles.openfreemap.org/styles/liberty' })
+      : osm;
 
     const imagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 20,
@@ -47,7 +47,7 @@
     };
 
     let activeMode = null;
-    let last2DMode = 'hybrid';
+    let last2DMode = 'street';
     let activeBase = null;
     let activeOverlay = null;
     let imageryErrors = 0;
@@ -67,7 +67,8 @@
     }
 
     function setMode(mode, notify = true) {
-      const safeMode = MODES.includes(mode) ? mode : 'hybrid';
+      const safeMode = MODES.includes(mode) ? mode : 'street';
+      let resolvedMode = safeMode;
 
       if (safeMode === '3d') {
         activeMode = '3d';
@@ -88,15 +89,43 @@
       if (activeOverlay) map.removeLayer(activeOverlay);
       activeBase = config.base;
       activeOverlay = config.overlay || null;
-      activeBase.addTo(map);
-      if (activeOverlay) activeOverlay.addTo(map);
-      activeMode = safeMode;
-      last2DMode = safeMode;
+      try {
+        activeBase.addTo(map);
+        if (activeOverlay) activeOverlay.addTo(map);
+      } catch (error) {
+        console.warn('Vector xarita yuklanmadi:', error);
+        if (activeBase !== osm) {
+          try { map.removeLayer(activeBase); } catch {}
+          activeBase = osm;
+          activeOverlay = null;
+          activeBase.addTo(map);
+          resolvedMode = 'standard';
+          if (typeof toast === 'function') toast('Vektor xarita ochilmadi. OSM xarita ko‘rsatildi.');
+        }
+      }
+      activeMode = resolvedMode;
+      last2DMode = resolvedMode;
       imageryErrors = 0;
-      persist(safeMode);
+      persist(resolvedMode);
       updateButtons();
       window.QRPMapStyle.last2DMode = last2DMode;
-      if (notify && typeof toast === 'function') toast(`Xarita: ${config.label}`);
+      if (notify && typeof toast === 'function') toast(`Xarita: ${configs[resolvedMode].label}`);
+    }
+
+    if (street !== osm) {
+      street.on('add', () => {
+        const gl = street.getMaplibreMap?.();
+        if (!gl || gl._qrpFallbackBound) return;
+        gl._qrpFallbackBound = true;
+        let errors = 0;
+        gl.on('load', () => { errors = 0; });
+        gl.on('error', () => {
+          if (activeMode === 'street' && ++errors >= 6) {
+            setMode('standard', false);
+            if (typeof toast === 'function') toast('Vektor xarita javob bermadi. OSM xarita ko‘rsatildi.');
+          }
+        });
+      });
     }
 
     imagery.on('tileerror', () => {
@@ -115,9 +144,9 @@
         div.setAttribute('aria-label', 'Xarita ko‘rinishi');
         div.innerHTML = [
           '<button type="button" data-map-mode="3d" title="MapLibre orqali 3D bino geometriyasi">🏙 <span>3D</span></button>',
-          '<button type="button" data-map-mode="hybrid" title="Sun’iy yo‘ldosh tasviri va joy nomlari">🛰 <span>Hybrid</span></button>',
-          '<button type="button" data-map-mode="satellite" title="Sun’iy yo‘ldosh tasviri">📷 <span>Satellite</span></button>',
-          '<button type="button" data-map-mode="street" title="Ko‘cha va bino konturlari uchun ko‘cha xaritasi">🛣 <span>Ko‘cha</span></button>',
+          '<button type="button" data-map-mode="hybrid" title="Sun’iy yo‘ldosh tasviri va joy nomlari; tasvir real vaqt emas">🛰 <span>Hybrid</span></button>',
+          '<button type="button" data-map-mode="satellite" title="Sun’iy yo‘ldosh tasviri; tasvir real vaqt emas">📷 <span>Satellite</span></button>',
+          '<button type="button" data-map-mode="street" title="OSM ma’lumotlari asosida yangilanadigan vektor ko‘cha xaritasi">🛣 <span>Ko‘cha</span></button>',
           '<button type="button" data-map-mode="standard" title="OpenStreetMap standart xaritasi">🗺 <span>OSM</span></button>',
         ].join('');
         L.DomEvent.disableClickPropagation(div);
@@ -139,10 +168,10 @@
     };
 
     const preferred = (() => {
-      try { return localStorage.getItem(STORAGE_KEY) || 'hybrid'; } catch { return 'hybrid'; }
+      try { return localStorage.getItem(STORAGE_KEY) || 'street'; } catch { return 'street'; }
     })();
     if (preferred === '3d') {
-      setMode('hybrid', false);
+      setMode('street', false);
       setTimeout(() => setMode('3d', false), 150);
     } else {
       setMode(preferred, false);
