@@ -19,6 +19,7 @@ body.dashboard-international #plannerForm>.adaptive-check,
 body.dashboard-international #plannerForm>.budget-detail,
 body.dashboard-international #plannerForm>.location-line,
 body.dashboard-international #plannerForm>.message{position:static!important;left:auto!important;width:auto!important;height:auto!important;overflow:visible!important;opacity:1!important;pointer-events:auto!important}
+body.dashboard-international #plannerForm>#prompt{width:100%!important}
 body.dashboard-international #plannerForm>#prompt{min-height:112px}
 body.dashboard-international .planner-actions label span{display:block;font-size:12px}
 .result-shell{grid-template-columns:minmax(290px,355px) minmax(0,1fr);grid-template-rows:auto minmax(650px,1fr);min-height:730px}

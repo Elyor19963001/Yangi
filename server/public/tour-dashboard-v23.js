@@ -104,6 +104,11 @@
   try { translate(localStorage.getItem('qrp_dashboard_language') || navigator.language?.slice(0, 2) || 'uz'); }
   catch { translate('uz'); }
   selector.addEventListener('change', () => translate(selector.value));
+  const createButton = document.getElementById('planBtn');
+  if (createButton) new MutationObserver(() => {
+    const wanted = labels[current].create;
+    if (!createButton.disabled && createButton.textContent !== wanted) createButton.textContent = wanted;
+  }).observe(createButton, { childList: true });
   window.addEventListener('load', () => setTimeout(() => translate(current), 80));
   gpsToggle.addEventListener('click', () => {
     const expanded = gpsToggle.getAttribute('aria-expanded') === 'true';
