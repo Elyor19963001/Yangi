@@ -2387,3 +2387,42 @@
     height:44px!important;
   }
 }
+
+/* Keep the guide avatar in its grid cell so confirmation text retains its width. */
+.simple-msg.assistant{
+  padding-left:0!important;
+}
+.simple-msg.assistant>.assistant-mini-mascot{
+  position:static!important;
+  grid-column:1;
+  grid-row:1;
+  align-self:end;
+}
+.simple-msg.assistant>.simple-bubble{
+  grid-column:2;
+  grid-row:1;
+  width:100%!important;
+  max-width:660px!important;
+  min-width:0!important;
+  box-sizing:border-box;
+}
+.simple-msg.assistant:has(.ready-summary)>.simple-bubble{
+  width:100%!important;
+  max-width:660px!important;
+}
+.simple-msg.assistant .ready-summary{
+  width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box;
+}
+.simple-msg.assistant .ready-actions{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+@media(max-width:760px){
+  .simple-msg.assistant{padding-left:0!important}
+  .simple-msg.assistant:has(.ready-summary)>.simple-bubble{
+    width:100%!important;
+    max-width:100%!important;
+  }
+  .simple-msg.assistant .ready-actions{grid-template-columns:1fr}
+}
