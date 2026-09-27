@@ -56,6 +56,7 @@ app.use(helmet({
       objectSrc: ["'none'"],
       baseUri: ["'self'"],
       frameAncestors: ["'self'"],
+      frameSrc: ["'self'", 'https://sketchfab.com'],
     },
   },
   referrerPolicy: { policy: 'strict-origin-when-cross-origin' },

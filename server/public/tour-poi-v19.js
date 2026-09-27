@@ -38,6 +38,56 @@
     }
   };
 
+  // Photogrammetric models published by Global Digital Heritage on Sketchfab.
+  const HERITAGE_3D = {
+    'registan': { name: 'Registon majmuasi', id: 'af54f5280eb249beb6501eab4769c351' },
+    'gur-amir': { name: 'Go‘ri Amir maqbarasi', id: 'fd795227e0bc4f61bc1e4e453d29a74b' },
+    'bibi-khanum': { name: 'Bibixonim masjidi', id: 'dc8ec865fd0d480c8ae06196fd18d296' }
+  };
+
+  function heritageModel(stop = {}) {
+    const key = stop.audio_guide?.id || '';
+    if (HERITAGE_3D[key]) return HERITAGE_3D[key];
+    const name = String(stop.name || '');
+    if (/registon|registan/i.test(name)) return HERITAGE_3D.registan;
+    if (/go.ri amir|gur.?amir|gur.?emir/i.test(name)) return HERITAGE_3D['gur-amir'];
+    if (/bibi.?xonim|bibi.?khanym|bibi.?khanum/i.test(name)) return HERITAGE_3D['bibi-khanum'];
+    return null;
+  }
+
+  function showHeritageModel(model) {
+    if (!model) return;
+    document.querySelector('.heritage-3d-dialog')?.remove();
+    const panel = document.createElement('div');
+    panel.className = 'heritage-3d-dialog';
+    panel.setAttribute('role', 'dialog');
+    panel.setAttribute('aria-modal', 'true');
+    panel.setAttribute('aria-label', model.name + ' 3D modeli');
+    const link = 'https://sketchfab.com/models/' + model.id;
+    panel.innerHTML = '<div class="heritage-3d-panel">'
+      + '<header><div><strong>' + esc(model.name) + ' · 3D</strong><small>Modelni sichqoncha yoki barmoq bilan aylantiring va yaqinlashtiring.</small></div>'
+      + '<button type="button" class="heritage-3d-close" aria-label="3D oynani yopish">✕</button></header>'
+      + '<iframe title="' + esc(model.name) + ' interaktiv 3D modeli" src="' + link + '/embed" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>'
+      + '<footer><span>3D skan: Global Digital Heritage / Sketchfab. Internet va WebGL talab qilinadi.</span>'
+      + '<a href="' + link + '" target="_blank" rel="noopener noreferrer">Modelni manbada ochish ↗</a></footer></div>';
+    const priorFocus = document.activeElement;
+    const oldOverflow = document.body.style.overflow;
+    document.body.appendChild(panel);
+    document.body.style.overflow = 'hidden';
+    const close = () => {
+      panel.remove();
+      document.body.style.overflow = oldOverflow;
+      document.removeEventListener('keydown', onKey);
+      priorFocus?.focus?.();
+    };
+    const onKey = (event) => { if (event.key === 'Escape') close(); };
+    document.addEventListener('keydown', onKey);
+    panel.addEventListener('click', event => {
+      if (event.target === panel || event.target.closest('.heritage-3d-close')) close();
+    });
+    panel.querySelector('.heritage-3d-close').focus();
+  }
+
   function photoMeta(stop = {}) {
     const id = stop?.audio_guide?.id || '';
     const row = PHOTO_CATALOG[id];
@@ -95,6 +145,7 @@
     const planInfo = planned.label ? '<div><span>📅 Rejadagi tashrif</span><strong>' + esc(stop.time_start || '') + ' · ' + esc(planned.label) + '</strong></div>' : '';
     const saved = isSaved(stop);
     const order = Number(stop.order || 0);
+    const model = heritageModel(stop);
 
     return '<article class="poi-v19-card" data-poi-name="' + esc(stop.name || '') + '">'
       + '<div class="poi-v19-hero">'
@@ -128,7 +179,8 @@
         + (photo ? '<a class="poi-photo-credit" href="' + esc(photo.page) + '" target="_blank" rel="noopener">Foto: Wikimedia Commons ↗</a>' : '')
       + '</div>'
 
-      + '<div class="poi-v19-secondary-actions">'
+      + '<div class="poi-v19-secondary-actions' + (model ? ' has-3d' : '') + '">'
+        + (model ? '<button type="button" data-poi-3d data-model-id="' + model.id + '"><b>◈</b><span>3D ko‘rish</span></button>' : '')
         + '<button type="button" data-poi-photo data-photo-url="' + esc(photo?.page || '') + '"><b>▧</b><span>Rasmlar</span></button>'
         + '<button type="button" data-poi-focus data-stop-lat="' + esc(stop.latitude) + '" data-stop-lon="' + esc(stop.longitude) + '"><b>⌖</b><span>Xaritada ko‘rish</span></button>'
         + '<button type="button" data-poi-share data-share-name="' + esc(stop.name || '') + '" data-stop-lat="' + esc(stop.latitude) + '" data-stop-lon="' + esc(stop.longitude) + '"><b>⌯</b><span>Ulashish</span></button>'
@@ -183,6 +235,12 @@
   } catch {}
 
   document.addEventListener('click', async (event) => {
+    const modelButton = event.target.closest('[data-poi-3d]');
+    if (modelButton) {
+      const model = Object.values(HERITAGE_3D).find(item => item.id === modelButton.dataset.modelId);
+      showHeritageModel(model);
+      return;
+    }
     const railButton = event.target.closest('.poi-v19-rail-item');
     if (railButton) {
       const index = Number(railButton.dataset.poiIndex);
