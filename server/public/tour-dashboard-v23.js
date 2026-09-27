@@ -87,6 +87,9 @@
     const mobilePrompt = document.querySelector('.mobile-ai-prompt');
     if (mobilePrompt) mobilePrompt.placeholder = current === 'en' ? 'For example: two days of heritage sites and local food.' : current === 'ru' ? 'Например: два дня исторических мест и местная кухня.' : 'Masalan: 2 kunlik ziyorat turi, ko‘p yurmasin, milliy taomlar ham bo‘lsin.';
     document.getElementById('prompt').placeholder = current === 'en' ? 'For example: two days of historical sites, less walking, local food…' : current === 'ru' ? 'Например: два дня исторических мест, меньше ходьбы, местная кухня…' : 'Masalan: 2 kunlik tarixiy tur, kamroq yurish…';
+    document.getElementById('budget').placeholder = current === 'en' ? 'For example: 2,000,000' : current === 'ru' ? 'Например: 2 000 000' : 'Masalan: 2000000';
+    const locationLine = document.getElementById('locationLine');
+    if (locationLine && /Samarqand markazi|Samarkand center|Центр Самарканда/.test(locationLine.textContent)) locationLine.textContent = current === 'en' ? 'Start: Samarkand center' : current === 'ru' ? 'Начало: центр Самарканда' : 'Boshlanish: Samarqand markazi';
     document.querySelectorAll('#days option').forEach((option) => { option.textContent = option.value + (current === 'en' ? (option.value === '1' ? ' day' : ' days') : current === 'ru' ? (option.value === '1' ? ' день' : option.value === '2' || option.value === '3' || option.value === '4' ? ' дня' : ' дней') : ' kun'); });
     document.querySelectorAll('[data-poi-3d]').forEach((button) => {
       if (current !== 'uz') button.textContent = labels[current]['3dButton'];
@@ -117,6 +120,28 @@
     if (button && current !== 'uz') button.textContent = labels[current]['3dButton'];
   });
   const mapPanel = document.querySelector('.map-panel');
+  const results = document.getElementById('resultShell');
+  function fitVisibleRoute() {
+    try {
+      const trip = typeof state === 'undefined' ? null : state;
+      const day = trip?.result?.days?.[trip.activeDay || 0];
+      if (!trip?.map || !day || results.classList.contains('hidden')) return;
+      const points = [trip.result.start, ...(day.stops || [])]
+        .filter((place) => Number.isFinite(Number(place?.latitude)) && Number.isFinite(Number(place?.longitude)))
+        .map((place) => [Number(place.latitude), Number(place.longitude)]);
+      if (!points.length) return;
+      trip.map.invalidateSize();
+      trip.map.fitBounds(L.latLngBounds(points).pad(.14), { maxZoom: 16, animate: false });
+    } catch (error) { console.warn('Map fit:', error); }
+  }
+  if (results) {
+    new MutationObserver(() => {
+      if (!results.classList.contains('hidden')) setTimeout(fitVisibleRoute, 400);
+    }).observe(results, { attributes: true, attributeFilter: ['class'] });
+    document.getElementById('dayTabs')?.addEventListener('click', (event) => {
+      if (event.target.closest('[data-day]')) setTimeout(fitVisibleRoute, 200);
+    });
+  }
   if (mapPanel) {
     const observer = new MutationObserver((records) => {
       if (current === 'uz') return;
