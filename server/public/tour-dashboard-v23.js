@@ -5,6 +5,7 @@
       planEyebrow: 'SAYOHATNI REJALASH', planTitle: 'Samarqandni qanday ko‘rmoqchisiz?',
       planHelp: 'Safaringizni yozing: masalan, “2 kunlik tarixiy tur, kamroq piyoda yurish”. Sana va kishi sonini tanlang, so‘ng xaritadan marshrutni ko‘ring.',
       locate: '⌖ Joylashuvimdan boshlash', create: '✨ Marshrut yaratish', dashboardEyebrow: 'INTERAKTIV SAYOHAT XARITASI',
+      startDate: 'Boshlanish sanasi', days: 'Kun', travelers: 'Sayohatchi', budget: 'Umumiy budjet, so‘m', weather: 'Ob-havoga avtomatik moslashtirish', weatherHelp: 'Yomg‘ir, kuchli shamol, issiq yoki sovuq bo‘lsa tashrif tartibi o‘zgaradi.', optionalBudget: 'Ixtiyoriy xarajatlar',
       dashboardTitle: 'Marshrut va obidalar', dashboardHelp: 'Kunni tanlang, xaritadagi manzilni bosing va 3D obidani oching.',
       stepOne: '1 · Kunni tanlang', stepTwo: '2 · Joyni bosing', stepThree: '3 · 3D ni ko‘ring', itinerary: 'SAYOHAT REJASI',
       gpsToggle: '◎ GPS navigatsiya sozlamalari', mapCaption: 'Xaritadan foydalanish',
@@ -16,6 +17,7 @@
       planEyebrow: 'PLAN YOUR VISIT', planTitle: 'How would you like to explore Samarkand?',
       planHelp: 'Describe your trip, e.g. “Two days of heritage sites with less walking”. Choose a date and group size, then view your route on the map.',
       locate: '⌖ Start from my location', create: '✨ Create route', dashboardEyebrow: 'INTERACTIVE TRAVEL MAP',
+      startDate: 'Start date', days: 'Days', travelers: 'Travelers', budget: 'Total budget · UZS', weather: 'Adjust for weather', weatherHelp: 'The visit order may change in rain, heat or strong wind.', optionalBudget: 'Optional daily costs',
       dashboardTitle: 'Route and landmarks', dashboardHelp: 'Choose a day, select a place on the map and explore its 3D model.',
       stepOne: '1 · Choose a day', stepTwo: '2 · Select a place', stepThree: '3 · Explore in 3D', itinerary: 'YOUR ITINERARY',
       gpsToggle: '◎ GPS navigation settings', mapCaption: 'How to use the map',
@@ -27,6 +29,7 @@
       planEyebrow: 'ПЛАНИРОВАНИЕ ПОЕЗДКИ', planTitle: 'Как вы хотите исследовать Самарканд?',
       planHelp: 'Опишите поездку, например: «Два дня по историческим местам, меньше ходьбы». Выберите дату и число людей, затем откройте маршрут на карте.',
       locate: '⌖ Начать с моего местоположения', create: '✨ Создать маршрут', dashboardEyebrow: 'ИНТЕРАКТИВНАЯ КАРТА',
+      startDate: 'Дата начала', days: 'Дней', travelers: 'Путешественники', budget: 'Общий бюджет · UZS', weather: 'Учитывать погоду', weatherHelp: 'Порядок посещения может измениться при дожде, жаре или сильном ветре.', optionalBudget: 'Дополнительные расходы',
       dashboardTitle: 'Маршрут и памятники', dashboardHelp: 'Выберите день, нажмите на место на карте и откройте его 3D-модель.',
       stepOne: '1 · Выберите день', stepTwo: '2 · Выберите место', stepThree: '3 · Откройте 3D', itinerary: 'ПЛАН ПОЕЗДКИ',
       gpsToggle: '◎ Настройки GPS-навигации', mapCaption: 'Как пользоваться картой',
@@ -74,6 +77,7 @@
   const translate = (language) => {
     current = labels[language] ? language : 'uz';
     document.documentElement.lang = current;
+    document.body.classList.toggle('dashboard-international', current !== 'uz');
     selector.value = current;
     document.querySelectorAll('[data-i18n]').forEach((el) => {
       const value = labels[current][el.dataset.i18n];
@@ -82,6 +86,8 @@
     mobileNodes().forEach(({ node, original }) => { node.textContent = mobileTranslations[current]?.[original] || original; });
     const mobilePrompt = document.querySelector('.mobile-ai-prompt');
     if (mobilePrompt) mobilePrompt.placeholder = current === 'en' ? 'For example: two days of heritage sites and local food.' : current === 'ru' ? 'Например: два дня исторических мест и местная кухня.' : 'Masalan: 2 kunlik ziyorat turi, ko‘p yurmasin, milliy taomlar ham bo‘lsin.';
+    document.getElementById('prompt').placeholder = current === 'en' ? 'For example: two days of historical sites, less walking, local food…' : current === 'ru' ? 'Например: два дня исторических мест, меньше ходьбы, местная кухня…' : 'Masalan: 2 kunlik tarixiy tur, kamroq yurish…';
+    document.querySelectorAll('#days option').forEach((option) => { option.textContent = option.value + (current === 'en' ? (option.value === '1' ? ' day' : ' days') : current === 'ru' ? (option.value === '1' ? ' день' : option.value === '2' || option.value === '3' || option.value === '4' ? ' дня' : ' дней') : ' kun'); });
     document.querySelectorAll('[data-poi-3d]').forEach((button) => {
       if (current !== 'uz') button.textContent = labels[current]['3dButton'];
     });

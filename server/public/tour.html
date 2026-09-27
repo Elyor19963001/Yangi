@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="/tour-poi-v15.css?v=19.1.1" />
   <link rel="stylesheet" href="/tour-copilot-v16.css?v=22.2" />
   <link rel="stylesheet" href="/tour-poi-v19.css?v=19.3" />
-  <link rel="stylesheet" href="/tour-dashboard-v23.css?v=23.1" />
+  <link rel="stylesheet" href="/tour-dashboard-v23.css?v=23.3" />
   <script src="/vendor/leaflet/leaflet.js" defer></script>
   <script src="/vendor/maplibre/maplibre-gl.js" defer></script>
   <script src="/vendor/maplibre-leaflet/leaflet-maplibre-gl.js" defer></script>
@@ -32,7 +32,7 @@
   <script src="/tour-horse-v214.js?v=22.1" defer></script>
   <script src="/tour-poi-v19.js?v=19.3" defer></script>
   <script src="/heritage-three.bundle.js?v=23.2" defer></script>
-  <script src="/tour-dashboard-v23.js?v=23.1" defer></script>
+  <script src="/tour-dashboard-v23.js?v=23.3" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -52,16 +52,16 @@
       <form id="plannerForm">
         <textarea id="prompt" rows="4" maxlength="1500"></textarea>
         <div class="planner-actions">
-          <label>Boshlanish sanasi<input id="startDate" type="date" /></label>
-          <label>Kun<select id="days"><option value="1">1 kun</option><option value="2" selected>2 kun</option><option value="3">3 kun</option><option value="4">4 kun</option><option value="5">5 kun</option></select></label>
-          <label>Sayohatchi<input id="partySize" type="number" min="1" max="20" value="1" inputmode="numeric" /></label>
-          <label>Umumiy budjet, so‘m<input id="budget" type="number" min="0" step="50000" placeholder="Masalan: 2000000" inputmode="numeric" /></label>
+          <label><span data-i18n="startDate">Boshlanish sanasi</span><input id="startDate" type="date" /></label>
+          <label><span data-i18n="days">Kun</span><select id="days"><option value="1">1 kun</option><option value="2" selected>2 kun</option><option value="3">3 kun</option><option value="4">4 kun</option><option value="5">5 kun</option></select></label>
+          <label><span data-i18n="travelers">Sayohatchi</span><input id="partySize" type="number" min="1" max="20" value="1" inputmode="numeric" /></label>
+          <label><span data-i18n="budget">Umumiy budjet, so‘m</span><input id="budget" type="number" min="0" step="50000" placeholder="Masalan: 2000000" inputmode="numeric" /></label>
           <button class="btn secondary" id="locateBtn" type="button" data-i18n="locate">⌖ Joylashuvimdan boshlash</button>
           <button class="btn primary" id="planBtn" type="submit" data-i18n="create">✨ Marshrut yaratish</button>
         </div>
-        <label class="adaptive-check"><input id="weatherAdaptive" type="checkbox" checked /><span><strong>Ob-havoga avtomatik moslashtirish</strong><small>Yomg‘ir, kuchli shamol, issiq yoki sovuq bo‘lsa tashrif tartibi o‘zgaradi.</small></span></label>
+        <label class="adaptive-check"><input id="weatherAdaptive" type="checkbox" checked /><span><strong data-i18n="weather">Ob-havoga avtomatik moslashtirish</strong><small data-i18n="weatherHelp">Yomg‘ir, kuchli shamol, issiq yoki sovuq bo‘lsa tashrif tartibi o‘zgaradi.</small></span></label>
         <details class="budget-detail">
-          <summary>Budjetni aniqroq rejalash uchun ixtiyoriy qiymatlar</summary>
+          <summary data-i18n="optionalBudget">Budjetni aniqroq rejalash uchun ixtiyoriy qiymatlar</summary>
           <div class="planned-cost-grid">
             <label>Ovqat, 1 kishi / kun<input id="foodPlan" type="number" min="0" step="10000" placeholder="Masalan: 120000" /></label>
             <label>Mehmonxona, 1 kecha / guruh<input id="hotelPlan" type="number" min="0" step="50000" placeholder="Masalan: 500000" /></label>

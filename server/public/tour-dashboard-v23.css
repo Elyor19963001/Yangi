@@ -6,6 +6,17 @@
 .planner-card{grid-template-columns:minmax(220px,.9fr) minmax(420px,1.5fr);gap:22px}
 .planner-copy h2{font-size:clamp(25px,3vw,34px);line-height:1.13}
 .planner-copy p{font-size:14px;line-height:1.6}
+body.dashboard-international .ai-copilot-v17{display:none!important}
+body.dashboard-international .planner-copy{display:block!important}
+body.dashboard-international .planner-card{display:grid!important;grid-template-columns:minmax(250px,.9fr) minmax(420px,1.4fr);padding:24px!important;background:#fff!important;border:1px solid #d7e5dd!important;box-shadow:0 12px 32px #163e2914!important}
+body.dashboard-international #plannerForm>#prompt,
+body.dashboard-international #plannerForm>.planner-actions,
+body.dashboard-international #plannerForm>.adaptive-check,
+body.dashboard-international #plannerForm>.budget-detail,
+body.dashboard-international #plannerForm>.location-line,
+body.dashboard-international #plannerForm>.message{position:static!important;left:auto!important;width:auto!important;height:auto!important;overflow:visible!important;opacity:1!important;pointer-events:auto!important}
+body.dashboard-international #plannerForm>#prompt{min-height:112px}
+body.dashboard-international .planner-actions label span{display:block;font-size:12px}
 .result-shell{grid-template-columns:minmax(290px,355px) minmax(0,1fr);grid-template-rows:auto minmax(650px,1fr);min-height:730px}
 .dashboard-heading{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:15px;padding:17px 22px;background:#fff;border-bottom:1px solid #e1e9e4}
 .dashboard-heading span{color:#2c7351;font-size:11px;font-weight:800;letter-spacing:.06em}
@@ -39,7 +50,13 @@
 .poi-v19-rail-item{flex-basis:142px}.poi-v19-rail-item strong{font-size:11px}
 .day-tab,.stop strong{font-size:13px}.stop span,.stop small{font-size:11px}
 @media(max-width:1050px){.result-shell{grid-template-columns:310px minmax(0,1fr)}.dashboard-steps{max-width:280px}}
+@media(max-width:1000px){body.dashboard-international .planner-card{grid-template-columns:1fr!important}}
 @media(max-width:760px){
+  body.dashboard-international .planner-card{display:block!important;padding:17px!important;margin:0 0 10px!important}
+  body.dashboard-international .planner-copy h2{font-size:23px}
+  body.dashboard-international .planner-actions{display:grid;grid-template-columns:1fr 1fr}
+  body.dashboard-international .planner-actions label{min-width:0}
+  body.dashboard-international .planner-actions input,body.dashboard-international .planner-actions select{width:100%;min-width:0}
   .topbar{gap:8px;padding:9px 12px}.topbar .back{width:auto;font-size:11px}.topbar .brand{order:-1;width:100%}.topbar .brand h1{font-size:16px}.topbar .ghost{font-size:10px;padding:9px}.dashboard-language{font-size:11px}
   .result-shell{display:flex!important;flex-direction:column;min-height:0;margin-top:9px;border-radius:15px}
   .result-shell.hidden,body.mobile-editing .result-shell{display:none!important}
