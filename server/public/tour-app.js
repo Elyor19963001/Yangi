@@ -39,7 +39,7 @@ function audioGuideHtml(stop,compact=false){
       ${button('uz','O‘zbek',short.uz,detailed.uz)}
       ${button('en','English',short.en,detailed.en)}
       ${button('ru','Русский',short.ru,detailed.ru)}
-      <button type="button" class="audio-guide-stop" aria-label="Ovozni to‘xtatish">■</button>
+      <button type="button" class="audio-guide-stop" aria-label="Ovozni to‘xtatish">■ To‘xtatish</button>
     </div>
     <p class="audio-guide-quality" role="status" ${state.audioEngine==='browser-fallback'?'':'hidden'}>Tabiiy audio hozir mavjud emas. Qurilma ovozining sifati telefon yoki brauzerga bog‘liq.</p>
   </div>`;
