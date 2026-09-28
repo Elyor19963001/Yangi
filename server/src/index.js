@@ -130,6 +130,11 @@ app.get('/heritage/:id.glb', (req, res) => {
       upstream.pipe(res);
       res.on('close', () => upstream.destroy());
     });
+    // Some large Zenodo objects can stall before sending headers. Fail promptly
+    // so the client can return to the lighter scan instead of hanging forever.
+    const firstByteTimer = setTimeout(() => request.destroy(new Error('Heritage upstream first byte timeout')), 60000);
+    request.on('response', () => clearTimeout(firstByteTimer));
+    res.on('close', () => { clearTimeout(firstByteTimer); request.destroy(); });
     request.on('timeout', () => request.destroy(new Error('Heritage model timeout')));
     request.on('error', (error) => {
       console.warn('Heritage scan unavailable:', error.message);
