@@ -1,0 +1,40 @@
+/* Place card: readable on phones and desktop, with one clear audio action group. */
+.tfe-place-popup .leaflet-popup-content{width:min(520px,calc(100vw - 32px))!important;max-height:min(78dvh,680px)!important;overflow:auto;overscroll-behavior:contain}
+.tfe-place-popup .leaflet-popup-content-wrapper{border-radius:20px;box-shadow:0 18px 50px #102d2240}
+.tfe-place-popup .leaflet-popup-close-button{width:38px!important;height:38px!important;line-height:35px!important;font-size:21px!important}
+.tfe-place-popup .poi-v19-card{padding:20px 18px;color:#153c2d}
+.tfe-place-popup .poi-v19-hero{grid-template-columns:108px minmax(0,1fr);gap:16px;padding-right:30px}
+.tfe-place-popup .poi-v19-photo{height:96px}
+.tfe-place-popup .poi-v19-type{font-size:12px;letter-spacing:0;text-transform:none}
+.tfe-place-popup .poi-v19-heading strong{font-size:24px;line-height:1.2;margin:5px 0}
+.tfe-place-popup .poi-v19-location,.tfe-place-popup .poi-v19-heading small{font-size:14px;line-height:1.35}
+.tfe-place-popup .poi-v19-facts{gap:9px;margin:17px 0}
+.tfe-place-popup .poi-v19-fact{padding:11px;border-radius:12px}
+.tfe-place-popup .poi-v19-fact span{font-size:13px!important;line-height:1.3}
+.tfe-place-popup .poi-v19-fact strong{font-size:14px!important;line-height:1.35}
+.tfe-place-popup .poi-v19-card>.audio-guide{padding:15px!important;background:#f7faf8!important}
+.tfe-place-popup .poi-v19-card>.audio-guide .audio-guide-head strong{font-size:17px!important}
+.tfe-place-popup .poi-v19-card>.audio-guide .audio-engine-label{font-size:12px!important;padding:5px 9px!important}
+.tfe-place-popup .poi-v19-card>.audio-guide .audio-guide-text{font-size:15px!important;line-height:1.55!important;color:#2d4c3c!important;max-height:135px;margin:12px 0!important}
+.tfe-place-popup .audio-guide-modes{gap:9px;margin-top:12px}
+.tfe-place-popup .poi-v19-card>.audio-guide .audio-guide-mode{font-size:14px!important;min-height:42px!important;padding:8px 15px}
+.tfe-place-popup .audio-guide-actions{gap:8px}
+.tfe-place-popup .poi-v19-card>.audio-guide .audio-guide-play{font-size:14px!important;min-height:43px!important;padding:8px 13px}
+.tfe-place-popup .poi-v19-card>.audio-guide .audio-guide-stop{font-size:16px!important;min-width:43px;min-height:43px!important}
+.tfe-place-popup .audio-guide-quality:not([hidden]){display:block;margin:11px 0 0;color:#6b4b1b;font-size:13px;line-height:1.45}
+.tfe-place-popup .poi-v19-primary-actions{gap:10px;margin-top:16px}
+.tfe-place-popup .poi-v19-btn{font-size:14px;min-height:47px;font-weight:750}
+.tfe-place-popup .poi-v19-secondary-actions{gap:5px;margin-top:15px;padding-top:12px}
+.tfe-place-popup .poi-v19-secondary-actions button{font-size:13px;min-height:56px;gap:5px}
+.tfe-place-popup .poi-v19-secondary-actions button b{font-size:19px}
+@media(max-width:600px){
+  .tfe-place-popup .leaflet-popup-content{width:min(390px,calc(100vw - 30px))!important;max-height:76dvh!important}
+  .tfe-place-popup .poi-v19-card{padding:15px 13px}
+  .tfe-place-popup .poi-v19-hero{grid-template-columns:82px minmax(0,1fr);gap:11px}
+  .tfe-place-popup .poi-v19-photo{height:82px}
+  .tfe-place-popup .poi-v19-heading strong{font-size:20px}
+  .tfe-place-popup .poi-v19-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tfe-place-popup .poi-v19-fact.duration{grid-column:1/-1}
+  .tfe-place-popup .poi-v19-card>.audio-guide .audio-guide-text{font-size:15px!important;max-height:105px}
+  .tfe-place-popup .poi-v19-secondary-actions button{font-size:12px}
+}

@@ -5,6 +5,7 @@ const state={
 };
 const guideAudioCache=new Map();
 let guideAudioPlayer=null;
+let guidePlaybackToken=0;
 const $=(id)=>document.getElementById(id);
 const esc=(v)=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
 const money=(v)=>new Intl.NumberFormat('uz-UZ').format(Number(v)||0);
@@ -28,7 +29,7 @@ function audioGuideHtml(stop,compact=false){
     ? `<button type="button" class="audio-guide-play" data-guide-id="${esc(guide.id)}" data-guide-lang="${esc(lang)}" data-guide-name="${esc(name)}" data-guide-short="${esc(shortText||detailedText||'')}" data-guide-detailed="${esc(detailedText||shortText||'')}">🔊 ${esc(label)}</button>`
     : '';
   return `<div class="audio-guide ${compact?'compact':''}" data-mode="short" data-lang="uz">
-    <div class="audio-guide-head"><strong>🎧 Audio gid</strong><span class="audio-engine-label">3 tilda</span></div>
+    <div class="audio-guide-head"><strong>🎧 Audio gid</strong><span class="audio-engine-label">${state.audioEngine==='browser-fallback'?'Qurilma ovozi':'3 tilda'}</span></div>
     <div class="audio-guide-modes">
       <button type="button" class="audio-guide-mode active" data-guide-mode="short">Qisqa</button>
       <button type="button" class="audio-guide-mode" data-guide-mode="detailed">Batafsil</button>
@@ -40,7 +41,19 @@ function audioGuideHtml(stop,compact=false){
       ${button('ru','Русский',short.ru,detailed.ru)}
       <button type="button" class="audio-guide-stop" aria-label="Ovozni to‘xtatish">■</button>
     </div>
+    <p class="audio-guide-quality" role="status" ${state.audioEngine==='browser-fallback'?'':'hidden'}>Tabiiy audio hozir mavjud emas. Qurilma ovozining sifati telefon yoki brauzerga bog‘liq.</p>
   </div>`;
+}
+function updateAudioGuideLabels(){
+  document.querySelectorAll('.audio-guide').forEach(box=>{
+    const label=box.querySelector('.audio-engine-label');
+    if(label)label.textContent=state.audioEngine==='browser-fallback'?'Qurilma ovozi':'3 tilda';
+    const notice=box.querySelector('.audio-guide-quality');
+    if(notice){
+      notice.hidden=state.audioEngine!=='browser-fallback';
+      notice.textContent='Tabiiy audio hozir mavjud emas. Qurilma ovozining sifati telefon yoki brauzerga bog‘liq.';
+    }
+  });
 }
 function poiCategoryMeta(stop={}){
   const map={
@@ -193,6 +206,7 @@ function updateGuidePreview(box){
   if(textNode&&button)textNode.textContent=guideTextForButton(button,mode);
 }
 function stopGuideAudio(){
+  guidePlaybackToken++;
   if(guideAudioPlayer){
     try{guideAudioPlayer.pause();guideAudioPlayer.currentTime=0;}catch{}
     guideAudioPlayer=null;
@@ -232,6 +246,12 @@ async function playProfessionalGuide(button){
   if(box)box.dataset.lang=lang;
   updateGuidePreview(box);
   stopGuideAudio();
+  const token=guidePlaybackToken;
+  if(state.audioEngine==='browser-fallback'){
+    updateAudioGuideLabels();
+    browserGuideFallback(button,false);
+    return;
+  }
   button.classList.add('loading');
   const key=`${guideId}:${lang}:${mode}`;
   try{
@@ -244,19 +264,24 @@ async function playProfessionalGuide(button){
         throw new Error(detail||`HTTP ${response.status}`);
       }
       const blob=await response.blob();
+      if(token!==guidePlaybackToken)return;
       if(!blob.size)throw new Error('Audio bo‘sh qaytdi.');
       url=URL.createObjectURL(blob);
       guideAudioCache.set(key,url);
     }
+    if(token!==guidePlaybackToken)return;
     button.classList.remove('loading');
     guideAudioPlayer=new Audio(url);
     guideAudioPlayer.preload='auto';
     button.classList.add('speaking');
     guideAudioPlayer.onended=()=>{button.classList.remove('speaking');guideAudioPlayer=null;};
-    guideAudioPlayer.onerror=()=>{button.classList.remove('speaking');guideAudioPlayer=null;browserGuideFallback(button,false);};
+    guideAudioPlayer.onerror=()=>{button.classList.remove('speaking');guideAudioPlayer=null;state.audioEngine='browser-fallback';updateAudioGuideLabels();browserGuideFallback(button,false);};
     await guideAudioPlayer.play();
   }catch(err){
+    if(token!==guidePlaybackToken)return;
     button.classList.remove('loading');
+    state.audioEngine='browser-fallback';
+    updateAudioGuideLabels();
     browserGuideFallback(button,true);
   }
 }
@@ -851,6 +876,7 @@ async function boot(){
     const status=await api('/api/tourism/status');
     const live=await api('/api/tourism/live/status');
     state.audioEngine=status.professional_audio_configured?'openai-tts':'browser-fallback';
+    updateAudioGuideLabels();
     state.live.professionalVoice=Boolean(live.professional_voice_configured);
     syncNavigatorControls();
     if(state.live.professionalVoice)toast('3 tildagi AI navigator tayyor · GPS '+live.version);
