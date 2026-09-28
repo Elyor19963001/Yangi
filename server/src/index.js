@@ -88,13 +88,22 @@ app.use(rateLimit({ windowMs: 60_000, limit: 240 }));
 
 // Only these published heritage scans may be streamed; no caller supplied URL.
 const heritageFiles = Object.freeze({
-  registan: 'https://zenodo.org/records/21490200/files/af54f5280eb249beb6501eab4769c351_normalized-0.100.glb?download=1',
-  'gur-amir': 'https://zenodo.org/records/21570554/files/fd795227e0bc4f61bc1e4e453d29a74b_normalized-0.100.glb?download=1',
-  'bibi-khanum': 'https://zenodo.org/records/21529722/files/dc8ec865fd0d480c8ae06196fd18d296_normalized-0.100.glb?download=1',
+  registan: {
+    standard: 'https://zenodo.org/records/21490200/files/af54f5280eb249beb6501eab4769c351_normalized-0.500.glb?download=1',
+    original: 'https://zenodo.org/records/21490200/files/af54f5280eb249beb6501eab4769c351_normalized.glb?download=1',
+  },
+  'gur-amir': {
+    standard: 'https://zenodo.org/records/21570554/files/fd795227e0bc4f61bc1e4e453d29a74b_normalized-0.500.glb?download=1',
+    original: 'https://zenodo.org/records/21570554/files/fd795227e0bc4f61bc1e4e453d29a74b_normalized.glb?download=1',
+  },
+  'bibi-khanum': {
+    standard: 'https://zenodo.org/records/21529722/files/dc8ec865fd0d480c8ae06196fd18d296_normalized-0.500.glb?download=1',
+    original: 'https://zenodo.org/records/21529722/files/dc8ec865fd0d480c8ae06196fd18d296_normalized.glb?download=1',
+  },
 });
 
 app.get('/heritage/:id.glb', (req, res) => {
-  const source = heritageFiles[req.params.id];
+  const source = heritageFiles[req.params.id]?.[req.query.quality === 'original' ? 'original' : 'standard'];
   if (!source) return res.status(404).end();
   res.set('Content-Type', 'model/gltf-binary');
   res.set('Cache-Control', 'public, max-age=86400');

@@ -8,6 +8,7 @@
   let activeLandmark = null;
   let landmarkLayer = null;
   let photoMap = false;
+  let originalQuality = false;
   const LANDMARKS = {
     registan: { name: 'Registon', aliases: /registon|registan/i, center: [66.975868, 39.654694] },
     'gur-amir': { name: 'Go‘ri Amir', aliases: /go.ri amir|gur.?amir|gur.?emir/i, center: [66.968, 39.649] },
@@ -134,6 +135,7 @@
         <div class="qrp-3d-actions">
           <label class="qrp-3d-select-label"><span>Obida</span><select data-3d-landmark aria-label="3D obidani tanlash"><option value="">Bino xaritasi</option><option value="registan">Registon</option><option value="gur-amir">Go‘ri Amir</option><option value="bibi-khanum">Bibixonim</option></select></label>
           <button type="button" data-3d-photo aria-pressed="false" title="Sun’iy yo‘ldosh suratlari">📷 Foto xarita</button>
+          <button type="button" data-3d-quality aria-pressed="false" title="Asl 3D skan katta hajmli bo‘lib, ko‘proq vaqt yuklanadi">✨ Batafsil skan (80–165 MB)</button>
           <button type="button" data-3d-pitch="0">2D ↑</button>
           <button type="button" data-3d-pitch="55">3D ◢</button>
           <button type="button" data-3d-rotate="-20">↺</button>
@@ -162,6 +164,17 @@
       else clearLandmark();
     });
     shell.querySelector('[data-3d-photo]').addEventListener('click', () => setPhotoMap(!photoMap));
+    shell.querySelector('[data-3d-quality]').addEventListener('click', () => {
+      originalQuality = !originalQuality;
+      const button = shell.querySelector('[data-3d-quality]');
+      button.setAttribute('aria-pressed', String(originalQuality));
+      button.textContent = originalQuality ? '✓ Batafsil skan · standartga qaytish' : '✨ Batafsil skan (80–165 MB)';
+      if (!activeLandmark || !glMap) return;
+      if (landmarkLayer && glMap.getLayer(landmarkLayer.id)) glMap.removeLayer(landmarkLayer.id);
+      landmarkLayer = null;
+      setLandmarkStatus(activeLandmark.name + ' · yuklanmoqda', originalQuality ? 'Asl skan katta hajmli. Yuklanishini kuting…' : 'Tezroq 3D skan yuklanmoqda…');
+      attachLandmark();
+    });
     return shell;
   }
 
@@ -207,11 +220,13 @@
     if (!glMap?.isStyleLoaded() || !activeLandmark || !window.QRPThreeMap || landmarkLayer) return;
     const { THREE, GLTFLoader, DRACOLoader } = window.QRPThreeMap;
     const selected = activeLandmark;
+    const original = originalQuality;
     const origin = maplibregl.MercatorCoordinate.fromLngLat(selected.center, 0);
     const scale = origin.meterInMercatorCoordinateUnits();
     const layer = {
       id: 'qrp-heritage-model', type: 'custom', renderingMode: '3d',
       onAdd(map, gl) {
+        this.disposed = false;
         this.camera = new THREE.Camera();
         this.scene = new THREE.Scene();
         this.scene.add(new THREE.HemisphereLight(0xffffff, 0xc5bba8, 1.35));
@@ -225,9 +240,9 @@
         this.renderer.toneMappingExposure = 1.35;
         const draco = new DRACOLoader().setDecoderPath('/vendor/three/draco/');
         const loader = new GLTFLoader().setDRACOLoader(draco);
-        loader.load('/heritage/' + selected.id + '.glb', (gltf) => {
+        loader.load('/heritage/' + selected.id + '.glb' + (original ? '?quality=original&v=2' : '?v=2'), (gltf) => {
           draco.dispose();
-          if (activeLandmark !== selected) return;
+          if (activeLandmark !== selected || this.disposed) return;
           // The scan has a local origin and includes surrounding terrain. Center its
           // bounds on the POI, with the lowest point on the map's ground plane.
           const box = new THREE.Box3().setFromObject(gltf.scene);
@@ -244,17 +259,26 @@
             }
           });
           this.scene.add(gltf.scene);
-          setLandmarkStatus(selected.name + ' · rangli 3D', 'Asl foto teksturali 3D skan taxminiy joyga qo‘yildi. Xaritani aylantirib ko‘ring.');
+          setLandmarkStatus(selected.name + (original ? ' · asl 3D skan' : ' · rangli 3D'), 'Haqiqiy obida fotosuratlaridan tayyorlangan 3D skan taxminiy joyga qo‘yildi. Yaqinlashtirib, aylantirib ko‘ring.');
           map.triggerRepaint();
         }, (progress) => {
-          if (progress.total && activeLandmark === selected) {
+          if (progress.total && activeLandmark === selected && !this.disposed) {
             const percent = Math.min(99, Math.round(progress.loaded / progress.total * 100));
             setLandmarkStatus(selected.name + ' · yuklanmoqda', '3D model ' + percent + '% yuklandi…');
           }
         }, (error) => {
           draco.dispose();
           console.warn('Heritage model:', error);
-          if (activeLandmark === selected) setLandmarkStatus('Model yuklanmadi', 'Internet aloqasini tekshiring yoki boshqa obidani tanlang.');
+          if (activeLandmark === selected && !this.disposed) {
+            if (original) {
+              originalQuality = false;
+              const button = shell?.querySelector('[data-3d-quality]');
+              if (button) { button.setAttribute('aria-pressed', 'false'); button.textContent = '✨ Batafsil skan (80–165 MB)'; }
+              if (glMap?.getLayer(layer.id)) glMap.removeLayer(layer.id);
+              landmarkLayer = null;
+              attachLandmark();
+            } else setLandmarkStatus('Model yuklanmadi', 'Internet aloqasini tekshiring yoki boshqa obidani tanlang.');
+          }
         });
       },
       render(_gl, args) {
@@ -268,6 +292,7 @@
         this.renderer.render(this.scene, this.camera);
       },
       onRemove() {
+        this.disposed = true;
         this.scene?.traverse((object) => {
           object.geometry?.dispose?.();
           const materials = Array.isArray(object.material) ? object.material : [object.material];
