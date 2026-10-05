@@ -88,5 +88,215 @@
     "verified_at": "2026-10-05",
     "price_status": "check-provider",
     "price": null
+  },
+  {
+    "id": "official/hilton-samarkand-regency",
+    "category": "hotel",
+    "name": "Hilton Samarkand Regency",
+    "latitude": 39.659934,
+    "longitude": 67.059303,
+    "address": "Konigil massivi, eshkak eshish kanali, Samarqand",
+    "phone": "+998 55 705 55 55",
+    "email": "SKDSR_GM@Hilton.com",
+    "website": "https://www.hilton.com/en/hotels/skdsrhi-hilton-samarkand-regency/",
+    "booking_url": "https://www.hilton.com/en/hotels/skdsrhi-hilton-samarkand-regency/",
+    "check_in": "15:00",
+    "check_out": "12:00",
+    "opening_hours": null,
+    "amenities": [
+      "Bepul avtoturargoh",
+      "Yopiq basseyn",
+      "Ochiq basseyn",
+      "Fitnes",
+      "Restoran",
+      "SPA"
+    ],
+    "photos": [
+      {
+        "url": "https://silkroad-samarkand.com/upload/iblock/14e/ld9uqezpmbzlyqfr89ri2pn3emm0v7if.jpg",
+        "caption": "Hilton Samarkand Regency · rasmiy galereya"
+      },
+      {
+        "url": "https://silkroad-samarkand.com/upload/iblock/16d/f2d1accuj9v6cyk0i7f92xcqrtxv0otu.jpg",
+        "caption": "Hilton Samarkand Regency · rasmiy galereya"
+      },
+      {
+        "url": "https://silkroad-samarkand.com/upload/iblock/c84/ilfq3s6cnp6cdtl215sekwgwicmql6h8.jpg",
+        "caption": "Hilton Samarkand Regency · rasmiy galereya"
+      }
+    ],
+    "photo_source_url": "https://www.hilton.com/en/hotels/skdsrhi-hilton-samarkand-regency/",
+    "source": "Official hotel website",
+    "source_url": "https://www.hilton.com/en/hotels/skdsrhi-hilton-samarkand-regency/",
+    "policy_source_url": "https://www.hilton.com/en/hotels/skdsrhi-hilton-samarkand-regency/",
+    "verified_at": "2026-10-05",
+    "price_status": "check-provider",
+    "price": null,
+    "stars": 5,
+    "stars_source_url": "https://silkroad-samarkand.com/hotels/samarkand-regency/"
+  },
+  {
+    "id": "official/silk-road-by-minyoun",
+    "category": "hotel",
+    "name": "Silk Road by Minyoun",
+    "latitude": 39.6578829,
+    "longitude": 67.0676075,
+    "address": "Konigil massivi, eshkak eshish kanali, Samarqand",
+    "phone": "+998 55 705 55 55",
+    "email": "info@silkroad-samarkand.com",
+    "website": "https://silkroad-samarkand.com/hotels/silk-road-by-minyoun/",
+    "booking_url": "https://silkroad-samarkand.com/hotels/silk-road-by-minyoun/",
+    "check_in": "15:00",
+    "check_out": "12:00",
+    "opening_hours": null,
+    "amenities": [
+      "Wi-Fi",
+      "Konditsioner",
+      "Restoran",
+      "Bar"
+    ],
+    "photos": [
+      {
+        "url": "https://silkroad-samarkand.com/upload/iblock/c31/fzjt3hqdfzvd64p51woj7c09ko1nxn5u.jpg",
+        "caption": "Silk Road by Minyoun · rasmiy galereya"
+      },
+      {
+        "url": "https://silkroad-samarkand.com/upload/iblock/483/rc1idcnzzn3cme41nfatiwi09ryyp9ix.jpg",
+        "caption": "Silk Road by Minyoun · rasmiy galereya"
+      },
+      {
+        "url": "https://silkroad-samarkand.com/upload/iblock/895/ah30jyclwisyd0wz6ep73gbnuluiki41.jpg",
+        "caption": "Silk Road by Minyoun · rasmiy galereya"
+      }
+    ],
+    "photo_source_url": "https://silkroad-samarkand.com/hotels/silk-road-by-minyoun/",
+    "source": "Official hotel website",
+    "source_url": "https://silkroad-samarkand.com/hotels/silk-road-by-minyoun/",
+    "policy_source_url": "https://silkroad-samarkand.com/hotels/silk-road-by-minyoun/",
+    "verified_at": "2026-10-05",
+    "price_status": "check-provider",
+    "price": null,
+    "stars": 5,
+    "stars_source_url": "https://silkroad-samarkand.com/resort/minyoun-hospitality-group/",
+    "coordinate_source_url": "https://www.openstreetmap.org/way/1083693570"
+  },
+  {
+    "id": "official/lia-by-minyoun-stars-of-ulugbek",
+    "category": "hotel",
+    "name": "Lia! by Minyoun Stars of Ulugbek",
+    "latitude": 39.6573241,
+    "longitude": 67.0697362,
+    "address": "Konigil massivi, eshkak eshish kanali, Samarqand",
+    "phone": "+998 55 705 55 55",
+    "email": "info@silkroad-samarkand.com",
+    "website": "https://silkroad-samarkand.com/hotels/lia-by-minyoun-stars-of-ulugbek/",
+    "booking_url": "https://silkroad-samarkand.com/hotels/lia-by-minyoun-stars-of-ulugbek/",
+    "check_in": null,
+    "check_out": "12:00",
+    "opening_hours": null,
+    "amenities": [
+      "Wi-Fi",
+      "Konditsioner",
+      "Restoran",
+      "Bar"
+    ],
+    "photos": [
+      {
+        "url": "https://silkroad-samarkand.com/upload/iblock/958/wau2nwmp1xykdgkr5irb28qdy2dhigbx.jpg",
+        "caption": "Lia! by Minyoun Stars of Ulugbek · rasmiy galereya"
+      },
+      {
+        "url": "https://silkroad-samarkand.com/upload/iblock/bd7/9tvgr9el8ebajo2wiqyvma0kru1lqudu.jpg",
+        "caption": "Lia! by Minyoun Stars of Ulugbek · rasmiy galereya"
+      },
+      {
+        "url": "https://silkroad-samarkand.com/upload/iblock/bac/75ehvpu8oe4fdsf0l21im8g0jm50m5ix.jpg",
+        "caption": "Lia! by Minyoun Stars of Ulugbek · rasmiy galereya"
+      }
+    ],
+    "photo_source_url": "https://silkroad-samarkand.com/hotels/lia-by-minyoun-stars-of-ulugbek/",
+    "source": "Official hotel website",
+    "source_url": "https://silkroad-samarkand.com/hotels/lia-by-minyoun-stars-of-ulugbek/",
+    "policy_source_url": "https://silkroad-samarkand.com/hotels/lia-by-minyoun-stars-of-ulugbek/",
+    "verified_at": "2026-10-05",
+    "price_status": "check-provider",
+    "price": null,
+    "stars": 4,
+    "stars_source_url": "https://silkroad-samarkand.com/resort/minyoun-hospitality-group/",
+    "coordinate_source_url": "https://www.openstreetmap.org/way/1083693564"
+  },
+  {
+    "id": "official/renaissance",
+    "category": "hotel",
+    "name": "Renaissance Boutique Hotel",
+    "latitude": 39.6561654,
+    "longitude": 66.9540178,
+    "address": "Mirzo Ulug‘bek ko‘chasi, 36, Samarqand",
+    "phone": "+998 97 898 00 48",
+    "email": "renaissancehotel771@gmail.com",
+    "website": "https://renaissancehotel.uz/en-gb/contacts/",
+    "booking_url": "https://renaissancehotel.uz/en-gb/contacts/",
+    "check_in": "14:00",
+    "check_out": "12:00",
+    "opening_hours": null,
+    "amenities": [],
+    "photos": [
+      {
+        "url": "https://renaissancehotel.uz/img/338fcaf9a8be04ae.webp",
+        "caption": "Renaissance Boutique Hotel · rasmiy galereya"
+      },
+      {
+        "url": "https://renaissancehotel.uz/img/5eb8b03fedcd4aec.webp",
+        "caption": "Renaissance Boutique Hotel · rasmiy galereya"
+      },
+      {
+        "url": "https://renaissancehotel.uz/img/6b5478f82e0de39d.webp",
+        "caption": "Renaissance Boutique Hotel · rasmiy galereya"
+      }
+    ],
+    "photo_source_url": "https://renaissancehotel.uz/en-gb/contacts/",
+    "source": "Official hotel website",
+    "source_url": "https://renaissancehotel.uz/en-gb/contacts/",
+    "policy_source_url": "https://renaissancehotel.uz/en-gb/contacts/",
+    "verified_at": "2026-10-05",
+    "price_status": "check-provider",
+    "price": null
+  },
+  {
+    "id": "official/guremir",
+    "category": "hotel",
+    "name": "Gur Emir Palace Boutique Hotel",
+    "latitude": 39.647716,
+    "longitude": 66.967442,
+    "address": "Shohrux Mirzo ko‘chasi, 126, Samarqand",
+    "phone": "+998 55 701 10 01",
+    "email": "guremirhotel@gmail.com",
+    "website": "https://guremirpalace.uz/contacts/",
+    "booking_url": "https://guremirpalace.uz/contacts/",
+    "check_in": "14:00",
+    "check_out": "12:00",
+    "opening_hours": null,
+    "amenities": [],
+    "photos": [
+      {
+        "url": "https://guremirpalace.uz/img/4c1d6099f90dae46.webp",
+        "caption": "Gur Emir Palace Boutique Hotel · rasmiy galereya"
+      },
+      {
+        "url": "https://guremirpalace.uz/img/559993983d921c8d.webp",
+        "caption": "Gur Emir Palace Boutique Hotel · rasmiy galereya"
+      },
+      {
+        "url": "https://guremirpalace.uz/img/e7c50463e0608a63.webp",
+        "caption": "Gur Emir Palace Boutique Hotel · rasmiy galereya"
+      }
+    ],
+    "photo_source_url": "https://guremirpalace.uz/contacts/",
+    "source": "Official hotel website",
+    "source_url": "https://guremirpalace.uz/contacts/",
+    "policy_source_url": "https://guremirpalace.uz/contacts/",
+    "verified_at": "2026-10-05",
+    "price_status": "check-provider",
+    "price": null
   }
 ]
