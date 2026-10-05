@@ -182,11 +182,11 @@ function anchorFor(day) {
   return { ...CENTER, name: 'Samarqand markazi' };
 }
 
-function nearby(rows, anchor, kind, limit = 3) {
+function nearby(rows, anchor, kind, limit = 3, radius = 5000) {
   return rows
     .filter((row) => row.category === kind)
     .map((row) => ({ ...row, distance_m: Math.round(haversine(anchor.latitude, anchor.longitude, row.latitude, row.longitude)) }))
-    .filter((row) => row.distance_m <= 5000)
+    .filter((row) => row.distance_m <= radius)
     .sort((a, b) => a.distance_m - b.distance_m)
     .slice(0, limit);
 }
@@ -362,7 +362,7 @@ router.post('/support', asyncHandler(async (req, res) => {
     const restaurants = nearby(services.rows, anchor, 'restaurant', 4);
     const hotels = nearby(services.rows, anchor, 'hotel', 10);
     const hotelIds = new Set(hotels.map(row => row.id));
-    nearby(services.rows.filter(row => row.source === 'Official hotel website'), anchor, 'hotel', 6).forEach(row => {
+    nearby(services.rows.filter(row => row.source === 'Official hotel website'), anchor, 'hotel', 20, 12000).forEach(row => {
       if (!hotelIds.has(row.id)) { hotels.push(row); hotelIds.add(row.id); }
     });
     const taxiPoints = nearby(services.rows, anchor, 'taxi', 3);
@@ -404,4 +404,5 @@ router.post('/support', asyncHandler(async (req, res) => {
 }));
 
 module.exports = router;
+
 
