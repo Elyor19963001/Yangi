@@ -8,7 +8,7 @@
       startDate: 'Boshlanish sanasi', days: 'Kun', travelers: 'Sayohatchi', budget: 'Umumiy budjet, so‘m', weather: 'Ob-havoga avtomatik moslashtirish', weatherHelp: 'Yomg‘ir, kuchli shamol, issiq yoki sovuq bo‘lsa tashrif tartibi o‘zgaradi.', optionalBudget: 'Ixtiyoriy xarajatlar',
       dashboardTitle: 'Marshrut va obidalar', dashboardHelp: 'Kunni tanlang, xaritadagi manzilni bosing va 3D obidani oching.',
       stepOne: '1 · Kunni tanlang', stepTwo: '2 · Joyni bosing', stepThree: '3 · 3D ni ko‘ring', itinerary: 'SAYOHAT REJASI',
-      gpsToggle: '◎ GPS navigatsiya sozlamalari', mapCaption: 'Xaritadan foydalanish',
+      gpsToggle: '◎ Yo‘l ko‘rsatmasi', nextStop: 'Keyingi manzil', navHint: 'yo‘l ko‘rsatmalari', navOptions: 'Ovoz va GPS tafsilotlari', navLang: 'Ovoz tili', navGuidance: 'Yo‘l ko‘rsatmalari', autoGuide: 'Manzilga yetganda audio gidni yoqish', gpsAccuracy: 'GPS aniqligi', routeDeviation: 'Yo‘ldan chetlanish', distanceCovered: 'Bosib o‘tilgan', gpsPrivacy: 'Joylashuvingiz shu safarni kuzatish uchun ishlatiladi. GPS ishlashi uchun sahifani ochiq tuting.', mapCaption: 'Xaritadan foydalanish',
       mapInstructions: 'Joy belgisini bosing · 3D tugmasi obida modelini xaritaning ichida ochadi',
       '3dButton': '🏛 Xaritada 3D ko‘rish →',
     },
@@ -20,7 +20,7 @@
       startDate: 'Start date', days: 'Days', travelers: 'Travelers', budget: 'Total budget · UZS', weather: 'Adjust for weather', weatherHelp: 'The visit order may change in rain, heat or strong wind.', optionalBudget: 'Optional daily costs',
       dashboardTitle: 'Route and landmarks', dashboardHelp: 'Choose a day, select a place on the map and explore its 3D model.',
       stepOne: '1 · Choose a day', stepTwo: '2 · Select a place', stepThree: '3 · Explore in 3D', itinerary: 'YOUR ITINERARY',
-      gpsToggle: '◎ GPS navigation settings', mapCaption: 'How to use the map',
+      gpsToggle: '◎ Route guidance', nextStop: 'Next stop', navHint: 'route guidance', navOptions: 'Voice and GPS details', navLang: 'Voice language', navGuidance: 'Guidance', autoGuide: 'Play the audio guide on arrival', gpsAccuracy: 'GPS accuracy', routeDeviation: 'Off route', distanceCovered: 'Distance covered', gpsPrivacy: 'Your location is used for this trip. Keep this page open for GPS tracking.', mapCaption: 'How to use the map',
       mapInstructions: 'Tap a place marker · Use 3D to see the landmark model on the map',
       '3dButton': '🏛 View in 3D on map →',
     },
@@ -32,7 +32,7 @@
       startDate: 'Дата начала', days: 'Дней', travelers: 'Путешественники', budget: 'Общий бюджет · UZS', weather: 'Учитывать погоду', weatherHelp: 'Порядок посещения может измениться при дожде, жаре или сильном ветре.', optionalBudget: 'Дополнительные расходы',
       dashboardTitle: 'Маршрут и памятники', dashboardHelp: 'Выберите день, нажмите на место на карте и откройте его 3D-модель.',
       stepOne: '1 · Выберите день', stepTwo: '2 · Выберите место', stepThree: '3 · Откройте 3D', itinerary: 'ПЛАН ПОЕЗДКИ',
-      gpsToggle: '◎ Настройки GPS-навигации', mapCaption: 'Как пользоваться картой',
+      gpsToggle: '◎ Навигация', nextStop: 'Следующая точка', navHint: 'указания маршрута', navOptions: 'Голос и данные GPS', navLang: 'Язык голоса', navGuidance: 'Указания', autoGuide: 'Включать аудиогид по прибытии', gpsAccuracy: 'Точность GPS', routeDeviation: 'Отклонение', distanceCovered: 'Пройдено', gpsPrivacy: 'Местоположение используется для этой поездки. Держите страницу открытой для работы GPS.', mapCaption: 'Как пользоваться картой',
       mapInstructions: 'Нажмите на метку · Кнопка 3D откроет модель памятника прямо на карте',
       '3dButton': '🏛 Посмотреть в 3D на карте →',
     },
@@ -158,4 +158,32 @@
     });
     observer.observe(mapPanel, { childList: true, subtree: true });
   }
+  function refreshNavigationLayout() {
+    try {
+      const trip = typeof state === 'undefined' ? null : state;
+      if (!trip?.result || !panel) return;
+      const tracking = Boolean(trip.live?.active || trip.live?.paused);
+      const value = tracking ? 'true' : 'false';
+      if (panel.dataset.tracking !== value) panel.dataset.tracking = value;
+      if (tracking) {
+        gpsToggle.setAttribute('aria-expanded', 'true');
+        panel.classList.remove('dashboard-live-collapsed');
+      } else if (document.getElementById('liveNextName')?.textContent === '—') {
+        const day = trip.result.days?.[trip.activeDay || 0];
+        const next = day?.navigation_stops?.[0] || day?.stops?.[0];
+        const name = document.getElementById('liveNextName');
+        const meta = document.getElementById('liveNextMeta');
+        if (name && next) name.textContent = next.name;
+        if (meta) meta.textContent = current === 'en' ? 'Start your trip to see GPS distance and arrival time.' : current === 'ru' ? 'Начните поездку, чтобы увидеть расстояние и время прибытия.' : 'Safarni boshlang — GPS masofa va yetib borish vaqtini ko‘rsatadi.';
+      }
+    } catch {}
+  }
+  const liveDot = document.getElementById('liveDot');
+  if (liveDot) new MutationObserver(refreshNavigationLayout).observe(liveDot, { attributes: true, attributeFilter: ['class'] });
+  const summary = document.getElementById('summaryTitle');
+  if (summary) new MutationObserver(refreshNavigationLayout).observe(summary, { childList: true });
+  document.getElementById('dayTabs')?.addEventListener('click', () => queueMicrotask(refreshNavigationLayout));
+  selector.addEventListener('change', refreshNavigationLayout);
+  refreshNavigationLayout();
+
 })();
