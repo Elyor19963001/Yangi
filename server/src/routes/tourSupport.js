@@ -360,7 +360,11 @@ router.post('/support', asyncHandler(async (req, res) => {
   const days = inputDays.map((day, index) => {
     const anchor = anchorFor(day);
     const restaurants = nearby(services.rows, anchor, 'restaurant', 4);
-    const hotels = nearby(services.rows, anchor, 'hotel', 12);
+    const hotels = nearby(services.rows, anchor, 'hotel', 10);
+    const hotelIds = new Set(hotels.map(row => row.id));
+    nearby(services.rows.filter(row => row.source === 'Official hotel website'), anchor, 'hotel', 6).forEach(row => {
+      if (!hotelIds.has(row.id)) { hotels.push(row); hotelIds.add(row.id); }
+    });
     const taxiPoints = nearby(services.rows, anchor, 'taxi', 3);
     const recommendations = {
       restaurant: chooseRecommended(services.rows, anchor, 'restaurant', selected, profile),

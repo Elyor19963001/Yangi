@@ -68,15 +68,15 @@
     ],
     "photos": [
       {
-        "url": "https://www.hilton.com/im/en/SKDDBGI/17978486/img-5561.jpg?rw=960&rh=640",
+        "url": "https://www.hilton.com/im/en/SKDDBGI/17978486/img-5561.jpg?impolicy=crop&cw=5000&ch=2799&gravity=NorthWest&xposition=0&yposition=162&rw=768&rh=430",
         "caption": "Mehmonxona tashqi ko‘rinishi"
       },
       {
-        "url": "https://www.hilton.com/im/en/SKDDBGI/17960912/img-6431ready.jpg?rw=960&rh=640",
+        "url": "https://www.hilton.com/im/en/SKDDBGI/17960912/img-6431ready.jpg?impolicy=crop&cw=5000&ch=2799&gravity=NorthWest&xposition=0&yposition=162&rw=768&rh=430",
         "caption": "King xona"
       },
       {
-        "url": "https://www.hilton.com/im/en/SKDDBGI/17960713/img-7158.jpg?rw=960&rh=640",
+        "url": "https://www.hilton.com/im/en/SKDDBGI/17960713/img-7158.jpg?impolicy=crop&cw=5000&ch=2799&gravity=NorthWest&xposition=0&yposition=162&rw=768&rh=430",
         "caption": "Yopiq basseyn"
       }
     ],
