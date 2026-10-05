@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const asyncHandler = require('../utils/asyncHandler');
 
+const referenceHotels = require('../data/samarkand-hotels.json');
 const router = express.Router();
 const CENTER = { latitude: 39.6542, longitude: 66.9597 };
 const OVERPASS_URLS = [
@@ -69,6 +70,13 @@ function parseServiceRows(elements = []) {
       opening_hours: tags.opening_hours || null,
       phone: tags.phone || tags['contact:phone'] || null,
       website: tags.website || tags['contact:website'] || null,
+      address: [tags['addr:street'], tags['addr:housenumber'], tags['addr:city']].filter(Boolean).join(', ') || null,
+      check_in: tags.check_in || null,
+      check_out: tags.check_out || null,
+      amenities: [tags.internet_access === 'wlan' ? 'Wi-Fi' : null, tags.parking === 'yes' ? 'Avtoturargoh' : null, tags.swimming_pool === 'yes' ? 'Basseyn' : null, tags.air_conditioning === 'yes' ? 'Konditsioner' : null].filter(Boolean),
+      photos: /^https?:\/\//i.test(tags.image || '') ? [{url: tags.image, caption: name}] : [],
+      photo_source_url: `https://www.openstreetmap.org/${el.type}/${el.id}`,
+      price_status: 'check-provider',
       stars: tags.stars || null,
       fee: tags.fee || null,
       charge: tags.charge || null,
@@ -78,6 +86,19 @@ function parseServiceRows(elements = []) {
     });
   }
   return rows;
+}
+
+function mergeReferenceHotels(rows) {
+  const merged = [...rows];
+  for (const reference of referenceHotels) {
+    const index = merged.findIndex(row => row.category === 'hotel' && (
+      haversine(row.latitude, row.longitude, reference.latitude, reference.longitude) < 100
+      && (String(row.name).toLowerCase().includes(reference.name.split(' ')[0].toLowerCase()))
+    ));
+    if (index >= 0) merged[index] = {...merged[index], ...reference, osm_source_url: merged[index].source_url};
+    else merged.push({...reference});
+  }
+  return merged;
 }
 
 async function discoverServices() {
@@ -105,6 +126,9 @@ async function discoverServices() {
   } catch {
     value = { provider: 'unavailable', endpoint: null, rows: [] };
   }
+  value.live_available = value.provider !== 'unavailable';
+  value.rows = mergeReferenceHotels(value.rows);
+  value.provider = value.live_available ? 'OpenStreetMap + official hotel reference' : 'Official hotel reference (OSM unavailable)';
   serviceCache = { at: Date.now(), value };
   return value;
 }
@@ -313,7 +337,7 @@ router.get('/support/status', (_req, res) => {
   res.json({
     version: '1.3.0',
     weather: 'Open-Meteo date-aware',
-    services: 'OpenStreetMap/Overpass with graceful empty fallback',
+    services: 'OpenStreetMap/Overpass + sourced hotel reference fallback',
     service_recommendation: 'distance + available metadata + traveler-profile fit; not a quality rating',
     budget: 'selected-service + user-planned-cost allocator',
   });
@@ -336,7 +360,7 @@ router.post('/support', asyncHandler(async (req, res) => {
   const days = inputDays.map((day, index) => {
     const anchor = anchorFor(day);
     const restaurants = nearby(services.rows, anchor, 'restaurant', 4);
-    const hotels = nearby(services.rows, anchor, 'hotel', 3);
+    const hotels = nearby(services.rows, anchor, 'hotel', 12);
     const taxiPoints = nearby(services.rows, anchor, 'taxi', 3);
     const recommendations = {
       restaurant: chooseRecommended(services.rows, anchor, 'restaurant', selected, profile),
@@ -367,12 +391,13 @@ router.post('/support', asyncHandler(async (req, res) => {
       services: services.provider,
     },
     warnings: [
-      services.rows.length ? null : 'Yaqin restoran, mehmonxona va taksi punktlari bo‘yicha jonli OSM xizmati hozir javob bermadi; tarixiy marshrut ishlashda davom etadi.',
+      services.live_available ? null : 'Jonli OSM xizmati javob bermadi. Tekshirilgan mehmonxona katalogi ko‘rsatilmoqda; restoran va taksi ma’lumotlari vaqtincha mavjud emas.',
       weather.length ? null : 'Qo‘shimcha ob-havo so‘rovi javob bermadi; asosiy marshrutdagi prognoz mavjud bo‘lsa o‘sha ko‘rsatiladi.',
-      'Restoran, mehmonxona va taksi yozuvlari OpenStreetMap ma’lumotidir; mavjudlik, narx va ish vaqtini xizmat ko‘rsatuvchidan tasdiqlang.',
+      'Mehmonxona kartasida har bir ma’lumot manbasi ko‘rsatiladi. Narx, bo‘sh xona va tarif shartlarini rasmiy bron sahifasida tekshiring.',
       'Avtomatik xizmat tanlovi sifat reytingi emas: masofa, OSMda mavjud metadata va sayohatchi profiliga moslik ishlatiladi.',
     ].filter(Boolean),
   });
 }));
 
 module.exports = router;
+
