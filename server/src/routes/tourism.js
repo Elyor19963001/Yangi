@@ -289,7 +289,7 @@ function audioGuideFor(poi = {}) {
     short: { ...guide.short },
     detailed: { ...guide.detailed },
     audio: {
-      engine: process.env.OPENAI_API_KEY ? 'openai-tts' : 'browser-fallback',
+      engine: guideAudioProvider('uz'),
       endpoint: `/api/tourism/audio-guide/${encodeURIComponent(guide.id)}`,
     },
   } : null;
@@ -316,6 +316,52 @@ function ttsConfig(lang) {
     },
   };
   return configs[lang] || null;
+}
+
+
+function azureSpeechConfig(lang) {
+  const region = String(process.env.AZURE_SPEECH_REGION || '').trim().toLowerCase();
+  const key = process.env.AZURE_SPEECH_KEY;
+  if (!key || !/^[a-z0-9]+$/.test(region)) return null;
+  const voices = {
+    uz: { locale: 'uz-UZ', voice: process.env.AZURE_TTS_VOICE_UZ || 'uz-UZ-MadinaNeural' },
+    en: { locale: 'en-US', voice: process.env.AZURE_TTS_VOICE_EN || 'en-US-JennyNeural' },
+    ru: { locale: 'ru-RU', voice: process.env.AZURE_TTS_VOICE_RU || 'ru-RU-SvetlanaNeural' },
+  };
+  const voice = voices[lang];
+  if (!voice) return null;
+  return { ...voice, key, region };
+}
+
+function guideAudioProvider(lang) {
+  if (azureSpeechConfig(lang)) return 'azure-speech';
+  return process.env.OPENAI_API_KEY ? 'openai-tts' : 'browser-fallback';
+}
+
+function escapeSpeechXml(value) {
+  return String(value).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[ch]));
+}
+
+async function generateAzureGuide(guide, lang, mode) {
+  const cfg = azureSpeechConfig(lang);
+  const input = guide?.[mode]?.[lang];
+  const rate = mode === 'detailed' ? '-5%' : '-2%';
+  const ssml = `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="${cfg.locale}"><voice name="${escapeSpeechXml(cfg.voice)}"><prosody rate="${rate}">${escapeSpeechXml(input)}</prosody></voice></speak>`;
+  const response = await axios.post(`https://${cfg.region}.tts.speech.microsoft.com/cognitiveservices/v1`, ssml, {
+    headers: {
+      'Ocp-Apim-Subscription-Key': cfg.key,
+      'Content-Type': 'application/ssml+xml',
+      'X-Microsoft-OutputFormat': 'audio-24khz-96kbitrate-mono-mp3',
+      'User-Agent': 'TourismForEveryone',
+      Accept: 'audio/mpeg',
+    },
+    responseType: 'arraybuffer',
+    timeout: 45_000,
+    maxContentLength: 15 * 1024 * 1024,
+  });
+  const buffer = Buffer.from(response.data);
+  if (!buffer.length) throw Object.assign(new Error('Audio xizmati bo‘sh javob qaytardi.'), { statusCode: 502 });
+  return buffer;
 }
 
 function limitedTtsRequest(req) {
@@ -347,8 +393,9 @@ async function generateTtsMp3(guide, lang, mode) {
     error.statusCode = 404;
     throw error;
   }
+  if (azureSpeechConfig(lang)) return generateAzureGuide(guide, lang, mode);
   if (!process.env.OPENAI_API_KEY) {
-    const error = new Error('Server AI audio hali sozlanmagan.');
+    const error = new Error('Server audio xizmati hali sozlanmagan.');
     error.statusCode = 503;
     throw error;
   }
@@ -1472,13 +1519,14 @@ router.get('/status', (_req, res) => {
     official_catalog_checked_on: '2026-09-18',
     audio_guide_languages: ['uz-UZ','en-US','ru-RU'],
     audio_guide_poi_count: AUDIO_GUIDES.length,
-    professional_audio_configured: Boolean(process.env.OPENAI_API_KEY),
-    professional_audio_model: process.env.OPENAI_API_KEY ? (process.env.TOUR_TTS_MODEL || 'gpt-4o-mini-tts') : null,
+    professional_audio_configured: guideAudioProvider('uz') !== 'browser-fallback',
+    professional_audio_provider: guideAudioProvider('uz'),
+    professional_audio_model: azureSpeechConfig('uz') ? 'Azure Neural TTS' : process.env.OPENAI_API_KEY ? (process.env.TOUR_TTS_MODEL || 'gpt-4o-mini-tts') : null,
     professional_audio_format: 'mp3',
-    professional_audio_voices: process.env.OPENAI_API_KEY ? {
-      uz: process.env.TOUR_TTS_VOICE_UZ || 'cedar',
-      en: process.env.TOUR_TTS_VOICE_EN || 'marin',
-      ru: process.env.TOUR_TTS_VOICE_RU || 'cedar',
+    professional_audio_voices: guideAudioProvider('uz') !== 'browser-fallback' ? {
+      uz: azureSpeechConfig('uz')?.voice || ttsConfig('uz').voice,
+      en: azureSpeechConfig('en')?.voice || ttsConfig('en').voice,
+      ru: azureSpeechConfig('ru')?.voice || ttsConfig('ru').voice,
     } : null,
     note: 'Registon va ayrim Samarqand davlat muzey-qo‘riqxonasi obyektlari uchun rasmiy sahifalarda e’lon qilingan ish vaqti/tariflar katalogi ishlatiladi; qolgan joylarda OSM fallback. Narxlar o‘zgarishi mumkin, xarid oldidan manbani tekshiring.',
   });
@@ -1493,8 +1541,9 @@ router.get('/audio-guide/:guideId', asyncHandler(async (req, res) => {
   if (!guide) return res.status(404).json({ error: 'Audio gid topilmadi.' });
 
   const model = process.env.TOUR_TTS_MODEL || 'gpt-4o-mini-tts';
-  const voice = ttsConfig(lang)?.voice || 'cedar';
-  const cacheKey = `${guideId}:${lang}:${mode}:${model}:${voice}`;
+  const provider = guideAudioProvider(lang);
+  const voice = azureSpeechConfig(lang)?.voice || ttsConfig(lang)?.voice || 'cedar';
+  const cacheKey = `${guideId}:${lang}:${mode}:${provider}:${model}:${voice}`;
   let audio = ttsCache.get(cacheKey);
   if (!audio) {
     let pending = ttsInFlight.get(cacheKey);
@@ -1521,7 +1570,7 @@ router.get('/audio-guide/:guideId', asyncHandler(async (req, res) => {
     'Content-Type': 'audio/mpeg',
     'Content-Length': String(audio.length),
     'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
-    'X-Audio-Engine': 'OpenAI',
+    'X-Audio-Engine': provider,
     'X-Audio-Model': model,
     'X-Audio-Voice': voice,
     'X-Audio-Mode': mode,
@@ -1592,7 +1641,7 @@ router.post('/plan', asyncHandler(async (req, res) => {
       optimization: [...new Set(days.map((d) => d.optimization?.method).filter(Boolean))],
       weather: weatherBundle.source,
       operational: 'Official Registan/Samarkand Museum-Reserve catalog + OpenStreetMap fallback',
-      audio_guide: process.env.OPENAI_API_KEY ? 'Server-generated MP3 via OpenAI TTS with browser fallback' : 'Browser Speech Synthesis fallback until server AI audio is configured',
+      audio_guide: guideAudioProvider('uz') !== 'browser-fallback' ? `Server MP3 via ${guideAudioProvider('uz')}` : 'Native-language device voice until server audio is configured',
       ai: intent.engine === 'openai' ? `OpenAI ${intent.model || ''}`.trim() : 'Local multilingual preference parser',
     },
     warnings: [
