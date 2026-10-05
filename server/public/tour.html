@@ -19,10 +19,12 @@
   <link rel="stylesheet" href="/tour-poi-v19.css?v=19.3" />
   <link rel="stylesheet" href="/tour-dashboard-v23.css?v=27.0" />
   <link rel="stylesheet" href="/tour-poi-clarity.css?v=1" />
+  <link rel="stylesheet" href="/tour-hotels.css?v=28.0" />
   <script src="/vendor/leaflet/leaflet.js" defer></script>
   <script src="/vendor/maplibre/maplibre-gl.js" defer></script>
   <script src="/vendor/maplibre-leaflet/leaflet-maplibre-gl.js" defer></script>
-  <script src="/tour-app.js?v=26.0" defer></script>
+  <script src="/tour-app.js?v=28.0" defer></script>
+  <script src="/tour-hotels.js?v=28.0" defer></script>
   <script src="/map-3d.js?v=25.0" defer></script>
   <script src="/map-style-switcher.js?v=25.0" defer></script>
   <script src="/tour-v2.js?v=19.1.1" defer></script>
@@ -77,6 +79,10 @@
 
     <section class="result-shell hidden" id="resultShell">
       <div class="dashboard-heading"><div><span data-i18n="dashboardEyebrow">INTERAKTIV SAYOHAT XARITASI</span><h2 data-i18n="dashboardTitle">Marshrut va obidalar</h2><p data-i18n="dashboardHelp">Kunni tanlang, xaritadagi manzilni bosing va 3D obidani oching.</p></div><div class="dashboard-steps"><span data-i18n="stepOne">1 · Kunni tanlang</span><span data-i18n="stepTwo">2 · Joyni bosing</span><span data-i18n="stepThree">3 · 3D ni ko‘ring</span></div></div>
+      <div class="hotel-discovery-bar" id="hotelDiscoveryBar" hidden>
+        <div><strong>🏨 Qayerda tunaysiz?</strong><span id="hotelDiscoveryInfo" role="status"></span></div>
+        <div class="hotel-bar-actions"><button id="hotelMarkersToggle" type="button" aria-pressed="true">✓ Xaritada ko‘rsatish</button><button id="hotelListOpen" type="button">Mehmonxonalarni ko‘rish →</button></div>
+      </div>
       <aside class="itinerary-panel">
         <div class="summary-head">
           <span class="eyebrow" data-i18n="itinerary">SAYOHAT REJASI</span>
@@ -123,6 +129,11 @@
 
 
   </main>
+  <dialog id="hotelDialog" class="hotel-dialog" aria-labelledby="hotelDialogTitle">
+    <div class="hotel-dialog-top"><div><span>SAMARQAND · TURAR JOY</span><h2 id="hotelDialogTitle">Mehmonxonalar</h2></div><button id="hotelDialogClose" type="button" aria-label="Mehmonxona oynasini yopish">✕</button></div>
+    <div id="hotelDialogContent"></div>
+  </dialog>
   <div class="toast hidden" id="toast"></div>
 </body>
 </html>
+
