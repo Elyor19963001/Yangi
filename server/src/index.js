@@ -56,6 +56,9 @@ app.use(helmet({
         'https://thumb.wikimedia.org',
         'https://malikahotel.com',
         'https://www.hilton.com',
+        'https://silkroad-samarkand.com',
+        'https://renaissancehotel.uz',
+        'https://guremirpalace.uz',
       ],
       connectSrc: ["'self'", 'ws:', 'wss:', 'https://tiles.openfreemap.org', 'https://server.arcgisonline.com'],
       workerSrc: ["'self'", 'blob:'],
@@ -279,3 +282,4 @@ io.on('connection', (socket) => {
 
 const port = Number(process.env.PORT || 4000);
 server.listen(port, () => console.log(`API + chat + maps + agro ML + Live GPS AI tourism + MapLibre 3D buildings + Playmobile-ready OTP + Research Pilot Architecture + split PII Vault TLS controls v1.8.1 on Node 22 listening on http://localhost:${port}`));
+
