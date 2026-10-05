@@ -37,6 +37,8 @@
   .qrp-3d-select-label>span{display:none}
   .qrp-3d-select-label select{width:100%;max-width:none}
   .qrp-3d-shell .qrp-3d-actions button{font-size:12px!important;padding:8px!important}
+  .qrp-3d-settings{position:static}
+  .qrp-3d-settings-options{right:10px;top:calc(100% + 6px)}
   .qrp-3d-settings summary{font-size:12px;padding:0 10px}
   .qrp-3d-shell .qrp-3d-note{max-height:66px}
   .qrp-3d-note strong{font-size:12px!important}
