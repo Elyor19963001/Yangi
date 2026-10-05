@@ -1,5 +1,5 @@
 /* Hotel discovery: sourced facts, distinct markers, accessible responsive details. */
-const hotelExplorer = {rows:[],markers:[],visible:true,currentId:null,photoIndex:0,query:'',filter:'all'};
+const hotelExplorer = {rows:[],markers:[],visible:true,currentId:null,photoIndex:0,query:'',filter:'all',clusterIds:null,mapEventsBound:false};
 const hotelBedIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5v15M21 10v10M3 16h18M3 10h18v6M6 8h5v4H6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function hotelUrl(value) {try {const u=new URL(value);return ['https:','http:'].includes(u.protocol)?u.href:'';} catch{return '';}}
 function hotelLang(){return document.getElementById('dashboardLanguage')?.value||'uz';}
@@ -17,20 +17,32 @@ function renderHotelExplorer(daySupport){
   bar.querySelector('strong').textContent=ht('🏨 Qayerda tunaysiz?','🏨 Where will you stay?','🏨 Где остановиться?');
   document.getElementById('hotelDiscoveryInfo').textContent=hotelExplorer.rows.length?`${hotelExplorer.rows.length} ${ht('turar joy · ko‘k 🛏 belgini bosing','stays · tap the blue bed marker','отелей · нажмите синюю метку')}`:ht('Hozir ma’lumot olinmadi. Qayta marshrut tuzib ko‘ring.','Hotel data is unavailable. Try planning again.','Данные недоступны. Постройте маршрут заново.');
   document.getElementById('hotelListOpen').textContent=ht('Mehmonxonalarni ko‘rish →','Explore hotels →','Посмотреть отели →');
+  drawHotelMarkers();
+  if(!hotelExplorer.mapEventsBound){state.map.on('zoomend moveend',drawHotelMarkers);hotelExplorer.mapEventsBound=true;}
+  updateHotelToggle();
+}
+function drawHotelMarkers(){
+  hotelExplorer.markers.forEach(m=>state.map.removeLayer(m));hotelExplorer.markers=[];
+  const groups=[];
   hotelExplorer.rows.forEach(row=>{
-    const icon=L.divIcon({className:'hotel-map-marker',html:hotelBedIcon,iconSize:[44,44],iconAnchor:[22,22]});
-    const marker=L.marker([row.latitude,row.longitude],{icon,title:row.name,alt:ht('Mehmonxona: ','Hotel: ','Отель: ')+row.name,zIndexOffset:200});
-    marker.on('click',()=>openHotelDetails(row.id));
+    const point=state.map.latLngToLayerPoint([row.latitude,row.longitude]);
+    const group=groups.find(g=>Math.hypot(g.point.x-point.x,g.point.y-point.y)<48);
+    if(group)group.rows.push(row);else groups.push({point,rows:[row]});
+  });
+  groups.forEach(group=>{
+    const row=group.rows[0];const count=group.rows.length;
+    const icon=L.divIcon({className:'hotel-map-marker',html:hotelBedIcon+(count>1?`<b class="hotel-marker-count">${count}</b>`:''),iconSize:[44,44],iconAnchor:[22,22]});
+    const marker=L.marker([row.latitude,row.longitude],{icon,title:count>1?`${count} ${ht('mehmonxona','hotels','отелей')}`:row.name,alt:count>1?`${count} ${ht('mehmonxona','hotels','отелей')}`:ht('Mehmonxona: ','Hotel: ','Отель: ')+row.name,zIndexOffset:200});
+    marker.on('click',()=>{if(count===1)openHotelDetails(row.id);else{hotelExplorer.clusterIds=group.rows.map(r=>r.id);hotelExplorer.query='';hotelExplorer.filter='all';openHotelList(true);}});
     if(hotelExplorer.visible)marker.addTo(state.map);
     hotelExplorer.markers.push(marker);
   });
-  updateHotelToggle();
 }
 function updateHotelToggle(){const b=document.getElementById('hotelMarkersToggle');if(!b)return;b.setAttribute('aria-pressed',String(hotelExplorer.visible));b.textContent=hotelExplorer.visible?ht('✓ Xaritada ko‘rsatish','✓ Show on map','✓ На карте'):ht('Xaritada ko‘rsatish','Show on map','Показать на карте');}
-function hotelListRows(){return [...hotelExplorer.rows].sort((a,b)=>hotelKnownPhotos(b).length-hotelKnownPhotos(a).length||Number(a.distance_m||0)-Number(b.distance_m||0)).filter(r=>String(r.name+' '+(r.address||'')).toLocaleLowerCase().includes(hotelExplorer.query.toLocaleLowerCase())&&(hotelExplorer.filter==='all'||(r.amenities||[]).some(a=>hotelExplorer.filter==='wifi'?/wi.?fi/i.test(a):/parking|avtoturargoh/i.test(a))));}
+function hotelListRows(){return [...hotelExplorer.rows].sort((a,b)=>hotelKnownPhotos(b).length-hotelKnownPhotos(a).length||Number(a.distance_m||0)-Number(b.distance_m||0)).filter(r=>(!hotelExplorer.clusterIds||hotelExplorer.clusterIds.includes(r.id))&&String(r.name+' '+(r.address||'')).toLocaleLowerCase().includes(hotelExplorer.query.toLocaleLowerCase())&&(hotelExplorer.filter==='all'||(r.amenities||[]).some(a=>hotelExplorer.filter==='wifi'?/wi.?fi/i.test(a):/parking|avtoturargoh/i.test(a))));}
 function hotelListCards(){const rows=hotelListRows();return rows.length?rows.map(r=>{const photo=hotelKnownPhotos(r)[0];return `<button type="button" class="hotel-list-card" data-hotel-open="${esc(r.id)}"><div class="hotel-list-photo">${photo?`<img src="${esc(hotelUrl(photo.url))}" alt="${esc(r.name)}" loading="lazy" referrerpolicy="no-referrer">`:hotelBedIcon}</div><div><span class="hotel-source-pill">${esc(hotelSourceLabel(r))}</span><strong>${esc(r.name)}</strong><small>${esc(r.address||ht('Manzil kartada','See details','Адрес в карточке'))}</small><small>${Number(r.distance_m)>0?`${formatDistance(r.distance_m)} · ${ht('marshrut markazidan','from route center','от центра маршрута')}`:''}</small><b>${hotelPrice(r)} →</b></div></button>`;}).join(''):`<p class="hotel-empty">${ht('Bu tanlovga mos mehmonxona topilmadi.','No hotels match your selection.','Нет подходящих отелей.')}</p>`;}
 function showHotelDialog(){const dialog=document.getElementById('hotelDialog');if(!dialog.open)dialog.showModal();}
-function openHotelList(){hotelExplorer.currentId=null;document.getElementById('hotelDialogTitle').textContent=ht('Mehmonxonalar','Hotels','Отели');document.getElementById('hotelDialogContent').innerHTML=`<div class="hotel-list-intro"><p>${esc(hotelDateSummary())}</p><small>${ht('Masofalar to‘g‘ri chiziq bo‘yicha. Narx va bo‘sh xonalarni mehmonxona saytida tasdiqlang.','Distances are straight-line estimates. Confirm rates and availability on the hotel website.','Расстояние по прямой. Цены и наличие номеров уточняйте на сайте отеля.')}</small></div><div class="hotel-list-tools"><label>${ht('Qidirish','Search','Поиск')}<input id="hotelSearch" type="search" placeholder="${ht('Mehmonxona nomi','Hotel name','Название отеля')}" value="${esc(hotelExplorer.query)}"></label><label>${ht('Qulaylik','Amenity','Удобства')}<select id="hotelAmenity"><option value="all">${ht('Barchasi','All','Все')}</option><option value="wifi">Wi-Fi</option><option value="parking">${ht('Avtoturargoh','Parking','Парковка')}</option></select></label></div><div class="hotel-list-grid" id="hotelListGrid">${hotelListCards()}</div>`;document.getElementById('hotelAmenity').value=hotelExplorer.filter;showHotelDialog();}
+function openHotelList(keepCluster=false){if(keepCluster!==true)hotelExplorer.clusterIds=null;hotelExplorer.currentId=null;document.getElementById('hotelDialogTitle').textContent=ht('Mehmonxonalar','Hotels','Отели');document.getElementById('hotelDialogContent').innerHTML=`<div class="hotel-list-intro"><p>${esc(hotelDateSummary())}</p><small>${ht('Masofalar to‘g‘ri chiziq bo‘yicha. Narx va bo‘sh xonalarni mehmonxona saytida tasdiqlang.','Distances are straight-line estimates. Confirm rates and availability on the hotel website.','Расстояние по прямой. Цены и наличие номеров уточняйте на сайте отеля.')}</small></div><div class="hotel-list-tools"><label>${ht('Qidirish','Search','Поиск')}<input id="hotelSearch" type="search" placeholder="${ht('Mehmonxona nomi','Hotel name','Название отеля')}" value="${esc(hotelExplorer.query)}"></label><label>${ht('Qulaylik','Amenity','Удобства')}<select id="hotelAmenity"><option value="all">${ht('Barchasi','All','Все')}</option><option value="wifi">Wi-Fi</option><option value="parking">${ht('Avtoturargoh','Parking','Парковка')}</option></select></label></div><div class="hotel-list-grid" id="hotelListGrid">${hotelListCards()}</div>`;document.getElementById('hotelAmenity').value=hotelExplorer.filter;showHotelDialog();}
 function hotelPhotoHtml(row){const photos=hotelKnownPhotos(row);const i=hotelExplorer.photoIndex%Math.max(1,photos.length);return photos.length?`<img id="hotelHeroImage" src="${esc(hotelUrl(photos[i].url))}" alt="${esc(photos[i].caption||row.name)}" referrerpolicy="no-referrer"><div class="hotel-photo-controls"><button type="button" data-hotel-photo="-1" aria-label="${ht('Oldingi rasm','Previous photo','Предыдущее фото')}">‹</button><span>${i+1} / ${photos.length}</span><button type="button" data-hotel-photo="1" aria-label="${ht('Keyingi rasm','Next photo','Следующее фото')}">›</button></div>`:`<div class="hotel-photo-empty">${hotelBedIcon}<strong>${ht('Rasm hali qo‘shilmagan','No photos available yet','Фото пока нет')}</strong></div>`;}
 function openHotelDetails(id){
   const row=hotelExplorer.rows.find(r=>r.id===id);if(!row)return;
