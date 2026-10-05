@@ -1,0 +1,92 @@
+[
+  {
+    "id": "official/malika-prime",
+    "category": "hotel",
+    "name": "Malika Prime Hotel",
+    "latitude": 39.6494,
+    "longitude": 66.966715,
+    "address": "Universitet xiyoboni, 1/4, Samarqand",
+    "phone": "+998 66 239 13 33",
+    "email": "malika-hotel@mail.ru",
+    "website": "https://malikahotel.com/",
+    "booking_url": "https://malikahotel.com/ru-ru/booking/",
+    "check_in": "14:00",
+    "check_out": "12:00",
+    "opening_hours": "24/7",
+    "amenities": [
+      "Wi-Fi",
+      "Avtoturargoh",
+      "Konditsioner",
+      "Nonushta mavjud",
+      "24 soat resepshen",
+      "Kir yuvish xizmati"
+    ],
+    "photos": [
+      {
+        "url": "https://malikahotel.com/img/d290b000ac30bd36.webp",
+        "caption": "Malika Prime · rasmiy galereya"
+      },
+      {
+        "url": "https://malikahotel.com/img/f468cea5f0fd928e.webp",
+        "caption": "Malika Prime · rasmiy galereya"
+      },
+      {
+        "url": "https://malikahotel.com/img/7457951fe56e6bb9.webp",
+        "caption": "Malika Prime · rasmiy galereya"
+      }
+    ],
+    "photo_source_url": "https://malikahotel.com/ru-ru/photos/",
+    "policy_note": "Pasport yoki ID karta kerak. Xonalarda chekish taqiqlangan. Nonushta va bekor qilish shartlarini tanlangan tarifda tekshiring.",
+    "source": "Official hotel website",
+    "source_url": "https://malikahotel.com/ru-ru/contacts/",
+    "policy_source_url": "https://malikahotel.com/ru-ru/about/",
+    "verified_at": "2026-10-05",
+    "price_status": "check-provider",
+    "price": null
+  },
+  {
+    "id": "official/hilton-garden-samarkand",
+    "category": "hotel",
+    "name": "Hilton Garden Inn Samarkand",
+    "latitude": 39.673565,
+    "longitude": 66.966812,
+    "address": "Dahbed yo‘li, 2, Samarqand",
+    "phone": "+998 55 704 07 07",
+    "email": "SKDDB_GM@Hilton.com",
+    "website": "https://www.hilton.com/en/hotels/skddbgi-hilton-garden-inn-samarkand/",
+    "booking_url": "https://www.hilton.com/en/hotels/skddbgi-hilton-garden-inn-samarkand/",
+    "check_in": "14:00",
+    "check_out": "12:00",
+    "opening_hours": null,
+    "amenities": [
+      "Bepul Wi-Fi",
+      "Bepul avtoturargoh",
+      "Yopiq basseyn",
+      "Fitnes",
+      "Restoran",
+      "Xonaga xizmat"
+    ],
+    "photos": [
+      {
+        "url": "https://www.hilton.com/im/en/SKDDBGI/17978486/img-5561.jpg?rw=960&rh=640",
+        "caption": "Mehmonxona tashqi ko‘rinishi"
+      },
+      {
+        "url": "https://www.hilton.com/im/en/SKDDBGI/17960912/img-6431ready.jpg?rw=960&rh=640",
+        "caption": "King xona"
+      },
+      {
+        "url": "https://www.hilton.com/im/en/SKDDBGI/17960713/img-7158.jpg?rw=960&rh=640",
+        "caption": "Yopiq basseyn"
+      }
+    ],
+    "photo_source_url": "https://www.hilton.com/en/hotels/skddbgi-hilton-garden-inn-samarkand/gallery/",
+    "policy_note": "Nonushta qo‘shimcha haq evaziga. Uy hayvonlariga ruxsat yo‘q. Aeroport transferi mavjud emas. Kirish vaqtini bron qilishda tasdiqlang.",
+    "source": "Official hotel website",
+    "source_url": "https://www.hilton.com/en/hotels/skddbgi-hilton-garden-inn-samarkand/hotel-info/",
+    "policy_source_url": "https://www.hilton.com/en/hotels/skddbgi-hilton-garden-inn-samarkand/hotel-info/",
+    "verified_at": "2026-10-05",
+    "price_status": "check-provider",
+    "price": null
+  }
+]
