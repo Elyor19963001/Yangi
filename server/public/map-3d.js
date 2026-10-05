@@ -10,9 +10,36 @@
   let photoMap = false;
   let originalQuality = false;
   const LANDMARKS = {
-    registan: { name: 'Registon', aliases: /registon|registan/i, center: [66.975868, 39.654694] },
-    'gur-amir': { name: 'Go‘ri Amir', aliases: /go.ri amir|gur.?amir|gur.?emir/i, center: [66.968, 39.649] },
-    'bibi-khanum': { name: 'Bibixonim', aliases: /bibi.?xonim|bibi.?khanym|bibi.?khanum/i, center: [66.9805, 39.6609] },
+    registan: {
+      name: 'Registon',
+      aliases: /registon|registan/i,
+      center: [66.975868, 39.654694],
+      targetSize: 185,
+      zoom: 16.45,
+      bearing: -22,
+      rotation: 0,
+      trimGround: true,
+    },
+    'gur-amir': {
+      name: 'Go‘ri Amir',
+      aliases: /go.ri amir|gur.?amir|gur.?emir/i,
+      center: [66.968, 39.649],
+      targetSize: 92,
+      zoom: 17.55,
+      bearing: -28,
+      rotation: 0,
+      trimGround: true,
+    },
+    'bibi-khanum': {
+      name: 'Bibixonim',
+      aliases: /bibi.?xonim|bibi.?khanym|bibi.?khanum/i,
+      center: [66.9805, 39.6609],
+      targetSize: 125,
+      zoom: 17.15,
+      bearing: -18,
+      rotation: 0,
+      trimGround: true,
+    },
   };
   const MODEL_IDS = {
     af54f5280eb249beb6501eab4769c351: 'registan',
@@ -235,6 +262,8 @@
         this.scene.add(sun);
         this.renderer = new THREE.WebGLRenderer({ canvas: map.getCanvas(), context: gl, antialias: true });
         this.renderer.autoClear = false;
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.outputColorSpace = THREE.SRGBColorSpace;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.35;
@@ -243,23 +272,72 @@
         loader.load('/heritage/' + selected.id + '.glb' + (original ? '?quality=original&v=2' : '?v=2'), (gltf) => {
           draco.dispose();
           if (activeLandmark !== selected || this.disposed) return;
-          // The scan has a local origin and includes surrounding terrain. Center its
-          // bounds on the POI, with the lowest point on the map's ground plane.
+          // Normalize downloaded photogrammetry models before placing them on the map.
+          // Different sources use different scene units; treating every raw unit as one
+          // metre is what made some monuments appear oversized or malformed.
+          const rawBox = new THREE.Box3().setFromObject(gltf.scene);
+          const rawSize = rawBox.getSize(new THREE.Vector3());
+          const rawFootprint = Math.max(rawSize.x, rawSize.z);
+          const targetSize = Number(selected.targetSize || 100);
+          const fitScale = rawFootprint > 0.0001 ? targetSize / rawFootprint : 1;
+          gltf.scene.scale.setScalar(fitScale);
+          gltf.scene.rotation.y = THREE.MathUtils.degToRad(Number(selected.rotation || 0));
+          gltf.scene.updateMatrixWorld(true);
+
+          // Photogrammetry downloads often contain a very large, almost-flat capture
+          // surface around the monument. Hide only that apron; keep architectural meshes.
+          if (selected.trimGround) {
+            const scaledBox = new THREE.Box3().setFromObject(gltf.scene);
+            const scaledSize = scaledBox.getSize(new THREE.Vector3());
+            gltf.scene.traverse((part) => {
+              if (!part.isMesh || !part.geometry) return;
+              const partBox = new THREE.Box3().setFromObject(part);
+              const partSize = partBox.getSize(new THREE.Vector3());
+              const broad = Math.max(partSize.x, partSize.z) > Math.max(scaledSize.x, scaledSize.z) * 0.82;
+              const flat = partSize.y < Math.max(0.35, scaledSize.y * 0.025);
+              if (broad && flat) part.visible = false;
+            });
+          }
+
+          // Recalculate bounds after scale/trim, center X/Z on the landmark coordinate
+          // and put the lowest visible point on the ground plane.
           const box = new THREE.Box3().setFromObject(gltf.scene);
           const center = box.getCenter(new THREE.Vector3());
           gltf.scene.position.x -= center.x;
           gltf.scene.position.z -= center.z;
           gltf.scene.position.y -= box.min.y;
-          // GLTFLoader preserves the scan's photographic base-color textures.
-          // Improve the grazing-angle detail without changing the original colors.
+
+          // Preserve photographic PBR textures. If a source mesh has no texture, use
+          // a warm Samarkand masonry fallback; dome/roof-like meshes get turquoise.
+          const maxAnisotropy = Math.min(8, this.renderer.capabilities.getMaxAnisotropy());
+          const totalHeight = Math.max(1, box.max.y - box.min.y);
           gltf.scene.traverse((part) => {
+            if (!part.isMesh) return;
+            part.castShadow = true;
+            part.receiveShadow = true;
+            const partBox = new THREE.Box3().setFromObject(part);
+            const relativeHeight = (partBox.getCenter(new THREE.Vector3()).y - box.min.y) / totalHeight;
+            const roofLike = /(dome|cupola|gumbaz|roof|tile|turq|blue|minaret)/i.test(part.name || '') || relativeHeight > 0.68;
             const materials = Array.isArray(part.material) ? part.material : [part.material];
-            for (const material of materials) {
-              if (material?.map) material.map.anisotropy = Math.min(8, this.renderer.capabilities.getMaxAnisotropy());
-            }
+            part.material = materials.map((material) => {
+              if (!material) return material;
+              if (material.map) {
+                material.map.colorSpace = THREE.SRGBColorSpace;
+                material.map.anisotropy = maxAnisotropy;
+                material.needsUpdate = true;
+                return material;
+              }
+              const fallback = material.clone();
+              if (fallback.color) fallback.color.set(roofLike ? '#2d9faf' : '#c7aa78');
+              if ('roughness' in fallback) fallback.roughness = 0.82;
+              if ('metalness' in fallback) fallback.metalness = 0.02;
+              fallback.needsUpdate = true;
+              return fallback;
+            });
+            if (!Array.isArray(part.material) && part.material.length === 1) part.material = part.material[0];
           });
           this.scene.add(gltf.scene);
-          setLandmarkStatus(selected.name + (original ? ' · asl 3D skan' : ' · rangli 3D'), 'Haqiqiy obida fotosuratlaridan tayyorlangan 3D skan taxminiy joyga qo‘yildi. Yaqinlashtirib, aylantirib ko‘ring.');
+          setLandmarkStatus(selected.name + (original ? ' · asl 3D skan' : ' · rangli 3D'), '3D model o‘lchami xaritadagi real metrga moslandi, ortiqcha fotogrammetriya maydoni kesildi va teksturasiz qismlar uchun tabiiy ranglar qo‘llandi.');
           map.triggerRepaint();
         }, (progress) => {
           if (progress.total && activeLandmark === selected && !this.disposed) {
@@ -324,7 +402,13 @@
     source.href = 'https://sketchfab.com/models/' + Object.keys(MODEL_IDS).find((key) => MODEL_IDS[key] === id);
     source.hidden = false;
     setLandmarkStatus(LANDMARKS[id].name + ' · yuklanmoqda', 'Obidaning 3D skani xaritada yuklanmoqda…');
-    glMap.flyTo({ center, zoom: id === 'registan' ? 16.7 : 17.5, pitch: 65, bearing: -25, duration: 1100 });
+    glMap.flyTo({
+      center,
+      zoom: Number(LANDMARKS[id].zoom || 17.3),
+      pitch: 66,
+      bearing: Number(LANDMARKS[id].bearing || -25),
+      duration: 1100,
+    });
     if (glMap.isStyleLoaded()) attachLandmark();
     else glMap.once('load', attachLandmark);
     return true;
