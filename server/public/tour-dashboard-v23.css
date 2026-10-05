@@ -91,3 +91,66 @@ body.dashboard-international .planner-actions label span{display:block;font-size
   .itinerary-panel button,.planner-actions button,.day-tab{min-height:44px}
 }
 @media(max-height:500px) and (orientation:landscape){.map-panel{height:80dvh!important;min-height:310px!important}}
+
+/* One navigation card, clear primary action, and no overlapping sticky bars. */
+.itinerary-panel .result-toolbar{position:static!important;top:auto!important;z-index:auto!important;margin:0 0 18px!important;padding:0 0 14px!important;display:flex!important;flex-wrap:wrap!important;gap:8px!important;overflow:visible!important;border-bottom:1px solid #dce7df;background:transparent}
+.itinerary-panel .result-toolbar strong,.itinerary-panel .result-toolbar [data-start-gps]{display:none!important}
+.itinerary-panel .result-tool{min-height:44px!important;padding:9px 12px!important;font-size:13px!important;font-weight:650}
+.itinerary-panel .summary-head h2{font-size:24px;line-height:1.25;overflow-wrap:anywhere}
+.itinerary-panel .summary-head p{font-size:14px;line-height:1.5}
+.itinerary-panel .badges{gap:6px}.itinerary-panel .badges span{font-size:12px;padding:6px 9px;line-height:1.35}
+.itinerary-panel .dashboard-gps-toggle{padding:12px 0;background:none;border:0;font-size:15px;min-height:48px;margin-top:14px}
+.itinerary-panel .live-card{margin:0 0 18px!important;padding:16px!important;background:#fff;border:1px solid #d9e6dd;border-radius:20px!important;box-shadow:0 5px 18px #183f2b09}
+.itinerary-panel .live-head{gap:8px;align-items:center;padding-bottom:12px;border-bottom:1px solid #e5ede7}
+.itinerary-panel .live-head strong{font-size:13px!important;font-weight:650;color:#385e4b}
+.itinerary-panel .live-center{min-height:44px;font-size:12px!important;padding:8px;background:#f0f6f2}
+.itinerary-panel .live-center:disabled{display:none}
+.itinerary-panel .live-next{padding:16px 0!important;margin:0!important;border:0!important;background:none!important;box-shadow:none!important}
+.itinerary-panel .live-next>span{font-size:12px!important;letter-spacing:0!important;text-transform:none!important;color:#547b65}
+.itinerary-panel .live-next>strong{font-size:22px!important;line-height:1.25;margin:6px 0;overflow-wrap:anywhere}
+.itinerary-panel .live-next>small{font-size:13px!important;line-height:1.5;color:#587365}
+.itinerary-panel .live-actions{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.itinerary-panel .live-actions .btn{min-height:46px;font-size:14px;padding:12px 14px;border-radius:12px;font-weight:700;flex:1 1 auto}
+.itinerary-panel .live-actions #startLiveBtn{flex-basis:100%}
+.itinerary-panel .live-actions .btn:disabled{display:none}
+.itinerary-panel .live-actions #stopLiveBtn{background:#fff6f5;color:#a13830;border:1px solid #e9c9c5}
+.itinerary-panel .nav-maneuver-card{position:static!important;top:auto!important;z-index:auto!important;margin:0 0 14px;padding:12px!important;grid-template-columns:44px minmax(0,1fr);box-shadow:none}
+.itinerary-panel .nav-maneuver-icon{width:40px;height:40px;font-size:25px}
+.itinerary-panel .nav-maneuver-copy>strong{font-size:16px!important;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.35}
+.itinerary-panel .nav-maneuver-copy>span{font-size:12px!important;letter-spacing:0;text-transform:none}
+.itinerary-panel .nav-maneuver-copy>small{font-size:11px!important;line-height:1.4}
+.itinerary-panel .live-card:not([data-tracking="true"]) .nav-maneuver-card{display:none}
+.navigation-options{border-top:1px solid #e3ece6}
+.navigation-options>summary{display:flex;justify-content:space-between;align-items:center;list-style:none;min-height:46px;font-size:13px;font-weight:650;color:#355c48;cursor:pointer;padding:8px 0}
+.navigation-options>summary::-webkit-details-marker{display:none}
+.navigation-options>summary:after{content:'＋';font-size:18px}.navigation-options[open]>summary:after{content:'−'}
+.navigation-options:not([open])>:not(summary){display:none!important}
+.itinerary-panel .voice-nav-controls{gap:10px;margin-top:8px}
+.itinerary-panel .voice-nav-controls label{padding:9px 10px;border-radius:12px;background:#f7faf8}
+.itinerary-panel .voice-nav-controls label>span{font-size:12px!important;letter-spacing:0;text-transform:none;color:#526e5e;font-weight:600}
+.itinerary-panel .voice-nav-controls select{min-height:44px;font-size:14px!important;outline:revert}
+.itinerary-panel .voice-nav-controls .auto-guide-toggle{min-height:48px}
+.itinerary-panel .auto-guide-toggle input{width:20px;height:20px;flex:0 0 20px}
+.itinerary-panel .auto-guide-toggle span{font-size:13px!important;line-height:1.45}
+.itinerary-panel .live-metrics{display:grid;grid-template-columns:1fr 1fr!important;gap:8px!important;margin:12px 0}
+.itinerary-panel .live-metrics>div{padding:10px;background:#f4f8f5;border:0;border-radius:10px}
+.itinerary-panel .live-metrics span{font-size:12px!important;letter-spacing:0;text-transform:none;line-height:1.4}
+.itinerary-panel .live-metrics strong{font-size:15px!important;margin-top:5px}
+.itinerary-panel .live-privacy{display:block;font-size:12px!important;line-height:1.55;color:#587162;margin-top:10px}
+.itinerary-panel .day-tabs{gap:8px;padding:4px 0 14px;display:flex;flex-wrap:wrap;border-bottom:1px solid #e1eae4}
+.itinerary-panel .day-tab{min-height:44px;font-size:14px!important;padding:10px 16px;border-radius:12px}
+.itinerary-panel .day-head{display:block;padding:12px 0}
+.itinerary-panel .day-head h3{font-size:19px;line-height:1.4;margin:0 0 6px;overflow-wrap:anywhere}
+.itinerary-panel .day-head small{display:block;font-size:13px;line-height:1.55;color:#56715f}
+.itinerary-panel .route-optimization{display:block;margin:0 0 15px;padding:10px 12px;background:#f1f7f3;border-radius:12px}
+.itinerary-panel .route-optimization strong,.itinerary-panel .route-optimization span{display:block;font-size:12px!important;line-height:1.45}
+.itinerary-panel :is(button,summary,select,input):focus-visible{outline:3px solid #197ca5;outline-offset:3px}
+@media(min-width:1101px){.result-shell{grid-template-columns:minmax(350px,390px) minmax(0,1fr)}}
+@media(max-width:760px){
+  .result-shell .itinerary-panel{overflow:visible!important;max-height:none!important;padding:16px!important}
+  .itinerary-panel .live-card{padding:16px!important;border-radius:18px!important}
+  .itinerary-panel .live-next>strong{font-size:23px!important}
+  .itinerary-panel .result-toolbar{margin:0 0 16px!important}
+  .itinerary-panel .day-head h3{font-size:20px}
+}
+@media(max-width:360px){.itinerary-panel .voice-nav-controls{grid-template-columns:1fr}.itinerary-panel .live-metrics{grid-template-columns:1fr!important}}
