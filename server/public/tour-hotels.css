@@ -3,3 +3,7 @@
 @media(max-width:360px){.hotel-bar-actions,.hotel-list-tools{grid-template-columns:1fr}.hotel-list-card{grid-template-columns:85px 1fr}.hotel-dialog-top h2{font-size:18px}}
 
 .hotel-marker-count{position:absolute;right:-7px;top:-7px;min-width:21px;height:21px;display:grid;place-items:center;background:#fff;border:1px solid #b4cbea;border-radius:50%;font-size:11px;color:#285c9a;box-shadow:0 2px 6px #16375b30}
+
+/* Header, compact hotel toolbar, then map/itinerary: reserve height only for the map row. */
+.result-shell#resultShell{grid-template-rows:auto auto minmax(650px,1fr)}
+.result-shell>.hotel-discovery-bar{align-self:start;min-height:0;height:auto}
