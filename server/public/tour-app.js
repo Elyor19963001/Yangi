@@ -47,11 +47,11 @@ function audioGuideHtml(stop,compact=false){
 function updateAudioGuideLabels(){
   document.querySelectorAll('.audio-guide').forEach(box=>{
     const label=box.querySelector('.audio-engine-label');
-    if(label)label.textContent=state.audioEngine==='browser-fallback'?'Qurilma ovozi':'3 tilda';
+    if(label)label.textContent=state.audioEngine==='browser-fallback'?'Qurilma ovozi':state.audioEngine==='azure-speech'?'AI audio':'AI audio';
     const notice=box.querySelector('.audio-guide-quality');
     if(notice){
       notice.hidden=state.audioEngine!=='browser-fallback';
-      notice.textContent='Tabiiy audio hozir mavjud emas. Qurilma ovozining sifati telefon yoki brauzerga bog‘liq.';
+      notice.textContent='Server audio hali ulanmagan. Qurilmada o‘zbekcha ovoz bo‘lsa, shu ovoz ishlatiladi.';
     }
   });
 }
@@ -225,12 +225,18 @@ function browserGuideFallback(button,notify=true){
   const guideText=guideTextForButton(button,mode);
   if(!guideText)return;
   const locale={uz:'uz-UZ',en:'en-US',ru:'ru-RU'}[lang]||lang;
+  const voice=selectGuideVoice(lang);
+  if(!voice){
+    const notice=box?.querySelector('.audio-guide-quality');
+    if(notice){notice.hidden=false;notice.textContent=lang==='uz'?'O‘zbekcha audio hali ulanmagan. Matnni o‘qishingiz mumkin.':'Tanlangan tilda audio hozir mavjud emas.';}
+    toast(lang==='uz'?'O‘zbekcha ovoz topilmadi. Boshqa tildagi ovoz ishlatilmaydi.':'Tanlangan tilda qurilma ovozi topilmadi.');
+    return;
+  }
   const utter=new SpeechSynthesisUtterance(guideText);
   utter.lang=locale;
   utter.rate=mode==='detailed' ? (lang==='ru'?0.90:0.92) : (lang==='ru'?0.94:0.96);
   utter.pitch=1;
-  const voice=selectGuideVoice(lang);
-  if(voice)utter.voice=voice;
+  utter.voice=voice;
   button.classList.add('speaking');
   utter.onend=()=>button.classList.remove('speaking');
   utter.onerror=()=>{button.classList.remove('speaking');toast('Ovozli ma’lumotni ijro etib bo‘lmadi.');};
@@ -275,13 +281,11 @@ async function playProfessionalGuide(button){
     guideAudioPlayer.preload='auto';
     button.classList.add('speaking');
     guideAudioPlayer.onended=()=>{button.classList.remove('speaking');guideAudioPlayer=null;};
-    guideAudioPlayer.onerror=()=>{button.classList.remove('speaking');guideAudioPlayer=null;state.audioEngine='browser-fallback';updateAudioGuideLabels();browserGuideFallback(button,false);};
+    guideAudioPlayer.onerror=()=>{button.classList.remove('speaking');guideAudioPlayer=null;browserGuideFallback(button,true);};
     await guideAudioPlayer.play();
   }catch(err){
     if(token!==guidePlaybackToken)return;
     button.classList.remove('loading');
-    state.audioEngine='browser-fallback';
-    updateAudioGuideLabels();
     browserGuideFallback(button,true);
   }
 }
@@ -875,7 +879,7 @@ async function boot(){
   try{
     const status=await api('/api/tourism/status');
     const live=await api('/api/tourism/live/status');
-    state.audioEngine=status.professional_audio_configured?'openai-tts':'browser-fallback';
+    state.audioEngine=status.professional_audio_configured?(status.professional_audio_provider||'openai-tts'):'browser-fallback';
     updateAudioGuideLabels();
     state.live.professionalVoice=Boolean(live.professional_voice_configured);
     syncNavigatorControls();
