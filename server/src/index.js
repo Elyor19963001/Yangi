@@ -54,6 +54,8 @@ app.use(helmet({
         'https://commons.wikimedia.org',
         'https://upload.wikimedia.org',
         'https://thumb.wikimedia.org',
+        'https://malikahotel.com',
+        'https://www.hilton.com',
       ],
       connectSrc: ["'self'", 'ws:', 'wss:', 'https://tiles.openfreemap.org', 'https://server.arcgisonline.com'],
       workerSrc: ["'self'", 'blob:'],
