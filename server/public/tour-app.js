@@ -525,7 +525,7 @@ function stopCard(stop){
 }
 function weatherLabel(code){const n=Number(code);if(n===0)return 'Ochiq';if([1,2,3].includes(n))return 'Bulutli';if([45,48].includes(n))return 'Tuman';if(n>=51&&n<=67)return 'Yomg‘ir';if(n>=71&&n<=77)return 'Qor';if(n>=80&&n<=82)return 'Jala';if(n>=95)return 'Momaqaldiroq';return 'Prognoz'}
 function selected(kind,row){return state.selectedServices?.[kind]?.id===row.id}
-function serviceItem(row,kind){const distance=Number(row.distance_m||0);const meta=[distance?formatDistance(distance):null,row.cuisine?`oshxona: ${row.cuisine}`:null,row.opening_hours?`ish vaqti: ${row.opening_hours}`:null].filter(Boolean).join(' · ');const chosen=selected(kind,row);const chooseButton=`<button type="button" class="select-service ${chosen?'selected':''}" data-kind="${esc(kind)}" data-id="${esc(row.id)}" data-name="${esc(row.name)}">${chosen?'✓ Tanlangan':'Tanlash'}</button>`;const hotelButton=kind==='hotel'?`<button type="button" class="hotel-start" data-lat="${Number(row.latitude)}" data-lon="${Number(row.longitude)}" data-name="${esc(row.name)}">🏨 Shu yerdan qayta rejalash</button>`:'';return `<div class="service-item ${chosen?'chosen':''}"><strong>${esc(row.name)}</strong>${meta?`<span>${esc(meta)}</span>`:''}${row.phone?`<span>☎ ${esc(row.phone)}</span>`:''}<a href="${esc(row.source_url)}" target="_blank" rel="noopener">Xaritada ko‘rish ↗</a><div class="service-actions">${chooseButton}${hotelButton}</div></div>`}
+function serviceItem(row,kind){const distance=Number(row.distance_m||0);const meta=[distance?formatDistance(distance):null,row.cuisine?`oshxona: ${row.cuisine}`:null,row.opening_hours?`ish vaqti: ${row.opening_hours}`:null].filter(Boolean).join(' · ');const chosen=selected(kind,row);const chooseButton=`<button type="button" class="select-service ${chosen?'selected':''}" data-kind="${esc(kind)}" data-id="${esc(row.id)}" data-name="${esc(row.name)}">${chosen?'✓ Tanlangan':'Tanlash'}</button>`;const detailButton=kind==='hotel'?`<button type="button" class="hotel-details-link" data-hotel-open="${esc(row.id)}">Rasmlar va ma’lumot</button>`:'';const hotelButton=kind==='hotel'?`<button type="button" class="hotel-start" data-lat="${Number(row.latitude)}" data-lon="${Number(row.longitude)}" data-name="${esc(row.name)}">🏨 Shu yerdan qayta rejalash</button>`:'';return `<div class="service-item ${chosen?'chosen':''}"><strong>${esc(row.name)}</strong>${meta?`<span>${esc(meta)}</span>`:''}${row.phone?`<span>☎ ${esc(row.phone)}</span>`:''}<a href="${esc(row.source_url)}" target="_blank" rel="noopener">Xaritada ko‘rish ↗</a><div class="service-actions">${detailButton}${chooseButton}${hotelButton}</div></div>`}
 function servicesBlock(title,emoji,rows,kind){return `<div class="context-card"><h4>${emoji} ${esc(title)}</h4>${rows?.length?`<div class="service-list">${rows.map(r=>serviceItem(r,kind)).join('')}</div>`:'<small>Jonli xarita manbasidan yaqin obyekt topilmadi.</small>'}</div>`}
 function budgetBlock(budget){if(!budget)return '';const warning=budget.over_budget_uzs?`<div class="budget-alert">⚠ Reja xarajatlari umumiy budjetdan ${money(budget.over_budget_uzs)} so‘mga oshdi.</div>`:'';return `<div class="context-card wide"><h4>💳 Budjet hisob-kitobi</h4><div class="context-main">${money(budget.total_uzs)} so‘m · ${budget.party_size} kishi</div>${budget.planned_commitments_uzs?`<small>Rejalashtirilgan xarajatlar: ${money(budget.planned_commitments_uzs)} so‘m · qolgan: ${money(budget.remaining_after_planned_uzs)} so‘m</small>`:''}<div class="budget-list">${(budget.allocations||[]).map(a=>`<div class="budget-row"><span>${esc(a.label)}${a.selected_service?` · ${esc(a.selected_service)}`:''}</span><strong>${money(a.amount_uzs)} so‘m</strong><small>${a.calculation==='user-planned-cost'?'Siz kiritgan reja narxi':'Qolgan budjet taqsimoti'}</small></div>`).join('')}</div>${warning}<small>${esc(budget.note||'')}</small></div>`}
 function supportBlock(day,daySupport){const w=day?.weather||daySupport?.weather;const risk=w?.risk;const weather=w?`<div class="context-card"><h4>🌦️ ${esc(w.date||day?.date||'Ob-havo')}</h4><div class="context-main">${esc(weatherLabel(w.weather_code))} · ${Number(w.temperature_min_c).toFixed(0)}…${Number(w.temperature_max_c).toFixed(0)}°C</div><small>Yomg‘ir ehtimoli ${Number(w.precipitation_probability_max_pct||0)}% · shamol ${Number(w.wind_speed_max_kmh||0).toFixed(0)} km/soat${risk?.label?` · ${esc(risk.label)}`:''}</small></div>`:'<div class="context-card"><h4>🌦️ Ob-havo</h4><small>Prognoz hozir olinmadi.</small></div>';const adaptive=day?.adaptation_note?`<div class="adaptive-note"><strong>🧭 Marshrut moslashtirildi</strong><span>${esc(day.adaptation_note)}</span></div>`:'';return `${adaptive}<div class="context-grid">${weather}${servicesBlock('Yaqin ovqatlanish','🍽️',daySupport?.restaurants,'restaurant')}${servicesBlock('Yaqin mehmonxona','🏨',daySupport?.hotels,'hotel')}${servicesBlock('Taksi punktlari','🚕',daySupport?.taxi_points,'taxi')}${state.activeDay===0?budgetBlock(state.support?.budget):''}</div>`}
@@ -550,6 +550,7 @@ function supportPayload(data){
 
 function serviceCard(row,kind,title){
   if(!row)return '';
+  if(kind==='hotel')return `<article class="integrated-service integrated-hotel"><div class="integrated-icon">🏨</div><div><span class="integrated-kicker">Turar joy varianti</span><strong>${esc(row.name)}</strong><small>${esc(row.address||'')}</small><button type="button" class="hotel-details-link" data-hotel-open="${esc(row.id)}">Rasmlar va ma’lumot →</button></div></article>`;
   const emoji=kind==='restaurant'?'🍽️':kind==='hotel'?'🏨':'🚕';
   const meta=[
     Number(row.distance_m||0)>0?formatDistance(row.distance_m):null,
@@ -795,7 +796,7 @@ function renderMap(day,daySupport){
   });
   const seen=new Set();
   const recommended=daySupport?.recommendations||{};
-  [['restaurant','🍽️'],['hotel','🏨'],['taxi','🚕']].forEach(([kind,emoji])=>{
+  [['restaurant','🍽️'],['taxi','🚕']].forEach(([kind,emoji])=>{
     const row=recommended[kind];
     if(!row||!Number.isFinite(Number(row.latitude))||!Number.isFinite(Number(row.longitude)))return;
     seen.add(row.id);
@@ -804,7 +805,7 @@ function renderMap(day,daySupport){
       .bindPopup(`<strong>${esc(row.name)}</strong><br>Marshrutga mos tavsiya · ${esc(kind)}`);
     state.supportMarkers.push(m);
   });
-  const supportKinds=[['restaurants','🍽️','restaurant'],['hotels','🏨','hotel'],['taxi_points','🚕','taxi']];
+  const supportKinds=[['restaurants','🍽️','restaurant'],['taxi_points','🚕','taxi']];
   supportKinds.forEach(([key,emoji,kind])=>(daySupport?.[key]||[]).slice(0,2).forEach(row=>{
     if(seen.has(row.id))return;
     const chosen=selected(kind,row);
@@ -818,6 +819,7 @@ function renderMap(day,daySupport){
   const group=L.featureGroup(layers);
   const b=group.getBounds();
   if(b.isValid()&&!state.live.active&&!state.live.paused)state.map.fitBounds(b.pad(.15));
+  if(typeof renderHotelExplorer==='function')renderHotelExplorer(daySupport);
   setTimeout(()=>state.map.invalidateSize(),50);
 }
 function sourceNote(){const data=state.result||{};const support=state.support||{};const sourceAI=data.sources?.ai||'Smart parser';const warnings=[...(data.warnings||[]),...(support.warnings||[])];return `<strong>Manbalar:</strong> ${esc(data.sources?.places||'Samarqand reference katalogi')} · routing: ${esc((data.sources?.routing||[]).join(', '))} · optimizatsiya: ${esc((data.sources?.optimization||[]).join(', ')||'—')} · AI: ${esc(sourceAI)} · ob-havo: ${esc(data.sources?.weather||support.sources?.weather||'—')} · ish vaqti/chipta: ${esc(data.sources?.operational||'—')} · xizmatlar: ${esc(support.sources?.services||'—')}<br>${warnings.map(w=>`⚠ ${esc(w)}`).join('<br>')}`}
@@ -889,3 +891,4 @@ async function boot(){
   }catch{syncNavigatorControls()}
 }
 boot();
+
