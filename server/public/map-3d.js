@@ -162,18 +162,33 @@
         <div class="qrp-3d-actions">
           <label class="qrp-3d-select-label"><span>Obida</span><select data-3d-landmark aria-label="3D obidani tanlash"><option value="">Bino xaritasi</option><option value="registan">Registon</option><option value="gur-amir">Go‘ri Amir</option><option value="bibi-khanum">Bibixonim</option></select></label>
           <button type="button" data-3d-photo aria-pressed="false" title="Sun’iy yo‘ldosh suratlari">📷 Foto xarita</button>
+          <details class="qrp-3d-settings"><summary>⚙ Sozlamalar</summary><div class="qrp-3d-settings-options">
           <button type="button" data-3d-quality aria-pressed="false" title="Asl 3D skan katta hajmli bo‘lib, ko‘proq vaqt yuklanadi">✨ Batafsil skan (80–165 MB)</button>
           <button type="button" data-3d-pitch="0">2D ↑</button>
           <button type="button" data-3d-pitch="55">3D ◢</button>
-          <button type="button" data-3d-rotate="-20">↺</button>
-          <button type="button" data-3d-rotate="20">↻</button>
-          <button type="button" data-3d-close>✕ 2D</button>
+          <button type="button" data-3d-rotate="-20" aria-label="Chapga aylantirish">↺</button>
+          <button type="button" data-3d-rotate="20" aria-label="O‘ngga aylantirish">↻</button>
+          </div></details>
+          <button type="button" data-3d-close aria-label="2D xaritaga qaytish">✕ 2D</button>
         </div>
       </div>
       <div class="qrp-3d-map" id="qrp3dMap"></div>
       <div class="qrp-3d-note" role="status"><strong data-3d-status>3D xarita</strong><span data-3d-description>Obidani tanlang. Boshqa binolar OpenStreetMap konturlari bo‘yicha ko‘rsatiladi.</span><a data-3d-source href="#" target="_blank" rel="noopener noreferrer" hidden>Asl 3D model ↗</a></div>
     `;
     parent.appendChild(shell);
+    // Toolbar and status resize independently of the viewport (menus, translations, model loading).
+    if (typeof ResizeObserver !== 'undefined') {
+      const layoutObserver = new ResizeObserver(() => {
+        if (!shell.classList.contains('hidden')) glMap?.resize();
+      });
+      layoutObserver.observe(shell.querySelector('.qrp-3d-map'));
+    }
+    shell.querySelector('.qrp-3d-settings').addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        event.currentTarget.open = false;
+        event.currentTarget.querySelector('summary').focus();
+      }
+    });
 
     shell.querySelector('[data-3d-close]').addEventListener('click', () => {
       if (window.QRPMapStyle?.setMode) window.QRPMapStyle.setMode(window.QRPMapStyle.last2DMode || 'hybrid');

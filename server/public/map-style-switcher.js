@@ -59,6 +59,7 @@
         const active = button.dataset.mapMode === activeMode;
         button.classList.toggle('active', active);
         button.setAttribute('aria-pressed', active ? 'true' : 'false');
+        if (active) controlNode.querySelector('summary span').textContent = `Xarita: ${button.textContent.trim()}`;
       });
     }
 
@@ -139,21 +140,22 @@
     const StyleControl = L.Control.extend({
       options: { position: 'topright' },
       onAdd() {
-        const div = L.DomUtil.create('div', 'qrp-map-style leaflet-control');
+        const div = L.DomUtil.create('details', 'qrp-map-style leaflet-control');
         div.setAttribute('role', 'group');
         div.setAttribute('aria-label', 'Xarita ko‘rinishi');
-        div.innerHTML = [
+        div.innerHTML = '<summary aria-label="Xarita qatlamlarini tanlash">🗺 <span>Xarita qatlamlari</span></summary><div class="qrp-map-mode-options">' + [
           '<button type="button" data-map-mode="3d" title="MapLibre orqali 3D bino geometriyasi">🏙 <span>3D</span></button>',
           '<button type="button" data-map-mode="hybrid" title="Sun’iy yo‘ldosh tasviri va joy nomlari; tasvir real vaqt emas">🛰 <span>Hybrid</span></button>',
           '<button type="button" data-map-mode="satellite" title="Sun’iy yo‘ldosh tasviri; tasvir real vaqt emas">📷 <span>Satellite</span></button>',
           '<button type="button" data-map-mode="street" title="OSM ma’lumotlari asosida yangilanadigan vektor ko‘cha xaritasi">🛣 <span>Ko‘cha</span></button>',
           '<button type="button" data-map-mode="standard" title="OpenStreetMap standart xaritasi">🗺 <span>OSM</span></button>',
-        ].join('');
+        ].join('') + '</div>';
         L.DomEvent.disableClickPropagation(div);
         L.DomEvent.disableScrollPropagation(div);
         div.querySelectorAll('[data-map-mode]').forEach((button) => {
-          button.addEventListener('click', () => setMode(button.dataset.mapMode));
+          button.addEventListener('click', () => { setMode(button.dataset.mapMode); div.open = false; });
         });
+        div.addEventListener('keydown', (event) => { if (event.key === 'Escape') { div.open = false; div.querySelector('summary').focus(); } });
         controlNode = div;
         updateButtons();
         return div;
