@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="/tour-poi-v15.css?v=19.1.1" />
   <link rel="stylesheet" href="/tour-copilot-v16.css?v=22.2" />
   <link rel="stylesheet" href="/tour-poi-v19.css?v=19.3" />
-  <link rel="stylesheet" href="/tour-dashboard-v23.css?v=25.0" />
+  <link rel="stylesheet" href="/tour-dashboard-v23.css?v=27.0" />
   <link rel="stylesheet" href="/tour-poi-clarity.css?v=1" />
   <script src="/vendor/leaflet/leaflet.js" defer></script>
   <script src="/vendor/maplibre/maplibre-gl.js" defer></script>
@@ -33,7 +33,7 @@
   <script src="/tour-horse-v214.js?v=22.1" defer></script>
   <script src="/tour-poi-v19.js?v=19.3" defer></script>
   <script src="/heritage-three.bundle.js?v=23.2" defer></script>
-  <script src="/tour-dashboard-v23.js?v=23.6" defer></script>
+  <script src="/tour-dashboard-v23.js?v=27.0" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -85,22 +85,25 @@
           <div class="badges" id="intentBadges"></div>
         </div>
 
-        <button class="dashboard-gps-toggle" id="dashboardGpsToggle" type="button" aria-controls="livePanel" aria-expanded="false" data-i18n="gpsToggle">◎ GPS navigatsiya sozlamalari</button>
-        <section class="live-card hidden dashboard-live-collapsed" id="livePanel">
-          <div class="live-head"><div><span class="live-dot" id="liveDot"></span><strong id="liveStatus">GPS tayyor</strong></div><button type="button" class="live-center" id="centerLiveBtn" disabled>◎ Menga qaytish</button></div>
-          <div class="voice-nav-controls">
-            <label><span>Navigator tili</span><select id="navLanguage"><option value="uz">🇺🇿 O‘zbek</option><option value="en">🇬🇧 English</option><option value="ru">🇷🇺 Русский</option></select></label>
-            <label><span>Ovozli ko‘rsatma</span><select id="navGuidance"><option value="full">To‘liq</option><option value="essential" selected>Muhim</option><option value="mute">Ovozsiz</option></select></label>
-            <label class="auto-guide-toggle"><input id="navAutoGuide" type="checkbox" checked><span>🎧 Manzilga yetganda audio gid avtomatik</span></label>
-          </div>
+        <button class="dashboard-gps-toggle" id="dashboardGpsToggle" type="button" aria-controls="livePanel" aria-expanded="true" data-i18n="gpsToggle">◎ Yo‘l ko‘rsatmasi</button>
+        <section class="live-card hidden" id="livePanel" aria-label="Safar navigatsiyasi">
+          <div class="live-head"><div><span class="live-dot" id="liveDot"></span><strong id="liveStatus" role="status" aria-live="polite">GPS tayyor</strong></div><button type="button" class="live-center" id="centerLiveBtn" disabled aria-label="Xaritani joylashuvimga qaytarish">◎ Joylashuvim</button></div>
+          <div class="live-next"><span data-i18n="nextStop">Keyingi manzil</span><strong id="liveNextName">—</strong><small id="liveNextMeta">Boshlash tugmasini bosing — GPS masofa va vaqtni aniqlaydi.</small></div>
           <div class="nav-maneuver-card" id="navManeuverCard">
-            <div class="nav-maneuver-icon" id="navManeuverIcon">◎</div>
-            <div class="nav-maneuver-copy"><span id="navInstructionDistance">Manzilgacha GPS kuzatuvi</span><strong id="navInstruction">Marshrut tayyor</strong><small><b id="navVoiceState">Qurilma ovozi</b> · burilishlar va qayta yo‘naltirish avtomatik</small></div>
+            <div class="nav-maneuver-icon" id="navManeuverIcon" aria-hidden="true">◎</div>
+            <div class="nav-maneuver-copy"><span id="navInstructionDistance">Manzilgacha masofa</span><strong id="navInstruction">Marshrut tayyor</strong><small><b id="navVoiceState">Qurilma ovozi</b> · <span data-i18n="navHint">yo‘l ko‘rsatmalari</span></small></div>
           </div>
-          <div class="live-next"><span>Keyingi manzil</span><strong id="liveNextName">—</strong><small id="liveNextMeta">Live Tour boshlanganda masofa va ETA chiqadi.</small></div>
-          <div class="live-metrics"><div><span>GPS aniqligi</span><strong id="liveAccuracy">—</strong></div><div><span>Marshrutdan og‘ish</span><strong id="liveDeviation">—</strong></div><div><span>Yurilgan</span><strong id="liveTravelled">0 m</strong></div></div>
           <div class="live-actions"><button type="button" class="btn primary" id="startLiveBtn">▶ Sayohatni boshlash</button><button type="button" class="btn secondary" id="pauseLiveBtn" disabled>⏸ Pauza</button><button type="button" class="btn danger" id="stopLiveBtn" disabled>■ Tugatish</button></div>
-          <small class="live-privacy">🔒 GPS koordinatalari ushbu web-sessiyada navigatsiya uchun ishlatiladi; Live Tour endpointi ularni bazaga saqlamaydi. Brauzer fon rejimida GPS kuzatuvini cheklashi mumkin.</small>
+          <details class="navigation-options">
+            <summary data-i18n="navOptions">Ovoz va GPS tafsilotlari</summary>
+            <div class="voice-nav-controls">
+              <label><span data-i18n="navLang">Ovoz tili</span><select id="navLanguage"><option value="uz">O‘zbek</option><option value="en">English</option><option value="ru">Русский</option></select></label>
+              <label><span data-i18n="navGuidance">Yo‘l ko‘rsatmalari</span><select id="navGuidance"><option value="full">To‘liq</option><option value="essential" selected>Muhim</option><option value="mute">Ovozsiz</option></select></label>
+              <label class="auto-guide-toggle"><input id="navAutoGuide" type="checkbox" checked><span data-i18n="autoGuide">Manzilga yetganda audio gidni yoqish</span></label>
+            </div>
+            <div class="live-metrics"><div><span data-i18n="gpsAccuracy">GPS aniqligi</span><strong id="liveAccuracy">—</strong></div><div><span data-i18n="routeDeviation">Yo‘ldan chetlanish</span><strong id="liveDeviation">—</strong></div><div><span data-i18n="distanceCovered">Bosib o‘tilgan</span><strong id="liveTravelled">0 m</strong></div></div>
+            <small class="live-privacy" data-i18n="gpsPrivacy">Joylashuvingiz shu safarni kuzatish uchun ishlatiladi. GPS ishlashi uchun sahifani ochiq tuting.</small>
+          </details>
         </section>
 
         <div class="day-tabs" id="dayTabs"></div>
